@@ -6,7 +6,8 @@ import (
 
 var factory Factory
 
-// Factory interface definition
+// Factory interface defines the interface that we have to provide
+// in order to use this abstraction
 type Factory interface {
 	Create() Logger
 	CreateWithFields(map[string]interface{}) Logger
