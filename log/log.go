@@ -1,19 +1,31 @@
 package log
 
-// Logger interface defines all methods a logger has to implement
-// for this abstraction
-type Logger interface {
-	Fields() map[string]interface{}
-	Fatal(...interface{})
-	Fatalf(string, ...interface{})
-	Panic(...interface{})
-	Panicf(string, ...interface{})
-	Error(...interface{})
-	Errorf(string, ...interface{})
-	Warn(...interface{})
-	Warnf(string, ...interface{})
-	Info(...interface{})
-	Infof(string, ...interface{})
-	Debug(...interface{})
-	Debugf(string, ...interface{})
+import "errors"
+
+var factory Factory
+
+// Setup set's up a new factory to the global state
+func Setup(f Factory) error {
+	if f == nil {
+		return errors.New("factory is nil")
+	}
+
+	factory = f
+
+	return nil
+}
+
+// Create returns a new logger
+func Create() Logger {
+	return factory.Create()
+}
+
+// CreateWithFields returns a new logger with fields
+func CreateWithFields(fields map[string]interface{}) Logger {
+	return factory.CreateWithFields(fields)
+}
+
+// CreateSub returns a new sub logger
+func CreateSub(l Logger, fields map[string]interface{}) Logger {
+	return factory.CreateSub(l, fields)
 }
