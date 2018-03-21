@@ -14,7 +14,7 @@ func TestSetup(t *testing.T) {
 		wantErr bool
 	}{
 		{"failure with nil metric", nil, true},
-		{"success", &testMetric{}, false},
+		{"success", &nullMetric{}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestSetup(t *testing.T) {
 
 func TestCounter(t *testing.T) {
 	assert := assert.New(t)
-	m := testMetric{}
+	m := nullMetric{}
 	Setup(&m)
 	key := "key"
 	value := 1.99
@@ -45,7 +45,7 @@ func TestCounter(t *testing.T) {
 
 func TestGauge(t *testing.T) {
 	assert := assert.New(t)
-	m := testMetric{}
+	m := nullMetric{}
 	Setup(&m)
 	key := "key"
 	value := 1.99
@@ -54,22 +54,4 @@ func TestGauge(t *testing.T) {
 	assert.Equal(key, m.key)
 	assert.Equal(value, m.v)
 	assert.Equal(labels, m.labels)
-}
-
-type testMetric struct {
-	key    string
-	v      float64
-	labels []string
-}
-
-func (nm *testMetric) Counter(key string, v float64, labels ...string) {
-	nm.key = key
-	nm.v = v
-	nm.labels = labels
-}
-
-func (nm *testMetric) Gauge(key string, v float64, labels ...string) {
-	nm.key = key
-	nm.v = v
-	nm.labels = labels
 }
