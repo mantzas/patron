@@ -15,6 +15,10 @@ type Logger struct {
 
 // NewLogger returns a new logger
 func NewLogger(l *zerolog.Logger, f map[string]interface{}) log.Logger {
+	if len(f) == 0 {
+		f = make(map[string]interface{})
+	}
+
 	return &Logger{l, f}
 }
 

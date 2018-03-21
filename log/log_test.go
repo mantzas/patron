@@ -33,14 +33,14 @@ func TestSetup(t *testing.T) {
 func TestCreate(t *testing.T) {
 	assert := assert.New(t)
 	Setup(testFactory{})
-	l := Create()
+	l := Create(nil)
 	assert.NotNil(l)
 }
 
 func TestCreateWithFields(t *testing.T) {
 	assert := assert.New(t)
 	Setup(testFactory{})
-	l := CreateWithFields(make(map[string]interface{}))
+	l := Create(make(map[string]interface{}))
 	assert.NotNil(l)
 }
 
@@ -54,11 +54,7 @@ func TestCreateSub(t *testing.T) {
 type testFactory struct {
 }
 
-func (f testFactory) Create() Logger {
-	return &testLogger{}
-}
-
-func (f testFactory) CreateWithFields(fields map[string]interface{}) Logger {
+func (f testFactory) Create(fields map[string]interface{}) Logger {
 	return &testLogger{}
 }
 
