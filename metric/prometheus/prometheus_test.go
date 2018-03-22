@@ -62,3 +62,51 @@ func TestMetric_RegisterGaugeAndAddValue(t *testing.T) {
 	assert.Len(m.gauges, 1)
 	m.Gauge(key, 1.0, "localhost")
 }
+
+func TestMetric_HistogramNotExists(t *testing.T) {
+	assert := assert.New(t)
+	key := "ttt"
+	m := New()
+	assert.Len(m.histograms, 0)
+	m.Histogram(key, 1.0, "localhost")
+}
+
+func TestMetric_RegisterHistogramAndAddValue(t *testing.T) {
+	assert := assert.New(t)
+	key := "test_histogram_seconds"
+	m := New()
+	h := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: key,
+			Help: "Test duration in seconds",
+		},
+		[]string{"host"},
+	)
+	m.RegisterHistogram(key, h)
+	assert.Len(m.histograms, 1)
+	m.Histogram(key, 1.0, "localhost")
+}
+
+func TestMetric_SummaryNotExists(t *testing.T) {
+	assert := assert.New(t)
+	key := "ttt"
+	m := New()
+	assert.Len(m.summaries, 0)
+	m.Summary(key, 1.0, "localhost")
+}
+
+func TestMetric_RegisterSummaryAndAddValue(t *testing.T) {
+	assert := assert.New(t)
+	key := "test_Summary_seconds"
+	m := New()
+	s := prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: key,
+			Help: "Test duration in seconds",
+		},
+		[]string{"host"},
+	)
+	m.RegisterSummary(key, s)
+	assert.Len(m.summaries, 1)
+	m.Summary(key, 1.0, "localhost")
+}

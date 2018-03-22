@@ -7,6 +7,8 @@ import "errors"
 type Metric interface {
 	Counter(key string, v float64, labels ...string)
 	Gauge(key string, v float64, labels ...string)
+	Histogram(key string, v float64, labels ...string)
+	Summary(key string, v float64, labels ...string)
 }
 
 var metric Metric
@@ -33,4 +35,14 @@ func Counter(key string, v float64, labels ...string) {
 // Gauge sets the keyed gauge by a value and attaches the labels
 func Gauge(key string, v float64, labels ...string) {
 	metric.Gauge(key, v, labels...)
+}
+
+// Histogram sets the keyed histogram by a value and attaches the labels
+func Histogram(key string, v float64, labels ...string) {
+	metric.Histogram(key, v, labels...)
+}
+
+// Summary sets the keyed summary by a value and attaches the labels
+func Summary(key string, v float64, labels ...string) {
+	metric.Summary(key, v, labels...)
 }
