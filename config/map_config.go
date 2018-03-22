@@ -36,11 +36,6 @@ func (mc *MapConfig) GetString(key string) string {
 	return mc.store[key].(string)
 }
 
-// GetFloat32 returns the float32 value of the key
-func (mc *MapConfig) GetFloat32(key string) float32 {
-	return mc.store[key].(float32)
-}
-
 // GetFloat64 returns the float64 value of the key
 func (mc *MapConfig) GetFloat64(key string) float64 {
 	return mc.store[key].(float64)

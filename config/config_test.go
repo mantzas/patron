@@ -32,66 +32,45 @@ func TestSetup(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	assert := assert.New(t)
-	c := NewMapConfig()
-	assert.NoError(Setup(c))
 	key := "key"
 	value := "value"
-	c.Set(key, value)
+	Set(key, value)
 	v := Get(key)
 	assert.Equal(value, v)
 }
 
 func TestBool(t *testing.T) {
 	assert := assert.New(t)
-	c := NewMapConfig()
-	assert.NoError(Setup(c))
 	key := "key"
 	value := true
-	c.Set(key, value)
+	Set(key, value)
 	v := GetBool(key)
 	assert.Equal(value, v)
 }
 
 func TestInt(t *testing.T) {
 	assert := assert.New(t)
-	c := NewMapConfig()
-	assert.NoError(Setup(c))
 	key := "key"
 	value := 1
-	c.Set(key, value)
+	Set(key, value)
 	v := GetInt(key)
 	assert.Equal(value, v)
 }
 
 func TestString(t *testing.T) {
 	assert := assert.New(t)
-	c := NewMapConfig()
-	assert.NoError(Setup(c))
 	key := "key"
 	value := "value"
-	c.Set(key, value)
+	Set(key, value)
 	v := GetString(key)
-	assert.Equal(value, v)
-}
-
-func TestFloat32(t *testing.T) {
-	assert := assert.New(t)
-	c := NewMapConfig()
-	assert.NoError(Setup(c))
-	key := "key"
-	value := float32(3.2)
-	c.Set(key, value)
-	v := GetFloat32(key)
 	assert.Equal(value, v)
 }
 
 func TestFloat64(t *testing.T) {
 	assert := assert.New(t)
-	c := NewMapConfig()
-	assert.NoError(Setup(c))
 	key := "key"
 	value := 3.2
-	c.Set(key, value)
+	Set(key, value)
 	v := GetFloat64(key)
 	assert.Equal(value, v)
 }

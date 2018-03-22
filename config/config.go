@@ -6,11 +6,11 @@ import (
 
 // Config interface which has to be implemented in order to be used here
 type Config interface {
+	Set(key string, value interface{})
 	Get(key string) interface{}
 	GetBool(key string) bool
 	GetInt(key string) int
 	GetString(key string) string
-	GetFloat32(key string) float32
 	GetFloat64(key string) float64
 }
 
@@ -28,6 +28,11 @@ func Setup(c Config) error {
 
 	config = c
 	return nil
+}
+
+// Set a key and a value to config
+func Set(key string, value interface{}) {
+	config.Set(key, value)
 }
 
 // Get returns the value of the key
@@ -48,11 +53,6 @@ func GetInt(key string) int {
 // GetString returns the string value of the key
 func GetString(key string) string {
 	return config.GetString(key)
-}
-
-// GetFloat32 returns the float32 value of the key
-func GetFloat32(key string) float32 {
-	return config.GetFloat32(key)
 }
 
 // GetFloat64 returns the float64 value of the key
