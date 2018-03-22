@@ -20,3 +20,17 @@ func (nm *nullMetric) Gauge(key string, v float64, labels ...string) {
 	nm.v = v
 	nm.labels = labels
 }
+
+// Histogram does nothing
+func (nm *nullMetric) Histogram(key string, v float64, labels ...string) {
+	nm.key = key
+	nm.v = v
+	nm.labels = labels
+}
+
+// Summary does nothing
+func (nm *nullMetric) Summary(key string, v float64, labels ...string) {
+	nm.key = key
+	nm.v = v
+	nm.labels = labels
+}
