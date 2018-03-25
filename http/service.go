@@ -72,7 +72,6 @@ func (s *Service) ListenAndServe() error {
 	case <-stop:
 		return s.shutdown()
 	}
-
 }
 
 func (s *Service) shutdown() error {

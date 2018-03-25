@@ -7,7 +7,7 @@ import (
 )
 
 // CreateHTTPServer returns a new HTTP server on a specific port
-func CreateHTTPServer(port int, sm *http.ServeMux) *http.Server {
+func CreateHTTPServer(port int, sm http.Handler) *http.Server {
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  5 * time.Second,
