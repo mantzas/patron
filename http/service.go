@@ -9,6 +9,13 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/http/pprof"
+	"github.com/pkg/errors"
+)
+
+const (
+	port            = 50000
+	pprofPort       = 50001
+	shutdownTimeout = 5 * time.Second
 )
 
 // Service definition for handling HTTP request
@@ -21,9 +28,10 @@ type Service struct {
 func New(options ...Option) (*Service, error) {
 
 	// TODO: replace with actual mux
+	mux := http.ServeMux{}
 	s := Service{
-		srv:   CreateHTTPServer(80, http.DefaultServeMux),
-		pprof: pprof.New(81),
+		srv:   CreateHTTPServer(port, &mux),
+		pprof: pprof.New(pprofPort),
 	}
 
 	for _, opt := range options {
@@ -49,17 +57,27 @@ func (s *Service) ListenAndServe() error {
 		errCh <- s.srv.ListenAndServe()
 	}()
 
-	return <-errCh
-}
-
-// WaitSignalAndShutdown waiting for shutdown signal and shuts down service
-func (s *Service) WaitSignalAndShutdown(timeout time.Duration) error {
-
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	select {
+	case err := <-errCh:
+
+		err1 := s.shutdown()
+		if err1 != nil {
+			return errors.Wrapf(err, "failed to shutdown %v", err1)
+		}
+		return err
+
+	case <-stop:
+		return s.shutdown()
+	}
+
+}
+
+func (s *Service) shutdown() error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	err := s.pprof.Shutdown(ctx)
