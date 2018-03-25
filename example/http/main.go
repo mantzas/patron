@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	s, err := http.New(http.Ports(80, 81))
+	s, err := http.New(http.Ports(50000, 50001))
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)
