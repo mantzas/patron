@@ -6,9 +6,13 @@ import (
 )
 
 var factory Factory
+var logger Logger
+var fields map[string]interface{}
 
 func init() {
 	factory = NewStdFactory(os.Stdout)
+	logger = factory.Create(nil)
+	fields = make(map[string]interface{})
 }
 
 // Setup set's up a new factory to the global state
@@ -16,18 +20,79 @@ func Setup(f Factory) error {
 	if f == nil {
 		return errors.New("factory is nil")
 	}
-
 	factory = f
+	logger = f.Create(nil)
 
 	return nil
 }
 
-// Create returns a new logger. Fields are optional and allow nil
-func Create(f map[string]interface{}) Logger {
-	return factory.Create(f)
+// AppendField appends a field
+func AppendField(key string, value interface{}) {
+	fields[key] = value
+	logger = factory.Create(fields)
 }
 
-// CreateSub returns a new sub logger
-func CreateSub(l Logger, fields map[string]interface{}) Logger {
-	return factory.CreateSub(l, fields)
+// Sub returns a new sub logger
+func Sub(fields map[string]interface{}) Logger {
+	return factory.CreateSub(logger, fields)
+}
+
+// Panic logging
+func Panic(args ...interface{}) {
+	logger.Panic(args...)
+}
+
+// Panicf logging
+func Panicf(msg string, args ...interface{}) {
+	logger.Panicf(msg, args...)
+}
+
+// Fatal logging
+func Fatal(args ...interface{}) {
+	logger.Fatal(args...)
+}
+
+// Fatalf logging
+func Fatalf(msg string, args ...interface{}) {
+	logger.Fatalf(msg, args...)
+}
+
+// Error logging
+func Error(args ...interface{}) {
+	logger.Error(args...)
+}
+
+// Errorf logging
+func Errorf(msg string, args ...interface{}) {
+	logger.Errorf(msg, args...)
+}
+
+// Warn logging
+func Warn(args ...interface{}) {
+	logger.Warn(args...)
+}
+
+// Warnf logging
+func Warnf(msg string, args ...interface{}) {
+	logger.Warnf(msg, args...)
+}
+
+// Info logging
+func Info(args ...interface{}) {
+	logger.Info(args...)
+}
+
+// Infof logging
+func Infof(msg string, args ...interface{}) {
+	logger.Infof(msg, args...)
+}
+
+// Debug logging
+func Debug(args ...interface{}) {
+	logger.Debug(args...)
+}
+
+// Debugf logging
+func Debugf(msg string, args ...interface{}) {
+	logger.Debugf(msg, args...)
 }

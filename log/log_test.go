@@ -1,6 +1,7 @@
 package log
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,25 +31,119 @@ func TestSetup(t *testing.T) {
 	}
 }
 
-func TestCreate(t *testing.T) {
+func TestSub(t *testing.T) {
 	assert := assert.New(t)
 	Setup(testFactory{})
-	l := Create(nil)
+	l := Sub(make(map[string]interface{}))
 	assert.NotNil(l)
 }
 
-func TestCreateWithFields(t *testing.T) {
+func TestLog_Panic(t *testing.T) {
 	assert := assert.New(t)
-	Setup(testFactory{})
-	l := Create(make(map[string]interface{}))
-	assert.NotNil(l)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Panic("panic")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] PANIC test=testing panic", w.String())
 }
 
-func TestCreateSub(t *testing.T) {
+func TestLog_Panicf(t *testing.T) {
 	assert := assert.New(t)
-	Setup(testFactory{})
-	l := CreateSub(&testLogger{}, make(map[string]interface{}))
-	assert.NotNil(l)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Panicf("panic %s", "1")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] PANIC test=testing panic 1", w.String())
+}
+
+func TestLog_Fatal(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Fatal("fatal")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] FATAL test=testing fatal", w.String())
+}
+
+func TestLog_Fatalf(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Fatalf("fatal %s", "1")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] FATAL test=testing fatal 1", w.String())
+}
+
+func TestLog_Error(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Error("error")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] ERROR test=testing error", w.String())
+}
+
+func TestLog_Errorf(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Errorf("error %s", "1")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] ERROR test=testing error 1", w.String())
+}
+
+func TestLog_Warn(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Warn("warn")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] WARN test=testing warn", w.String())
+}
+
+func TestLog_Warnf(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Warnf("warn %s", "1")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] WARN test=testing warn 1", w.String())
+}
+
+func TestLog_Info(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Info("info")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] INFO test=testing info", w.String())
+}
+
+func TestLog_Infof(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Infof("info %s", "1")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] INFO test=testing info 1", w.String())
+}
+
+func TestLog_Debug(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Debug("debug")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] DEBUG test=testing debug", w.String())
+}
+
+func TestLog_Debugf(t *testing.T) {
+	assert := assert.New(t)
+	w := &bytes.Buffer{}
+	Setup(NewStdFactory(w))
+	AppendField("test", "testing")
+	Debugf("debug %s", "1")
+	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] DEBUG test=testing debug 1", w.String())
 }
 
 type testFactory struct {
