@@ -111,8 +111,7 @@ func (l StdLogger) logf(lvl string, msg string, args ...interface{}) {
 
 func (l StdLogger) logMessage(lvl string, msg string) {
 	ts := time.Now().UTC().Format(time.RFC3339Nano)
-
-	fmt.Fprintf(l.w, "[%s] %s %s %s", ts, lvl, l.getFieldsMessage(), msg)
+	fmt.Fprintf(l.w, "[%s] %s %s%s\n", ts, lvl, l.getFieldsMessage(), msg)
 }
 
 func (l StdLogger) getFieldsMessage() string {
@@ -123,7 +122,7 @@ func (l StdLogger) getFieldsMessage() string {
 
 	var m string
 	for k, v := range l.fields {
-		m += fmt.Sprintf("%s=%s", k, v)
+		m += fmt.Sprintf("%s=%s ", k, v)
 	}
 	return m
 }
