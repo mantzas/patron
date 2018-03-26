@@ -5,10 +5,7 @@ import "errors"
 // Metric defines a interface that has to be implemented in order to
 // be used in this package
 type Metric interface {
-	Counter(key string, v float64, labels ...string)
-	Gauge(key string, v float64, labels ...string)
-	Histogram(key string, v float64, labels ...string)
-	Summary(key string, v float64, labels ...string)
+	Collect(key string, v float64, labels ...string)
 }
 
 var metric Metric
@@ -27,22 +24,7 @@ func Setup(m Metric) error {
 	return nil
 }
 
-// Counter increases the keyed counter by a value and attaches the labels
-func Counter(key string, v float64, labels ...string) {
-	metric.Counter(key, v, labels...)
-}
-
-// Gauge sets the keyed gauge by a value and attaches the labels
-func Gauge(key string, v float64, labels ...string) {
-	metric.Gauge(key, v, labels...)
-}
-
-// Histogram sets the keyed histogram by a value and attaches the labels
-func Histogram(key string, v float64, labels ...string) {
-	metric.Histogram(key, v, labels...)
-}
-
-// Summary sets the keyed summary by a value and attaches the labels
-func Summary(key string, v float64, labels ...string) {
-	metric.Summary(key, v, labels...)
+// Collect a keyed value with labels
+func Collect(key string, v float64, labels ...string) {
+	metric.Collect(key, v, labels...)
 }
