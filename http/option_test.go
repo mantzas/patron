@@ -25,7 +25,7 @@ func TestPorts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s, err := New(Ports(tt.args.port, tt.args.pprofPort))
+			s, err := New("test", Ports(tt.args.port, tt.args.pprofPort))
 
 			if tt.wantErr {
 				assert.Nil(s)

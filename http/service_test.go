@@ -21,7 +21,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := New(tt.args.options...)
+			_, err := New("test", tt.args.options...)
 
 			if tt.wantErr {
 				assert.Error(err)
@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 
 func TestServer_ListenAndServer_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	s, err := New(Ports(10000, 10001))
+	s, err := New("test", Ports(10000, 10001))
 	assert.NoError(err)
 	go func() {
 		s.ListenAndServe()

@@ -34,6 +34,11 @@ func (s *Server) SetPort(port int) {
 	s.srv.Addr = fmt.Sprintf(":%d", port)
 }
 
+// GetAddr gets the address of the service
+func (s *Server) GetAddr() string {
+	return s.srv.Addr
+}
+
 // ListenAndServe starts up the pprof server, listens and serves requests
 func (s *Server) ListenAndServe() error {
 	return s.srv.ListenAndServe()

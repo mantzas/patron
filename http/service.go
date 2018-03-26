@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/http/pprof"
+	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
 
@@ -25,8 +26,15 @@ type Service struct {
 }
 
 // New returns a new service with options applied
-func New(options ...Option) (*Service, error) {
+func New(name string, options ...Option) (*Service, error) {
 
+	log.AppendField("srv", name)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	log.AppendField("host", hostname)
+	log.Info("creating a new service")
 	// TODO: replace with actual mux
 	mux := http.ServeMux{}
 	s := Service{
@@ -50,10 +58,12 @@ func (s *Service) ListenAndServe() error {
 	errCh := make(chan error)
 
 	go func() {
+		log.Infof("listen and server pprof:%s", s.pprof.GetAddr())
 		errCh <- s.pprof.ListenAndServe()
 	}()
 
 	go func() {
+		log.Infof("listen and server service:%s", s.srv.Addr)
 		errCh <- s.srv.ListenAndServe()
 	}()
 
@@ -62,27 +72,28 @@ func (s *Service) ListenAndServe() error {
 
 	select {
 	case err := <-errCh:
-
+		log.Info("service/pprof returned a error")
 		err1 := s.shutdown()
 		if err1 != nil {
 			return errors.Wrapf(err, "failed to shutdown %v", err1)
 		}
 		return err
-
 	case <-stop:
+		log.Info("stop signal received")
 		return s.shutdown()
 	}
 }
 
 func (s *Service) shutdown() error {
-
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
+	log.Info("shutting down pprof")
 	err := s.pprof.Shutdown(ctx)
 	if err != nil {
-		//TODO: logging
+		log.Error("failed to shutdown pprof server")
 	}
 
+	log.Info("shutting down service")
 	return s.srv.Shutdown(ctx)
 }
