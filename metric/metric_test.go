@@ -30,53 +30,14 @@ func TestSetup(t *testing.T) {
 	}
 }
 
-func TestCounter(t *testing.T) {
+func TestCollect(t *testing.T) {
 	assert := assert.New(t)
 	m := nullMetric{}
 	Setup(&m)
 	key := "key"
 	value := 1.99
 	labels := []string{"test 1", "test 2"}
-	Counter(key, value, labels...)
-	assert.Equal(key, m.key)
-	assert.Equal(value, m.v)
-	assert.Equal(labels, m.labels)
-}
-
-func TestGauge(t *testing.T) {
-	assert := assert.New(t)
-	m := nullMetric{}
-	Setup(&m)
-	key := "key"
-	value := 1.99
-	labels := []string{"test 1", "test 2"}
-	Gauge(key, value, labels...)
-	assert.Equal(key, m.key)
-	assert.Equal(value, m.v)
-	assert.Equal(labels, m.labels)
-}
-
-func TestHistogram(t *testing.T) {
-	assert := assert.New(t)
-	m := nullMetric{}
-	Setup(&m)
-	key := "key"
-	value := 1.99
-	labels := []string{"test 1", "test 2"}
-	Histogram(key, value, labels...)
-	assert.Equal(key, m.key)
-	assert.Equal(value, m.v)
-	assert.Equal(labels, m.labels)
-}
-
-func TestSummary(t *testing.T) {
-	assert := assert.New(t)
-	m := nullMetric{}
-	Setup(&m)
-	key := "key"
-	value := 1.99
-	labels := []string{"test 1", "test 2"}
-	Summary(key, value, labels...)
+	Collect(key, value, labels...)
 	assert.Equal(key, m.key)
 	assert.Equal(value, m.v)
 	assert.Equal(labels, m.labels)
