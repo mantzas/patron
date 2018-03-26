@@ -15,12 +15,13 @@ func Ports(port, pprofPort int) Option {
 			return errors.New("invalid port")
 		}
 
-		if port <= 0 || pprofPort > 65535 {
+		if pprofPort <= 0 || pprofPort > 65535 {
 			return errors.New("invalid pprof port")
 		}
 
 		if port == pprofPort {
 			return errors.New("pprof must be on a separate port")
+
 		}
 
 		s.srv.Addr = fmt.Sprintf(":%d", port)
