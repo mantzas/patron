@@ -5,19 +5,18 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/julienschmidt/httprouter"
 	patron_http "github.com/mantzas/patron/http"
 )
 
-func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Welcome!\n")
 }
 
 func main() {
-	router := httprouter.New()
-	router.GET("/", index)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", index)
 
-	s, err := patron_http.New("test", router, patron_http.Ports(50000, 50001))
+	s, err := patron_http.New("test", mux, patron_http.Ports(50000, 50001))
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)
