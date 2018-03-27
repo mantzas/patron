@@ -27,7 +27,6 @@ func TestNew(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := New(tt.args.name, tt.args.h, tt.args.options...)
-
 			if tt.wantErr {
 				assert.Error(err)
 			} else {

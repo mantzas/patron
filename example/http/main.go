@@ -18,12 +18,13 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
+	// Set up logging
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-
 	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	f := zero.NewFactory(&zl)
 	log.Setup(f)
 
+	// Set up HTTP router
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", index)
 
