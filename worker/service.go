@@ -17,7 +17,7 @@ func New(name string) (*Service, error) {
 		return nil, errors.New("name is required")
 	}
 
-	log.AppendField("srv", name)
+	log.AppendField("wrk", name)
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
