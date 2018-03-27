@@ -18,8 +18,8 @@ func NewLogger(l *zerolog.Logger, f map[string]interface{}) log.Logger {
 	if len(f) == 0 {
 		f = make(map[string]interface{})
 	}
-
-	return &Logger{l, f}
+	zl := l.With().Fields(f).Logger()
+	return &Logger{&zl, f}
 }
 
 // Fields returns the fields associated with this logger

@@ -5,7 +5,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/rs/zerolog"
+
 	patron_http "github.com/mantzas/patron/http"
+	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zero"
 )
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -13,6 +17,13 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	f := zero.NewFactory(&zl)
+	log.Setup(f)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", index)
 
