@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ func TestPorts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s, err := New("test", Ports(tt.args.port, tt.args.pprofPort))
+			s, err := New("test", http.DefaultServeMux, Ports(tt.args.port, tt.args.pprofPort))
 
 			if tt.wantErr {
 				assert.Nil(s)

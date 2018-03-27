@@ -2,14 +2,22 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
-	"github.com/mantzas/patron/http"
+	"github.com/julienschmidt/httprouter"
+	patron_http "github.com/mantzas/patron/http"
 )
 
-func main() {
+func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	fmt.Fprint(w, "Welcome!\n")
+}
 
-	s, err := http.New("test", http.Ports(50000, 50001))
+func main() {
+	router := httprouter.New()
+	router.GET("/", index)
+
+	s, err := patron_http.New("test", router, patron_http.Ports(50000, 50001))
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)
