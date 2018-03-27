@@ -26,7 +26,15 @@ type Service struct {
 }
 
 // New returns a new service with options applied
-func New(name string, options ...Option) (*Service, error) {
+func New(name string, h http.Handler, options ...Option) (*Service, error) {
+
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
+
+	if h == nil {
+		return nil, errors.New("HTTP handler is required")
+	}
 
 	log.AppendField("srv", name)
 	hostname, err := os.Hostname()
@@ -35,10 +43,9 @@ func New(name string, options ...Option) (*Service, error) {
 	}
 	log.AppendField("host", hostname)
 	log.Info("creating a new service")
-	// TODO: replace with actual mux
-	mux := http.ServeMux{}
+
 	s := Service{
-		srv:   CreateHTTPServer(port, &mux),
+		srv:   CreateHTTPServer(port, h),
 		pprof: pprof.New(pprofPort),
 	}
 

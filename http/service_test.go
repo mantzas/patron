@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,8 @@ import (
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
+		name    string
+		h       http.Handler
 		options []Option
 	}
 	tests := []struct {
@@ -16,12 +19,14 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{}, false},
-		{"failed with wrong option", args{[]Option{Ports(-1, -1)}}, true},
+		{"success", args{"test", http.DefaultServeMux, []Option{}}, false},
+		{"failed with missing name", args{"", http.DefaultServeMux, []Option{}}, true},
+		{"failed with missing handler", args{"test", nil, []Option{}}, true},
+		{"failed with wrong option", args{"test", http.DefaultServeMux, []Option{Ports(-1, -1)}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := New("test", tt.args.options...)
+			_, err := New(tt.args.name, tt.args.h, tt.args.options...)
 
 			if tt.wantErr {
 				assert.Error(err)
@@ -34,7 +39,7 @@ func TestNew(t *testing.T) {
 
 func TestServer_ListenAndServer_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	s, err := New("test", Ports(10000, 10001))
+	s, err := New("test", http.DefaultServeMux, Ports(10000, 10001))
 	assert.NoError(err)
 	go func() {
 		s.ListenAndServe()
