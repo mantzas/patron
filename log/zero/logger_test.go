@@ -54,7 +54,6 @@ func TestLogger_Panicf(t *testing.T) {
 	var b bytes.Buffer
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, f)
-
 	assert.Panics(func() { l.Panicf("testing %d", 1) })
 	assert.Equal("{\"level\":\"panic\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
 }
