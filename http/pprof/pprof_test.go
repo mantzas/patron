@@ -20,8 +20,7 @@ func TestServer_ListenAndServer_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	s := New(10001)
 	go func() {
-		err := s.ListenAndServe()
-		assert.NoError(err)
+		s.ListenAndServe()
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
