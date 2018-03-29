@@ -2,8 +2,6 @@ package http
 
 import (
 	"errors"
-
-	"github.com/mantzas/patron/log"
 )
 
 // Option defines a option for the HTTP service
@@ -27,7 +25,6 @@ func Ports(port, pprofPort int) Option {
 
 		s.port = port
 		s.pprofPort = pprofPort
-		log.Infof("setup port: %d and pprof port: %d", port, pprofPort)
 		return nil
 	}
 }

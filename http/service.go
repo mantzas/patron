@@ -39,14 +39,6 @@ func New(name string, routes []Route, options ...Option) (*Service, error) {
 		return nil, errors.New("routes should be provided")
 	}
 
-	log.AppendField("srv", name)
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
-	log.AppendField("host", hostname)
-	log.Info("creating a new service")
-
 	s := Service{
 		port:       port,
 		pprofPort:  pprofPort,
@@ -59,7 +51,12 @@ func New(name string, routes []Route, options ...Option) (*Service, error) {
 			return nil, err
 		}
 	}
-
+	log.AppendField("srv", name)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	log.AppendField("host", hostname)
 	s.srv = CreateHTTPServer(s.port, s.HandlerGen(routes))
 	s.pprof = pprof.New(s.pprofPort)
 
