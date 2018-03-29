@@ -17,6 +17,16 @@ func TestNewFactory(t *testing.T) {
 	assert.NotNil(f)
 }
 
+func TestDefaultFactory(t *testing.T) {
+	assert := assert.New(t)
+	f := DefaultFactory(zerolog.InfoLevel)
+	assert.NotNil(f)
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	zerolog.LevelFieldName = "level"
+	zerolog.MessageFieldName = "message"
+	zerolog.TimestampFieldName = "time"
+}
+
 func TestFactory_Create(t *testing.T) {
 	assert := assert.New(t)
 	var b bytes.Buffer
