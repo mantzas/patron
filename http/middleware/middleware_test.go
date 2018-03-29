@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func testHandle(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +27,7 @@ func testPanicHandleInt(w http.ResponseWriter, r *http.Request) {
 
 func TestMiddleware(t *testing.T) {
 
-	req := require.New(t)
+	assert := assert.New(t)
 	r, _ := http.NewRequest("POST", "/test", nil)
 
 	type args struct {
@@ -49,7 +49,7 @@ func TestMiddleware(t *testing.T) {
 
 			DefaultMiddleware(tt.args.next)(tt.args.w, r)
 
-			req.Equal(tt.expectedCode, tt.args.w.Code, "default middleware expected %d but got %d", tt.expectedCode, tt.args.w.Code)
+			assert.Equal(tt.expectedCode, tt.args.w.Code, "default middleware expected %d but got %d", tt.expectedCode, tt.args.w.Code)
 		})
 	}
 }

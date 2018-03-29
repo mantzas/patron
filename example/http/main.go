@@ -8,12 +8,12 @@ import (
 	"github.com/rs/zerolog"
 
 	patron_http "github.com/mantzas/patron/http"
+	"github.com/mantzas/patron/http/httprouter"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zero"
 )
 
 func index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Welcome!\n")
 }
 
 func main() {
@@ -22,13 +22,17 @@ func main() {
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	f := zero.NewFactory(&zl)
-	log.Setup(f)
+	err := log.Setup(f)
+	if err != nil {
+		fmt.Printf("failed to setup logging %v", err)
+		os.Exit(1)
+	}
 
-	// Set up HTTP router
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", index)
+	// Set up routes
+	routes := make([]patron_http.Route, 0)
+	routes = append(routes, patron_http.NewRoute("/", http.MethodGet, index))
 
-	s, err := patron_http.New("test", mux, patron_http.Ports(50000, 50001))
+	s, err := patron_http.New("test", routes, patron_http.Ports(50000, 50001), httprouter.Handler())
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)

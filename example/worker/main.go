@@ -16,7 +16,11 @@ func main() {
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	f := zero.NewFactory(&zl)
-	log.Setup(f)
+	err := log.Setup(f)
+	if err != nil {
+		fmt.Printf("failed to setup logging %v", err)
+		os.Exit(1)
+	}
 
 	// Set up worker
 	w, err := worker.New("test")
