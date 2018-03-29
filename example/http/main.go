@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog"
 
 	patron_http "github.com/mantzas/patron/http"
+	"github.com/mantzas/patron/http/httprouter"
+	"github.com/mantzas/patron/http/route"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zero"
 )
@@ -24,11 +26,18 @@ func main() {
 	f := zero.NewFactory(&zl)
 	log.Setup(f)
 
-	// Set up HTTP router
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", index)
+	// Set up routes
+	routes := make([]route.Route, 0)
+	routes = append(routes, route.New("/", http.MethodGet, index))
 
-	s, err := patron_http.New("test", mux, patron_http.Ports(50000, 50001))
+	// Set up HTTP router
+	h, err := httprouter.CreateHandler(routes)
+	if err != nil {
+		fmt.Printf("failed to create handler %v", err)
+		os.Exit(1)
+	}
+
+	s, err := patron_http.New("test", h, patron_http.Ports(50000, 50001))
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)

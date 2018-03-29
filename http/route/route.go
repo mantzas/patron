@@ -10,6 +10,6 @@ type Route struct {
 }
 
 // New returns a new route
-func New(p string, m string, h http.HandlerFunc) *Route {
-	return &Route{p, m, h}
+func New(p string, m string, h http.HandlerFunc) Route {
+	return Route{p, m, h}
 }
