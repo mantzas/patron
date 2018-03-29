@@ -13,10 +13,7 @@ import (
 func main() {
 
 	// Set up logging
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	f := zero.NewFactory(&zl)
-	err := log.Setup(f)
+	err := log.Setup(zero.DefaultFactory(zerolog.InfoLevel))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)

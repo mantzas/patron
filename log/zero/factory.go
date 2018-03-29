@@ -1,6 +1,8 @@
 package zero
 
 import (
+	"os"
+
 	"github.com/mantzas/patron/log"
 	"github.com/rs/zerolog"
 )
@@ -13,6 +15,16 @@ type Factory struct {
 // NewFactory returns a new zero logger factory
 func NewFactory(l *zerolog.Logger) log.Factory {
 	return &Factory{l}
+}
+
+// DefaultFactory returns a zero logger factory with default settings
+func DefaultFactory(l zerolog.Level) log.Factory {
+	zerolog.SetGlobalLevel(l)
+	zerolog.LevelFieldName = "lvl"
+	zerolog.MessageFieldName = "msg"
+	zerolog.TimestampFieldName = "ts"
+	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	return NewFactory(&zl)
 }
 
 // Create a zero logger
