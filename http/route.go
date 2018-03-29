@@ -1,4 +1,4 @@
-package route
+package http
 
 import "net/http"
 
@@ -9,7 +9,7 @@ type Route struct {
 	Handler http.HandlerFunc
 }
 
-// New returns a new route
-func New(p string, m string, h http.HandlerFunc) Route {
+// NewRoute returns a new route
+func NewRoute(p string, m string, h http.HandlerFunc) Route {
 	return Route{p, m, h}
 }

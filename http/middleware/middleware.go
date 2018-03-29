@@ -6,7 +6,6 @@ import (
 
 	"time"
 
-	patron_http "github.com/mantzas/patron/http"
 	"github.com/mantzas/patron/log"
 )
 
@@ -19,7 +18,7 @@ func DefaultMiddleware(next http.HandlerFunc) http.HandlerFunc {
 func LoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		lw := patron_http.NewResponseWriter(w)
+		lw := NewResponseWriter(w)
 		startTime := time.Now()
 		next(lw, r)
 		log.Infof("method=%s route=%s status=%d time=%s", r.Method, r.URL.String(), lw.Status(), time.Since(startTime))

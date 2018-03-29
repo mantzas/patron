@@ -21,19 +21,22 @@ const (
 
 // Service definition for handling HTTP request
 type Service struct {
-	srv   *http.Server
-	pprof *pprof.Server
+	port       int
+	pprofPort  int
+	HandlerGen HandlerGen
+	srv        *http.Server
+	pprof      *pprof.Server
 }
 
 // New returns a new service with options applied
-func New(name string, h http.Handler, options ...Option) (*Service, error) {
+func New(name string, routes []Route, options ...Option) (*Service, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
 
-	if h == nil {
-		return nil, errors.New("HTTP handler is required")
+	if len(routes) == 0 {
+		return nil, errors.New("routes should be provided")
 	}
 
 	log.AppendField("srv", name)
@@ -45,8 +48,9 @@ func New(name string, h http.Handler, options ...Option) (*Service, error) {
 	log.Info("creating a new service")
 
 	s := Service{
-		srv:   CreateHTTPServer(port, h),
-		pprof: pprof.New(pprofPort),
+		port:       port,
+		pprofPort:  pprofPort,
+		HandlerGen: CreateHandler,
 	}
 
 	for _, opt := range options {
@@ -55,6 +59,9 @@ func New(name string, h http.Handler, options ...Option) (*Service, error) {
 			return nil, err
 		}
 	}
+
+	s.srv = CreateHTTPServer(s.port, s.HandlerGen(routes))
+	s.pprof = pprof.New(s.pprofPort)
 
 	return &s, nil
 }
@@ -65,12 +72,12 @@ func (s *Service) ListenAndServe() error {
 	errCh := make(chan error)
 
 	go func() {
-		log.Infof("listen and server pprof:%s", s.pprof.GetAddr())
+		log.Infof("listen and server pprof on port %d", s.pprofPort)
 		errCh <- s.pprof.ListenAndServe()
 	}()
 
 	go func() {
-		log.Infof("listen and server service:%s", s.srv.Addr)
+		log.Infof("listen and server service on port %d", s.port)
 		errCh <- s.srv.ListenAndServe()
 	}()
 

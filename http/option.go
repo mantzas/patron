@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/mantzas/patron/log"
 )
@@ -26,8 +25,8 @@ func Ports(port, pprofPort int) Option {
 
 		}
 
-		s.srv.Addr = fmt.Sprintf(":%d", port)
-		s.pprof.SetPort(pprofPort)
+		s.port = port
+		s.pprofPort = pprofPort
 		log.Infof("setup port: %d and pprof port: %d", port, pprofPort)
 		return nil
 	}
