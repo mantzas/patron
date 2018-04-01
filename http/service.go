@@ -63,8 +63,8 @@ func New(name string, routes []Route, options ...Option) (*Service, error) {
 	return &s, nil
 }
 
-// ListenAndServe starts up the server, listens and serves requests
-func (s *Service) ListenAndServe() error {
+// Run starts up the server, listens and serves requests
+func (s *Service) Run() error {
 
 	errCh := make(chan error)
 

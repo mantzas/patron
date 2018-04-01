@@ -43,7 +43,7 @@ func TestServer_ListenAndServer_Shutdown(t *testing.T) {
 	s, err := New("test", testRoutes, Ports(10000, 10001))
 	assert.NoError(err)
 	go func() {
-		s.ListenAndServe()
+		s.Run()
 	}()
 	err = s.shutdown()
 	assert.NoError(err)
