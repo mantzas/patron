@@ -3,12 +3,15 @@ package worker
 import (
 	"os"
 
+	"github.com/mantzas/patron"
+
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
 
 // Service definition
 type Service struct {
+	patron.Service
 	p Processor
 }
 
@@ -29,11 +32,10 @@ func New(name string, p Processor) (*Service, error) {
 	}
 	log.AppendField("host", hostname)
 
-	return &Service{p}, nil
+	return &Service{*patron.New(), p}, nil
 }
 
 // Run kicks off the processing
 func (s Service) Run() error {
-
-	return errors.Wrap(s.p.Process(), "processor failed")
+	return errors.Wrap(s.p.Process(s.Ctx), "processor failed")
 }

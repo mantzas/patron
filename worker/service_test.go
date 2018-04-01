@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -11,7 +12,7 @@ type testProcessor struct {
 	count int
 }
 
-func (tp *testProcessor) Process() error {
+func (tp *testProcessor) Process(ctx context.Context) error {
 
 	if tp.count == 1 {
 		return errors.New("failed to process")
