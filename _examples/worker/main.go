@@ -7,8 +7,17 @@ import (
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zero"
 	"github.com/mantzas/patron/worker"
+	"github.com/mantzas/patron/worker/amqp"
 	"github.com/rs/zerolog"
 )
+
+type helloProcessor struct {
+}
+
+func (hp helloProcessor) Process(msg []byte) error {
+	fmt.Printf("message: %s", string(msg))
+	return nil
+}
 
 func main() {
 
@@ -19,8 +28,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	// setting up a amqp processor
+	p, err := amqp.New("http://localhost:8081", "test", &helloProcessor{})
+
 	// Set up worker
-	w, err := worker.New("test")
+	w, err := worker.New("test", p)
 	if err != nil {
 		fmt.Printf("failed to create worker %v", err)
 		os.Exit(1)

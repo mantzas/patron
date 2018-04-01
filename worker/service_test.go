@@ -3,29 +3,15 @@ package worker
 import (
 	"testing"
 
-	"github.com/mantzas/patron/worker/work"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
-
-type testAcquirer struct {
-	returnError bool
-}
-
-func (ta testAcquirer) Acquire() ([]work.Work, error) {
-
-	if ta.returnError {
-		return nil, errors.New("error returned")
-	}
-
-	return []work.Work{"One", "Two"}, nil
-}
 
 type testProcessor struct {
 	count int
 }
 
-func (tp *testProcessor) Process(items []work.Work) error {
+func (tp *testProcessor) Process() error {
 
 	if tp.count == 1 {
 		return errors.New("failed to process")
@@ -39,22 +25,20 @@ func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
 		name string
-		acq  work.Acquirer
-		prc  work.Processor
+		p    Processor
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", &testAcquirer{}, &testProcessor{}}, false},
-		{"failed with missing name", args{"", &testAcquirer{}, &testProcessor{}}, true},
-		{"failed with missing acquirer", args{"test", nil, &testProcessor{}}, true},
-		{"failed with missing processor", args{"test", &testAcquirer{}, nil}, true},
+		{"success", args{"test", &testProcessor{}}, false},
+		{"failed with missing name", args{"", &testProcessor{}}, true},
+		{"failed with nil processor", args{"test", nil}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := New(tt.args.name, tt.args.acq, tt.args.prc)
+			_, err := New(tt.args.name, tt.args.p)
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
@@ -64,16 +48,9 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestService_Run_ProcessorError(t *testing.T) {
+func TestService_Run(t *testing.T) {
 	assert := assert.New(t)
-	s, err := New("test", &testAcquirer{}, &testProcessor{})
+	s, err := New("test", &testProcessor{})
 	assert.NoError(err)
-	assert.Error(s.Run())
-}
-
-func TestService_Run_AcquirerError(t *testing.T) {
-	assert := assert.New(t)
-	s, err := New("test", &testAcquirer{true}, &testProcessor{})
-	assert.NoError(err)
-	assert.Error(s.Run())
+	assert.NoError(s.Run())
 }
