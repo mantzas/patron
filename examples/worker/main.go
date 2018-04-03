@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zero"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/worker"
 	"github.com/mantzas/patron/worker/amqp"
-	"github.com/rs/zerolog"
+	zl "github.com/rs/zerolog"
 )
 
 type helloProcessor struct {
@@ -23,7 +23,7 @@ func (hp helloProcessor) Process(ctx context.Context, msg []byte) error {
 func main() {
 
 	// Set up logging
-	err := log.Setup(zero.DefaultFactory(zerolog.InfoLevel))
+	err := log.Setup(zerolog.DefaultFactory(zl.InfoLevel))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)
