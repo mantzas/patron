@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -14,7 +15,7 @@ import (
 type helloProcessor struct {
 }
 
-func (hp helloProcessor) Process(msg []byte) error {
+func (hp helloProcessor) Process(ctx context.Context, msg []byte) error {
 	fmt.Printf("message: %s", string(msg))
 	return nil
 }
