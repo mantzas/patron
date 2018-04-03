@@ -27,7 +27,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = s.ListenAndServe()
+	err = s.Run()
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)

@@ -1,6 +1,8 @@
 package amqp
 
 import (
+	"context"
+
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/worker"
 	"github.com/pkg/errors"
@@ -35,7 +37,7 @@ func New(url, queue string, mp worker.MessageProcessor) (*Processor, error) {
 }
 
 // Process items of the queue
-func (p Processor) Process() error {
+func (p Processor) Process(ctx context.Context) error {
 
 	conn, err := amqp.Dial(p.url)
 	if err != nil {
@@ -57,13 +59,16 @@ func (p Processor) Process() error {
 
 	procFailed := false
 
-	for d := range deliveries {
-
+	select {
+	case <-ctx.Done():
+		log.Info("canceling requested")
+		break
+	case d := <-deliveries:
 		log.Infof("processing message %s", d.MessageId)
 
 		go func(d *amqp.Delivery, failed *bool) {
 
-			err := p.mp.Process(d.Body)
+			err := p.mp.Process(ctx, d.Body)
 			if err != nil {
 				log.Errorf("failed to process message %s with %v", d.MessageId, err)
 				procFailed = true

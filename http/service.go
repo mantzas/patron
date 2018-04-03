@@ -4,10 +4,9 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
+	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/http/pprof"
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
@@ -21,6 +20,7 @@ const (
 
 // Service definition for handling HTTP request
 type Service struct {
+	patron.Service
 	port       int
 	pprofPort  int
 	HandlerGen HandlerGen
@@ -40,6 +40,7 @@ func New(name string, routes []Route, options ...Option) (*Service, error) {
 	}
 
 	s := Service{
+		Service:    *patron.New(),
 		port:       port,
 		pprofPort:  pprofPort,
 		HandlerGen: CreateHandler,
@@ -78,9 +79,6 @@ func (s *Service) Run() error {
 		errCh <- s.srv.ListenAndServe()
 	}()
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-
 	select {
 	case err := <-errCh:
 		log.Info("service/pprof returned a error")
@@ -89,7 +87,7 @@ func (s *Service) Run() error {
 			return errors.Wrapf(err, "failed to shutdown %v", err1)
 		}
 		return err
-	case <-stop:
+	case <-s.Ctx.Done():
 		log.Info("stop signal received")
 		return s.shutdown()
 	}

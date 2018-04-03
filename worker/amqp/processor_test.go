@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"testing"
 
 	"github.com/mantzas/patron/worker"
@@ -10,7 +11,7 @@ import (
 type testMesssageProcessor struct {
 }
 
-func (tmp testMesssageProcessor) Process(msg []byte) error {
+func (tmp testMesssageProcessor) Process(ctx context.Context, msg []byte) error {
 
 	return nil
 }
