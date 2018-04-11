@@ -9,11 +9,12 @@ import (
 
 // Log option for setting the zerolog default logging
 func Log(l zerolog.Level) http.Option {
-	return func(s http.Service) error {
+	return func(s *http.Service) error {
 		err := log.Setup(DefaultFactory(l))
 		if err != nil {
 			return errors.Wrap(err, "failed to set up zerolog default")
 		}
+		log.Infof("zerolog setup with min level: %d", l)
 		return nil
 	}
 }

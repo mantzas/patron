@@ -3,6 +3,9 @@ language: go
 go:
   - "1.10.x"
 
+# install true, to skip go get
+install: true
+
 script: go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:

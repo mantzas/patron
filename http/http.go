@@ -11,7 +11,7 @@ func CreateHTTPServer(port int, sm http.Handler) *http.Server {
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      sm,
 	}
