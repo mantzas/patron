@@ -13,6 +13,7 @@ import (
 )
 
 func index(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello from patron!"))
 }
 
 func main() {
@@ -21,7 +22,7 @@ func main() {
 	routes = append(routes, patron_http.NewRoute("/", http.MethodGet, index))
 
 	s, err := patron_http.New("test", routes, zerolog.Log(zl.InfoLevel),
-		patron_http.Ports(50000, 50001), httprouter.Handler())
+		patron_http.Ports(50000), httprouter.Handler())
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)

@@ -8,24 +8,18 @@ import (
 
 func TestPorts(t *testing.T) {
 	assert := assert.New(t)
-	type args struct {
-		port      int
-		pprofPort int
-	}
 	tests := []struct {
 		name    string
-		args    args
+		port    int
 		wantErr bool
 	}{
-		{"success", args{30000, 30001}, false},
-		{"error for same port", args{30000, 30000}, true},
-		{"error for port number out of range", args{-1, 30001}, true},
-		{"error for pprof port number out of range", args{30000, -1}, true},
+		{"success", 30000, false},
+		{"error for port number out of range", -1, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s, err := New("test", testRoutes, Ports(tt.args.port, tt.args.pprofPort))
+			s, err := New("test", getRoutes("/3"), Ports(tt.port))
 
 			if tt.wantErr {
 				assert.Nil(s)

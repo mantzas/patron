@@ -11,8 +11,8 @@ var fields map[string]interface{}
 
 func init() {
 	factory = NewStdFactory(os.Stdout)
-	logger = factory.Create(nil)
 	fields = make(map[string]interface{})
+	logger = factory.Create(fields)
 }
 
 // Setup set's up a new factory to the global state
@@ -21,8 +21,7 @@ func Setup(f Factory) error {
 		return errors.New("factory is nil")
 	}
 	factory = f
-	logger = f.Create(nil)
-
+	logger = f.Create(fields)
 	return nil
 }
 
