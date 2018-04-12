@@ -41,7 +41,7 @@ func TestSub(t *testing.T) {
 func TestLog_Panic(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Panic("panic")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] PANIC test=testing panic", w.String())
@@ -50,7 +50,7 @@ func TestLog_Panic(t *testing.T) {
 func TestLog_Panicf(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Panicf("panic %s", "1")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] PANIC test=testing panic 1", w.String())
@@ -59,7 +59,7 @@ func TestLog_Panicf(t *testing.T) {
 func TestLog_Fatal(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Fatal("fatal")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] FATAL test=testing fatal", w.String())
@@ -68,7 +68,7 @@ func TestLog_Fatal(t *testing.T) {
 func TestLog_Fatalf(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Fatalf("fatal %s", "1")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] FATAL test=testing fatal 1", w.String())
@@ -77,7 +77,7 @@ func TestLog_Fatalf(t *testing.T) {
 func TestLog_Error(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Error("error")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] ERROR test=testing error", w.String())
@@ -86,7 +86,7 @@ func TestLog_Error(t *testing.T) {
 func TestLog_Errorf(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Errorf("error %s", "1")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] ERROR test=testing error 1", w.String())
@@ -95,7 +95,7 @@ func TestLog_Errorf(t *testing.T) {
 func TestLog_Warn(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Warn("warn")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] WARN test=testing warn", w.String())
@@ -104,7 +104,7 @@ func TestLog_Warn(t *testing.T) {
 func TestLog_Warnf(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Warnf("warn %s", "1")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] WARN test=testing warn 1", w.String())
@@ -113,7 +113,7 @@ func TestLog_Warnf(t *testing.T) {
 func TestLog_Info(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Info("info")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] INFO test=testing info", w.String())
@@ -122,7 +122,7 @@ func TestLog_Info(t *testing.T) {
 func TestLog_Infof(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, InfoLevel))
 	AppendField("test", "testing")
 	Infof("info %s", "1")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] INFO test=testing info 1", w.String())
@@ -131,7 +131,7 @@ func TestLog_Infof(t *testing.T) {
 func TestLog_Debug(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, DebugLevel))
 	AppendField("test", "testing")
 	Debug("debug")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] DEBUG test=testing debug", w.String())
@@ -140,7 +140,7 @@ func TestLog_Debug(t *testing.T) {
 func TestLog_Debugf(t *testing.T) {
 	assert := assert.New(t)
 	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w))
+	Setup(NewStdFactory(w, DebugLevel))
 	AppendField("test", "testing")
 	Debugf("debug %s", "1")
 	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] DEBUG test=testing debug 1", w.String())
@@ -158,6 +158,10 @@ func (f testFactory) CreateSub(logger Logger, fields map[string]interface{}) Log
 }
 
 type testLogger struct {
+}
+
+func (t testLogger) Level() Level {
+	return DebugLevel
 }
 
 func (t testLogger) Fields() map[string]interface{} {

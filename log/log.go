@@ -10,7 +10,7 @@ var logger Logger
 var fields map[string]interface{}
 
 func init() {
-	factory = NewStdFactory(os.Stdout)
+	factory = NewStdFactory(os.Stdout, InfoLevel)
 	fields = make(map[string]interface{})
 	logger = factory.Create(fields)
 }

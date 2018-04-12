@@ -6,17 +6,18 @@ import (
 
 // StdFactory of the std logger
 type StdFactory struct {
-	w io.Writer
+	w   io.Writer
+	lvl Level
 }
 
 // NewStdFactory constructor
-func NewStdFactory(w io.Writer) Factory {
-	return &StdFactory{w}
+func NewStdFactory(w io.Writer, lvl Level) Factory {
+	return &StdFactory{w, lvl}
 }
 
 // Create a std logger
 func (sf *StdFactory) Create(f map[string]interface{}) Logger {
-	return NewStdLogger(sf.w, f)
+	return NewStdLogger(sf.w, sf.lvl, f)
 }
 
 // CreateSub a std sub logger with defined fields
@@ -32,5 +33,5 @@ func (sf *StdFactory) CreateSub(l Logger, f map[string]interface{}) Logger {
 		all[k] = v
 	}
 
-	return NewStdLogger(sf.w, all)
+	return NewStdLogger(sf.w, sf.lvl, all)
 }

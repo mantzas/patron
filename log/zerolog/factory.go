@@ -9,27 +9,24 @@ import (
 
 // Factory of the zero logger
 type Factory struct {
-	l *zerolog.Logger
+	l   *zerolog.Logger
+	lvl log.Level
 }
 
 // NewFactory returns a new zero logger factory
-func NewFactory(l *zerolog.Logger) log.Factory {
-	return &Factory{l}
+func NewFactory(l *zerolog.Logger, lvl log.Level) log.Factory {
+	return &Factory{l, lvl}
 }
 
 // DefaultFactory returns a zero logger factory with default settings
-func DefaultFactory(l zerolog.Level) log.Factory {
-	zerolog.SetGlobalLevel(l)
-	zerolog.LevelFieldName = "lvl"
-	zerolog.MessageFieldName = "msg"
-	zerolog.TimestampFieldName = "ts"
+func DefaultFactory(lvl log.Level) log.Factory {
 	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	return NewFactory(&zl)
+	return NewFactory(&zl, lvl)
 }
 
 // Create a zero logger
 func (zf *Factory) Create(f map[string]interface{}) log.Logger {
-	return NewLogger(zf.l, f)
+	return NewLogger(zf.l, zf.lvl, f)
 }
 
 // CreateSub a zero sub logger with defined fields
@@ -46,5 +43,5 @@ func (zf *Factory) CreateSub(logger log.Logger, fields map[string]interface{}) l
 	}
 
 	l := zf.l.With().Fields(fields).Logger()
-	return NewLogger(&l, all)
+	return NewLogger(&l, zf.lvl, all)
 }
