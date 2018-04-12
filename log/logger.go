@@ -3,6 +3,7 @@ package log
 // Logger interface defines all methods a logger has to implement
 // for this abstraction
 type Logger interface {
+	Level() Level
 	Fields() map[string]interface{}
 	Fatal(...interface{})
 	Fatalf(string, ...interface{})

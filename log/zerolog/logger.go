@@ -7,19 +7,39 @@ import (
 	"github.com/rs/zerolog"
 )
 
+var levelMap map[log.Level]zerolog.Level
+
+func init() {
+	levelMap = map[log.Level]zerolog.Level{
+		log.NoLevel:    zerolog.NoLevel,
+		log.DebugLevel: zerolog.DebugLevel,
+		log.InfoLevel:  zerolog.InfoLevel,
+		log.WarnLevel:  zerolog.WarnLevel,
+		log.ErrorLevel: zerolog.ErrorLevel,
+		log.FatalLevel: zerolog.FatalLevel,
+		log.PanicLevel: zerolog.PanicLevel,
+	}
+}
+
 // Logger implements logging with zerolog
 type Logger struct {
 	logger *zerolog.Logger
 	fields map[string]interface{}
+	lvl    log.Level
 }
 
 // NewLogger returns a new logger
-func NewLogger(l *zerolog.Logger, f map[string]interface{}) log.Logger {
+func NewLogger(l *zerolog.Logger, lvl log.Level, f map[string]interface{}) log.Logger {
 	if len(f) == 0 {
 		f = make(map[string]interface{})
 	}
-	zl := l.With().Fields(f).Logger()
-	return &Logger{&zl, f}
+	zl := l.Level(levelMap[lvl]).With().Fields(f).Logger()
+	return &Logger{&zl, f, lvl}
+}
+
+// Level returns the minimum level.
+func (zl Logger) Level() log.Level {
+	return zl.lvl
 }
 
 // Fields returns the fields associated with this logger

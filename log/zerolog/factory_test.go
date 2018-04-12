@@ -19,12 +19,8 @@ func TestNewFactory(t *testing.T) {
 
 func TestDefaultFactory(t *testing.T) {
 	assert := assert.New(t)
-	f := DefaultFactory(zerolog.InfoLevel)
+	f := DefaultFactory(log.InfoLevel)
 	assert.NotNil(f)
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	zerolog.LevelFieldName = "level"
-	zerolog.MessageFieldName = "message"
-	zerolog.TimestampFieldName = "time"
 }
 
 func TestFactory_Create(t *testing.T) {
@@ -62,5 +58,5 @@ func TestFactory_CreateSub(t *testing.T) {
 func createFactory(b *bytes.Buffer) log.Factory {
 	writer := bufio.NewWriter(b)
 	l := zerolog.New(writer)
-	return NewFactory(&l)
+	return NewFactory(&l, log.DebugLevel)
 }
