@@ -2,18 +2,11 @@ package log
 
 import (
 	"errors"
-	"os"
 )
 
 var factory Factory
 var logger Logger
-var fields map[string]interface{}
-
-func init() {
-	factory = NewStdFactory(os.Stdout, InfoLevel)
-	fields = make(map[string]interface{})
-	logger = factory.Create(fields)
-}
+var fields = make(map[string]interface{})
 
 // Setup set's up a new factory to the global state
 func Setup(f Factory) error {

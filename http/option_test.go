@@ -3,10 +3,13 @@ package http
 import (
 	"testing"
 
+	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPorts(t *testing.T) {
+	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
 	assert := assert.New(t)
 	tests := []struct {
 		name    string
