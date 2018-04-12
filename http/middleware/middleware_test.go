@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,6 +29,7 @@ func testPanicHandleInt(w http.ResponseWriter, r *http.Request) {
 
 func TestMiddleware(t *testing.T) {
 
+	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
 	assert := assert.New(t)
 	r, _ := http.NewRequest("POST", "/test", nil)
 

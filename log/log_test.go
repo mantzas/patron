@@ -1,7 +1,6 @@
 package log
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,117 +32,112 @@ func TestSetup(t *testing.T) {
 
 func TestSub(t *testing.T) {
 	assert := assert.New(t)
-	Setup(testFactory{})
+	Setup(&testFactory{})
 	l := Sub(make(map[string]interface{}))
 	assert.NotNil(l)
 }
 
+func TestLog_AppendField(t *testing.T) {
+	assert := assert.New(t)
+	Setup(&testFactory{})
+	AppendField("test", "testing")
+	assert.Equal("testing", fields["test"])
+}
+
 func TestLog_Panic(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Panic("panic")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] PANIC test=testing panic", w.String())
+	assert.Equal(1, l.panicCount)
 }
 
 func TestLog_Panicf(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Panicf("panic %s", "1")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] PANIC test=testing panic 1", w.String())
+	assert.Equal(1, l.panicCount)
 }
 
 func TestLog_Fatal(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Fatal("fatal")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] FATAL test=testing fatal", w.String())
+	assert.Equal(1, l.fatalCount)
 }
 
 func TestLog_Fatalf(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Fatalf("fatal %s", "1")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] FATAL test=testing fatal 1", w.String())
+	assert.Equal(1, l.fatalCount)
 }
 
 func TestLog_Error(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Error("error")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] ERROR test=testing error", w.String())
+	assert.Equal(1, l.errorCount)
 }
 
 func TestLog_Errorf(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Errorf("error %s", "1")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] ERROR test=testing error 1", w.String())
+	assert.Equal(1, l.errorCount)
 }
 
 func TestLog_Warn(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Warn("warn")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] WARN test=testing warn", w.String())
+	assert.Equal(1, l.warnCount)
 }
 
 func TestLog_Warnf(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Warnf("warn %s", "1")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] WARN test=testing warn 1", w.String())
+	assert.Equal(1, l.warnCount)
 }
 
 func TestLog_Info(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Info("info")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] INFO test=testing info", w.String())
+	assert.Equal(1, l.infoCount)
 }
 
 func TestLog_Infof(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, InfoLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Infof("info %s", "1")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] INFO test=testing info 1", w.String())
+	assert.Equal(1, l.infoCount)
 }
 
 func TestLog_Debug(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, DebugLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Debug("debug")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] DEBUG test=testing debug", w.String())
+	assert.Equal(1, l.debugCount)
 }
 
 func TestLog_Debugf(t *testing.T) {
 	assert := assert.New(t)
-	w := &bytes.Buffer{}
-	Setup(NewStdFactory(w, DebugLevel))
-	AppendField("test", "testing")
+	l := testLogger{}
+	logger = &l
 	Debugf("debug %s", "1")
-	assert.Regexp("\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d+Z\\] DEBUG test=testing debug 1", w.String())
+	assert.Equal(1, l.debugCount)
 }
 
 type testFactory struct {
@@ -158,48 +152,66 @@ func (f testFactory) CreateSub(logger Logger, fields map[string]interface{}) Log
 }
 
 type testLogger struct {
+	debugCount int
+	infoCount  int
+	warnCount  int
+	errorCount int
+	fatalCount int
+	panicCount int
 }
 
-func (t testLogger) Level() Level {
+func (t *testLogger) Level() Level {
 	return DebugLevel
 }
 
-func (t testLogger) Fields() map[string]interface{} {
+func (t *testLogger) Fields() map[string]interface{} {
 	return make(map[string]interface{})
 }
 
-func (t testLogger) Panic(args ...interface{}) {
+func (t *testLogger) Panic(args ...interface{}) {
+	t.panicCount++
 }
 
-func (t testLogger) Panicf(msg string, args ...interface{}) {
+func (t *testLogger) Panicf(msg string, args ...interface{}) {
+	t.panicCount++
 }
 
-func (t testLogger) Fatal(args ...interface{}) {
+func (t *testLogger) Fatal(args ...interface{}) {
+	t.fatalCount++
 }
 
-func (t testLogger) Fatalf(msg string, args ...interface{}) {
+func (t *testLogger) Fatalf(msg string, args ...interface{}) {
+	t.fatalCount++
 }
 
-func (t testLogger) Error(args ...interface{}) {
+func (t *testLogger) Error(args ...interface{}) {
+	t.errorCount++
 }
 
-func (t testLogger) Errorf(msg string, args ...interface{}) {
+func (t *testLogger) Errorf(msg string, args ...interface{}) {
+	t.errorCount++
 }
 
-func (t testLogger) Warn(args ...interface{}) {
+func (t *testLogger) Warn(args ...interface{}) {
+	t.warnCount++
 }
 
-func (t testLogger) Warnf(msg string, args ...interface{}) {
+func (t *testLogger) Warnf(msg string, args ...interface{}) {
+	t.warnCount++
 }
 
-func (t testLogger) Info(args ...interface{}) {
+func (t *testLogger) Info(args ...interface{}) {
+	t.infoCount++
 }
 
-func (t testLogger) Infof(msg string, args ...interface{}) {
+func (t *testLogger) Infof(msg string, args ...interface{}) {
+	t.infoCount++
 }
 
-func (t testLogger) Debug(args ...interface{}) {
+func (t *testLogger) Debug(args ...interface{}) {
+	t.debugCount++
 }
 
-func (t testLogger) Debugf(msg string, args ...interface{}) {
+func (t *testLogger) Debugf(msg string, args ...interface{}) {
+	t.debugCount++
 }

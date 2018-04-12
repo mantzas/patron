@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,6 +25,7 @@ func (tp *testProcessor) Process(ctx context.Context) error {
 }
 
 func TestNew(t *testing.T) {
+	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
 	assert := assert.New(t)
 	type args struct {
 		name string
