@@ -14,7 +14,7 @@ func TestSetup(t *testing.T) {
 		wantErr bool
 	}{
 		{"failed with nil config", nil, true},
-		{"success", NewMapConfig(), false},
+		{"success", newTestConfig(), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -32,6 +32,7 @@ func TestSetup(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	assert := assert.New(t)
+	Setup(newTestConfig())
 	key := "key"
 	value := "value"
 	Set(key, value)
@@ -41,6 +42,7 @@ func TestGet(t *testing.T) {
 
 func TestBool(t *testing.T) {
 	assert := assert.New(t)
+	Setup(newTestConfig())
 	key := "key"
 	value := true
 	Set(key, value)
@@ -50,6 +52,7 @@ func TestBool(t *testing.T) {
 
 func TestInt(t *testing.T) {
 	assert := assert.New(t)
+	Setup(newTestConfig())
 	key := "key"
 	value := 1
 	Set(key, value)
@@ -59,6 +62,7 @@ func TestInt(t *testing.T) {
 
 func TestString(t *testing.T) {
 	assert := assert.New(t)
+	Setup(newTestConfig())
 	key := "key"
 	value := "value"
 	Set(key, value)
@@ -68,9 +72,47 @@ func TestString(t *testing.T) {
 
 func TestFloat64(t *testing.T) {
 	assert := assert.New(t)
+	Setup(newTestConfig())
 	key := "key"
 	value := 3.2
 	Set(key, value)
 	v := GetFloat64(key)
 	assert.Equal(value, v)
+}
+
+type testConfig struct {
+	store map[string]interface{}
+}
+
+func newTestConfig() *testConfig {
+	return &testConfig{make(map[string]interface{}, 0)}
+}
+
+func (tc *testConfig) Set(key string, value interface{}) {
+	tc.store[key] = value
+}
+
+// Get returns the value of the key
+func (tc *testConfig) Get(key string) interface{} {
+	return tc.store[key].(string)
+}
+
+// GetBool returns the bool value of the key
+func (tc *testConfig) GetBool(key string) bool {
+	return tc.store[key].(bool)
+}
+
+// GetInt returns the int value of the key
+func (tc *testConfig) GetInt(key string) int {
+	return tc.store[key].(int)
+}
+
+// GetString returns the string value of the key
+func (tc *testConfig) GetString(key string) string {
+	return tc.store[key].(string)
+}
+
+// GetFloat64 returns the float64 value of the key
+func (tc *testConfig) GetFloat64(key string) float64 {
+	return tc.store[key].(float64)
 }

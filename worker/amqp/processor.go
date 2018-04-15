@@ -3,8 +3,8 @@ package amqp
 import (
 	"context"
 
+	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/worker"
 	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
@@ -15,11 +15,11 @@ import (
 type Processor struct {
 	url   string
 	queue string
-	mp    worker.MessageProcessor
+	mp    patron.MessageProcessor
 }
 
 // New returns a new client
-func New(url, queue string, mp worker.MessageProcessor) (*Processor, error) {
+func New(url, queue string, mp patron.MessageProcessor) (*Processor, error) {
 
 	if url == "" {
 		return nil, errors.New("rabbitmq url is required")

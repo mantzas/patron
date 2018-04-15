@@ -16,10 +16,6 @@ type Config interface {
 
 var config Config
 
-func init() {
-	config = NewMapConfig()
-}
-
 // Setup set's up a new config to the global state
 func Setup(c Config) error {
 	if c == nil {

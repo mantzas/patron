@@ -5,14 +5,14 @@ import (
 	"net/http/pprof"
 
 	"github.com/julienschmidt/httprouter"
-	patron_http "github.com/mantzas/patron/http"
-	"github.com/mantzas/patron/http/middleware"
+	"github.com/mantzas/patron"
+	middleware "github.com/mantzas/patron/http"
 	"github.com/mantzas/patron/log"
 )
 
 // CreateHandler creates a router
-func CreateHandler(routes []patron_http.Route) http.Handler {
-	routes = append(routes, getPprofRoutes()...)
+func CreateHandler(routes []patron.Route) http.Handler {
+	routes = append(routes, profilingRoutes()...)
 	log.Infof("adding %d routes", len(routes))
 
 	router := httprouter.New()
@@ -25,19 +25,19 @@ func CreateHandler(routes []patron_http.Route) http.Handler {
 	return router
 }
 
-func getPprofRoutes() []patron_http.Route {
+func profilingRoutes() []patron.Route {
 
-	return []patron_http.Route{
-		patron_http.NewRoute("/debug/pprof/", http.MethodGet, middleware.DefaultMiddleware(index)),
-		patron_http.NewRoute("/debug/pprof/cmdline/", http.MethodGet, middleware.DefaultMiddleware(cmdline)),
-		patron_http.NewRoute("/debug/pprof/profile/", http.MethodGet, middleware.DefaultMiddleware(profile)),
-		patron_http.NewRoute("/debug/pprof/symbol/", http.MethodGet, middleware.DefaultMiddleware(symbol)),
-		patron_http.NewRoute("/debug/pprof/trace/", http.MethodGet, middleware.DefaultMiddleware(trace)),
-		patron_http.NewRoute("/debug/pprof/heap/", http.MethodGet, middleware.DefaultMiddleware(heap)),
-		patron_http.NewRoute("/debug/pprof/goroutine/", http.MethodGet, middleware.DefaultMiddleware(goroutine)),
-		patron_http.NewRoute("/debug/pprof/block/", http.MethodGet, middleware.DefaultMiddleware(block)),
-		patron_http.NewRoute("/debug/pprof/threadcreate/", http.MethodGet, middleware.DefaultMiddleware(threadcreate)),
-		patron_http.NewRoute("/debug/pprof/mutex/", http.MethodGet, middleware.DefaultMiddleware(mutex)),
+	return []patron.Route{
+		patron.NewRoute("/debug/pprof/", http.MethodGet, middleware.DefaultMiddleware(index)),
+		patron.NewRoute("/debug/pprof/cmdline/", http.MethodGet, middleware.DefaultMiddleware(cmdline)),
+		patron.NewRoute("/debug/pprof/profile/", http.MethodGet, middleware.DefaultMiddleware(profile)),
+		patron.NewRoute("/debug/pprof/symbol/", http.MethodGet, middleware.DefaultMiddleware(symbol)),
+		patron.NewRoute("/debug/pprof/trace/", http.MethodGet, middleware.DefaultMiddleware(trace)),
+		patron.NewRoute("/debug/pprof/heap/", http.MethodGet, middleware.DefaultMiddleware(heap)),
+		patron.NewRoute("/debug/pprof/goroutine/", http.MethodGet, middleware.DefaultMiddleware(goroutine)),
+		patron.NewRoute("/debug/pprof/block/", http.MethodGet, middleware.DefaultMiddleware(block)),
+		patron.NewRoute("/debug/pprof/threadcreate/", http.MethodGet, middleware.DefaultMiddleware(threadcreate)),
+		patron.NewRoute("/debug/pprof/mutex/", http.MethodGet, middleware.DefaultMiddleware(mutex)),
 	}
 }
 
