@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/mantzas/patron"
+	"github.com/mantzas/patron/config"
+	"github.com/mantzas/patron/config/viper"
 	"github.com/mantzas/patron/http/httprouter"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
@@ -27,8 +29,14 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
+	// Set up config (should come from flag, env, file etc)
+	config.Setup(viper.New())
+	config.Set("log_level", log.InfoLevel)
+	config.Set("rabbitmq_url", "amqp://localhost:8081")
+
 	// Set up logging
-	err := log.Setup(zerolog.DefaultFactory(log.InfoLevel))
+	lvl := config.Get("log_level").(log.Level)
+	err := log.Setup(zerolog.DefaultFactory(lvl))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)
@@ -39,7 +47,7 @@ func main() {
 	routes = append(routes, patron.NewRoute("/", http.MethodGet, index))
 
 	// setting up a amqp processor
-	p, err := amqp.New("http://localhost:8081", "test", &helloProcessor{})
+	p, err := amqp.New(config.GetString("rabbitmq_url"), "test", &helloProcessor{})
 	if err != nil {
 		fmt.Print("failed to setup amqp processor", err)
 		os.Exit(1)
