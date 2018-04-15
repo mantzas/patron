@@ -38,43 +38,31 @@ func TestNewServer(t *testing.T) {
 	}
 }
 
-func TestServer_Run_ReturnsError(t *testing.T) {
-	assert := assert.New(t)
-	s, err := NewServer("test", &testService{true, false})
-	assert.NoError(err)
-	assert.Error(s.Run())
-}
-
-func TestServer_Shutdown_ReturnsError(t *testing.T) {
-	assert := assert.New(t)
-	s, err := NewServer("test", &testService{false, true})
-	assert.NoError(err)
-	go func() {
-		s.Run()
-	}()
-	assert.Error(s.Shutdown())
-}
-
-func TestServer_Shutdown(t *testing.T) {
+func TestServer_Run_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		name    string
-		service ServiceInt
-		wantErr bool
+		name            string
+		service         ServiceInt
+		wantRunErr      bool
+		wantShutdownErr bool
 	}{
-		{"success", &testService{}, false},
-		{"failed to shutdown", &testService{false, true}, true},
+		{"success", &testService{}, false, false},
+		{"failed to run", &testService{true, false}, true, false},
+		{"failed to shutdown", &testService{false, true}, false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			s, err := NewServer("test", tt.service)
 			assert.NoError(err)
-			go func() {
-				s.Run()
-			}()
+			err = s.Run()
+			if tt.wantRunErr {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+			}
 			err = s.Shutdown()
-			if tt.wantErr {
+			if tt.wantShutdownErr {
 				assert.Error(err)
 			} else {
 				assert.NoError(err)
