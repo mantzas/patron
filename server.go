@@ -77,7 +77,7 @@ func (s *Server) Run() error {
 
 	select {
 	case err := <-errCh:
-		log.Info("service returned a error")
+		log.Error("service returned a error")
 		err1 := s.Shutdown()
 		if err1 != nil {
 			return errors.Wrapf(err, "failed to shutdown %v", err1)
