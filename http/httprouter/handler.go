@@ -6,7 +6,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron"
-	"github.com/mantzas/patron/http/middleware"
+	middleware "github.com/mantzas/patron/http"
 	"github.com/mantzas/patron/log"
 )
 
