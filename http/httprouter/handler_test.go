@@ -3,15 +3,18 @@ package httprouter
 import (
 	"testing"
 
-	"github.com/mantzas/patron/http"
+	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+}
+
 func TestCreateHandler(t *testing.T) {
 	assert := assert.New(t)
-	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-	h := CreateHandler([]http.Route{http.NewRoute("/", "GET", nil)})
+	h := CreateHandler([]patron.Route{patron.NewRoute("/", "GET", nil)})
 	assert.NotNil(h)
 }

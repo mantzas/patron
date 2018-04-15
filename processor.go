@@ -1,4 +1,4 @@
-package worker
+package patron
 
 import "context"
 

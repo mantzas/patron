@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mantzas/patron/worker"
+	"github.com/mantzas/patron"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,7 @@ func TestNew(t *testing.T) {
 	type args struct {
 		url   string
 		queue string
-		mp    worker.MessageProcessor
+		mp    patron.MessageProcessor
 	}
 	tests := []struct {
 		name    string

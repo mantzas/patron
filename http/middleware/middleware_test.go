@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+}
+
 func testHandle(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(202)
 }
@@ -28,8 +32,6 @@ func testPanicHandleInt(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestMiddleware(t *testing.T) {
-
-	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
 	assert := assert.New(t)
 	r, _ := http.NewRequest("POST", "/test", nil)
 
