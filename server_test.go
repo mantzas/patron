@@ -4,29 +4,33 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+}
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
 		name     string
-		services []ServiceInt
+		services []Service
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", []ServiceInt{&testService{}}}, false},
-		{"failed missing name", args{"", []ServiceInt{&testService{}}}, true},
-		{"failed missing services", args{"test", []ServiceInt{}}, true},
+		{"success", args{"test", []Service{&testService{}}}, false},
+		{"failed missing name", args{"", []Service{&testService{}}}, true},
+		{"failed missing services", args{"test", []Service{}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			got, err := NewServer(tt.args.name, tt.args.services...)
+			got, err := New(tt.args.name, tt.args.services...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -42,7 +46,7 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
 		name            string
-		service         ServiceInt
+		service         Service
 		wantRunErr      bool
 		wantShutdownErr bool
 	}{
@@ -53,7 +57,7 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s, err := NewServer("test", tt.service)
+			s, err := New("test", tt.service)
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {

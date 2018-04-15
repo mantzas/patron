@@ -6,14 +6,16 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
 
-// TODO: rename after refactoring
-type ServiceInt interface {
+const shutdownTimeout = 5 * time.Second
+
+type Service interface {
 	Run(ctx context.Context) error
 	Shutdown(ctx context.Context) error
 }
@@ -21,13 +23,13 @@ type ServiceInt interface {
 // Server definition of a server hosting service
 type Server struct {
 	name     string
-	services []ServiceInt
+	services []Service
 	Ctx      context.Context
 	Cancel   context.CancelFunc
 }
 
-// NewServer creates a new server
-func NewServer(name string, services ...ServiceInt) (*Server, error) {
+// New creates a new server
+func New(name string, services ...Service) (*Server, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -52,7 +54,6 @@ func NewServer(name string, services ...ServiceInt) (*Server, error) {
 }
 
 func (s *Server) setupTermSignal() {
-	log.Info("setting up termination signal loop")
 	go func() {
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -68,7 +69,7 @@ func (s *Server) Run() error {
 	errCh := make(chan error)
 
 	for _, service := range s.services {
-		go func(s ServiceInt, ctx context.Context) {
+		go func(s Service, ctx context.Context) {
 			errCh <- s.Run(ctx)
 		}(service, s.Ctx)
 	}
@@ -99,7 +100,7 @@ func (s *Server) Shutdown() error {
 
 	for _, srv := range s.services {
 
-		go func(srv ServiceInt, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {
+		go func(srv Service, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {
 			defer w.Done()
 			agr.Append(srv.Shutdown(ctx))
 		}(srv, ctx, &wg, agr)

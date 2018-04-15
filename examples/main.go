@@ -7,12 +7,13 @@ import (
 	"os"
 
 	"github.com/mantzas/patron"
+	"github.com/mantzas/patron/async/amqp"
 	"github.com/mantzas/patron/config"
 	"github.com/mantzas/patron/config/viper"
-	"github.com/mantzas/patron/http/httprouter"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
-	"github.com/mantzas/patron/worker/amqp"
+	sync_http "github.com/mantzas/patron/sync/http"
+	"github.com/mantzas/patron/sync/http/httprouter"
 )
 
 type helloProcessor struct {
@@ -42,30 +43,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Set up routes
-	routes := make([]patron.Route, 0)
-	routes = append(routes, patron.NewRoute("/", http.MethodGet, index))
-
 	// setting up a amqp processor
-	p, err := amqp.New(config.GetString("rabbitmq_url"), "test", &helloProcessor{})
+	amqpSrv, err := amqp.New(config.GetString("rabbitmq_url"), "test", &helloProcessor{})
 	if err != nil {
-		fmt.Print("failed to setup amqp processor", err)
+		fmt.Print("failed to create AMQP service", err)
 		os.Exit(1)
 	}
 
-	options := []patron.Option{
-		patron.SetPorts(50000),
-		patron.SetRoutes(routes),
-		patron.SetProcessor(p),
+	// Set up routes
+	routes := make([]sync_http.Route, 0)
+	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, index))
+
+	options := []sync_http.Option{
+		sync_http.SetPorts(50000),
+		sync_http.SetRoutes(routes),
 	}
 
-	s, err := patron.New("test", httprouter.CreateHandler, options...)
+	httpSrv, err := sync_http.New(httprouter.CreateHandler, options...)
+	if err != nil {
+		fmt.Print("failed to create HTTP service", err)
+		os.Exit(1)
+	}
+
+	srv, err := patron.New("test", httpSrv, amqpSrv)
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)
 	}
 
-	err = s.Run()
+	err = srv.Run()
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)
