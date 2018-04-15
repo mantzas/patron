@@ -47,15 +47,13 @@ func NewServer(name string, services ...ServiceInt) (*Server, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	s := Server{name, services, ctx, cancel}
 
-	// options
-
 	s.setupTermSignal()
 	return &s, nil
 }
 
 func (s *Server) setupTermSignal() {
+	log.Info("setting up termination signal loop")
 	go func() {
-		log.Info("setting up termination signal")
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 		<-stop
