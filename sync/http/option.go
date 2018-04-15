@@ -1,4 +1,4 @@
-package patron
+package http
 
 import (
 	"github.com/mantzas/patron/log"
@@ -28,18 +28,6 @@ func SetRoutes(rr []Route) Option {
 		}
 		s.routes = rr
 		log.Info("routes set")
-		return nil
-	}
-}
-
-// SetProcessor option for setting the processor of the service
-func SetProcessor(p Processor) Option {
-	return func(s *Service) error {
-		if p == nil {
-			return errors.New("processor not provided")
-		}
-		s.proc = p
-		log.Info("processor set")
 		return nil
 	}
 }

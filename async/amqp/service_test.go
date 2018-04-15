@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mantzas/patron"
+	"github.com/mantzas/patron/async"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,7 @@ func TestNew(t *testing.T) {
 	type args struct {
 		url   string
 		queue string
-		mp    patron.MessageProcessor
+		mp    async.MessageProcessor
 	}
 	tests := []struct {
 		name    string
@@ -29,6 +29,9 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{"success", args{"url", "queue", &testMesssageProcessor{}}, false},
+		{"failed with invalid url", args{"", "queue", &testMesssageProcessor{}}, true},
+		{"failed with invalid queue name", args{"url", "", &testMesssageProcessor{}}, true},
+		{"failed with invalid processor", args{"url", "queue", nil}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

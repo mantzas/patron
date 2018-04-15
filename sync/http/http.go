@@ -1,4 +1,4 @@
-package patron
+package http
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type httpHandlerGen func([]Route) http.Handler
+type handlerGen func([]Route) http.Handler
 
 func createHTTPServer(port int, sm http.Handler) *http.Server {
 	return &http.Server{

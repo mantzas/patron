@@ -1,4 +1,4 @@
-package patron
+package http
 
 import "net/http"
 

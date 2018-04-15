@@ -1,7 +1,6 @@
-package patron
+package http
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -64,37 +63,4 @@ func TestSetRoutes(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestSetProcessor(t *testing.T) {
-	assert := assert.New(t)
-	tests := []struct {
-		name    string
-		p       Processor
-		wantErr bool
-	}{
-		{"success", &testProcessor{}, false},
-		{"error for no processor", nil, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
-			s := Service{}
-			err := SetProcessor(tt.p)(&s)
-
-			if tt.wantErr {
-				assert.Error(err)
-			} else {
-				assert.NotNil(s.proc)
-				assert.NoError(err)
-			}
-		})
-	}
-}
-
-type testProcessor struct {
-}
-
-func (tp testProcessor) Process(context.Context) error {
-	return nil
 }
