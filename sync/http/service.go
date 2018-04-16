@@ -12,9 +12,14 @@ const (
 	port = 50000
 )
 
+var (
+	defaultHealthCheck = func() HealthStatus { return Healthy }
+)
+
 // Service implementation of HTTP
 type Service struct {
 	hg     handlerGen
+	hc     HealthCheckFunc
 	port   int
 	routes []Route
 	srv    *http.Server
@@ -26,7 +31,7 @@ func New(hg handlerGen, options ...Option) (*Service, error) {
 		return nil, errors.New("http handler generator is required")
 	}
 
-	s := Service{hg, port, []Route{}, nil}
+	s := Service{hg, defaultHealthCheck, port, []Route{}, nil}
 
 	for _, opt := range options {
 		err := opt(&s)
@@ -35,6 +40,7 @@ func New(hg handlerGen, options ...Option) (*Service, error) {
 		}
 	}
 
+	s.routes = append(s.routes, healthCheckRoute(s.hc))
 	s.srv = createHTTPServer(s.port, s.hg(s.routes))
 	return &s, nil
 }
