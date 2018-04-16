@@ -31,3 +31,15 @@ func SetRoutes(rr []Route) Option {
 		return nil
 	}
 }
+
+// SetHealthCheck option for setting the health check function
+func SetHealthCheck(hcf HealthCheckFunc) Option {
+	return func(s *Service) error {
+		if hcf == nil {
+			return errors.New("health check function is not defined")
+		}
+		s.hc = hcf
+		log.Info("health check function set")
+		return nil
+	}
+}

@@ -64,3 +64,30 @@ func TestSetRoutes(t *testing.T) {
 		})
 	}
 }
+
+func TestSetHealthCheck(t *testing.T) {
+	assert := assert.New(t)
+	tests := []struct {
+		name    string
+		hcf     HealthCheckFunc
+		wantErr bool
+	}{
+		{"success", func() HealthStatus { return Healthy }, false},
+		{"error for no routes", nil, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			s := Service{}
+			err := SetHealthCheck(tt.hcf)(&s)
+
+			if tt.wantErr {
+				assert.Error(err)
+				assert.Nil(s.hc)
+			} else {
+				assert.NoError(err)
+				assert.NotNil(s.hc)
+			}
+		})
+	}
+}
