@@ -25,7 +25,6 @@ func TestSetPorts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			s := Service{}
 			err := SetPorts(tt.port)(&s)
 
@@ -51,7 +50,6 @@ func TestSetRoutes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			s := Service{}
 			err := SetRoutes(tt.rr)(&s)
 
@@ -77,7 +75,6 @@ func TestSetHealthCheck(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			s := Service{}
 			err := SetHealthCheck(tt.hcf)(&s)
 
