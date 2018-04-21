@@ -85,7 +85,7 @@ type testConfig struct {
 }
 
 func newTestConfig() *testConfig {
-	return &testConfig{make(map[string]interface{}, 0)}
+	return &testConfig{make(map[string]interface{})}
 }
 
 func (tc *testConfig) Set(key string, value interface{}) {

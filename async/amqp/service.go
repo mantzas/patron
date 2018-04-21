@@ -79,7 +79,11 @@ func (s *Service) Run(ctx context.Context) error {
 				a.Append(errors.Wrapf(err, "failed to process message %s", d.MessageId))
 				return
 			}
-			d.Ack(false)
+			err = d.Ack(false)
+			if err != nil {
+				a.Append(errors.Wrapf(err, "failed to ACK message %s", d.MessageId))
+				return
+			}
 		}(&d, agr)
 
 		if agr.Count() > 0 {

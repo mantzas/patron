@@ -8,14 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testHealthManager struct {
-}
-
 func Test_healthCheckRoute(t *testing.T) {
 	assert := assert.New(t)
-	type args struct {
-		hcf HealthCheckFunc
-	}
 	tests := []struct {
 		name string
 		hcf  HealthCheckFunc

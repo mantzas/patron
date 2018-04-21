@@ -20,24 +20,32 @@ type helloProcessor struct {
 }
 
 func (hp helloProcessor) Process(ctx context.Context, msg []byte) error {
-	fmt.Printf("message: %s", string(msg))
+	log.Infof("message: %s", string(msg))
 	return nil
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello from patron!"))
+	_, err := w.Write([]byte("Hello from patron!"))
+	if err != nil {
+		log.Errorf("failed to write response %v", err)
+	}
 }
 
 func main() {
 
 	// Set up config (should come from flag, env, file etc)
-	config.Setup(viper.New())
+	err := config.Setup(viper.New())
+	if err != nil {
+		fmt.Printf("failed to setup config %v", err)
+		os.Exit(1)
+	}
+
 	config.Set("log_level", log.InfoLevel)
 	config.Set("rabbitmq_url", "amqp://localhost:8081")
 
 	// Set up logging
 	lvl := config.Get("log_level").(log.Level)
-	err := log.Setup(zerolog.DefaultFactory(lvl))
+	err = log.Setup(zerolog.DefaultFactory(lvl))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)

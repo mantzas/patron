@@ -3,6 +3,8 @@ package errors
 import (
 	"strings"
 	"sync"
+
+	"github.com/mantzas/patron/log"
 )
 
 // Aggregate definition of a construct that aggregates multiple errors
@@ -45,8 +47,14 @@ func (a *Aggregate) Error() string {
 	b := strings.Builder{}
 
 	for _, err := range a.errors {
-		b.WriteString(err.Error())
-		b.WriteRune('\n')
+		_, err1 := b.WriteString(err.Error())
+		if err1 != nil {
+			log.Errorf("failed to write %v with error %v", err, err1)
+		}
+		_, err1 = b.WriteRune('\n')
+		if err1 != nil {
+			log.Errorf("failed to write newline")
+		}
 	}
 
 	return b.String()

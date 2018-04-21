@@ -10,8 +10,6 @@ import (
 
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
-	type args struct {
-	}
 	tests := []struct {
 		name    string
 		hg      handlerGen
