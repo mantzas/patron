@@ -19,7 +19,6 @@ func Setup(m Metric) error {
 	if m == nil {
 		return errors.New("metric is nil")
 	}
-
 	metric = m
 	return nil
 }

@@ -27,9 +27,7 @@ func LoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 // RecoveryMiddleware for recovering from failed requests
 func RecoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		defer func() {
 			if r := recover(); r != nil {
 

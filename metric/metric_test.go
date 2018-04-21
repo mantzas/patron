@@ -18,9 +18,7 @@ func TestSetup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			err := Setup(tt.f)
-
 			if tt.wantErr {
 				assert.Error(err, "expected error")
 			} else {

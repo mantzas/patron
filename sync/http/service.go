@@ -47,14 +47,12 @@ func New(hg handlerGen, options ...Option) (*Service, error) {
 
 // Run starts the processing
 func (s *Service) Run(ctx context.Context) error {
-
 	log.Infof("service listening on port %d", s.port)
 	return s.srv.ListenAndServe()
 }
 
 // Shutdown the service
 func (s *Service) Shutdown(ctx context.Context) error {
-
 	log.Info("shutting down service")
 	return s.srv.Shutdown(ctx)
 }

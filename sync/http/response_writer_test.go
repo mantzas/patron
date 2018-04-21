@@ -8,7 +8,6 @@ import (
 )
 
 func TestResponseWriter(t *testing.T) {
-
 	assert := assert.New(t)
 	rc := httptest.NewRecorder()
 	rw := NewResponseWriter(rc)
