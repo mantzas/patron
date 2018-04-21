@@ -161,3 +161,31 @@ func TestLogger_Debugf(t *testing.T) {
 	l.Debugf("testing %d", 1)
 	assert.Equal("{\"level\":\"debug\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
 }
+
+var t int
+
+func Benchmark_LoggingEnabled(b *testing.B) {
+
+	var bf bytes.Buffer
+	zl := zerolog.New(&bf)
+	l := NewLogger(&zl, log.DebugLevel, f)
+	l.Debugf("testing %d", 1)
+
+	for n := 0; n < b.N; n++ {
+		l.Debugf("testing %d", 1)
+		t = n
+	}
+}
+
+func Benchmark_LoggingDisabled(b *testing.B) {
+
+	var bf bytes.Buffer
+	zl := zerolog.New(&bf)
+	l := NewLogger(&zl, log.NoLevel, f)
+	l.Debugf("testing %d", 1)
+
+	for n := 0; n < b.N; n++ {
+		l.Debugf("testing %d", 1)
+		t = n
+	}
+}
