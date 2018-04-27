@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 
 	"github.com/mantzas/patron/log"
 )
@@ -23,6 +24,7 @@ type Service struct {
 	port   int
 	routes []Route
 	srv    *http.Server
+	m      sync.Mutex
 }
 
 // New returns a new service
@@ -31,7 +33,7 @@ func New(hg handlerGen, options ...Option) (*Service, error) {
 		return nil, errors.New("http handler generator is required")
 	}
 
-	s := Service{hg, defaultHealthCheck, port, []Route{}, nil}
+	s := Service{hg, defaultHealthCheck, port, []Route{}, nil, sync.Mutex{}}
 
 	for _, opt := range options {
 		err := opt(&s)
@@ -47,12 +49,16 @@ func New(hg handlerGen, options ...Option) (*Service, error) {
 
 // Run starts the processing
 func (s *Service) Run(ctx context.Context) error {
+	s.m.Lock()
+	defer s.m.Unlock()
 	log.Infof("service listening on port %d", s.port)
 	return s.srv.ListenAndServe()
 }
 
 // Shutdown the service
 func (s *Service) Shutdown(ctx context.Context) error {
+	s.m.Lock()
+	defer s.m.Unlock()
 	log.Info("shutting down service")
 	return s.srv.Shutdown(ctx)
 }
