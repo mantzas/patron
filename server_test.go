@@ -4,15 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
-func init() {
-	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-}
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {

@@ -6,14 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/stretchr/testify/assert"
 )
-
-func init() {
-	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-}
 
 func testHandle(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(202)

@@ -24,6 +24,9 @@ func Setup(f Factory) error {
 
 // AppendField appends a field
 func AppendField(key string, value interface{}) {
+	if factory == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	fields[key] = value
@@ -32,6 +35,9 @@ func AppendField(key string, value interface{}) {
 
 // Sub returns a new sub logger
 func Sub(fields map[string]interface{}) Logger {
+	if factory == nil || logger == nil {
+		return nil
+	}
 	m.Lock()
 	defer m.Unlock()
 	return factory.CreateSub(logger, fields)
@@ -39,6 +45,9 @@ func Sub(fields map[string]interface{}) Logger {
 
 // Panic logging
 func Panic(args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Panic(args...)
@@ -46,6 +55,9 @@ func Panic(args ...interface{}) {
 
 // Panicf logging
 func Panicf(msg string, args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Panicf(msg, args...)
@@ -53,6 +65,9 @@ func Panicf(msg string, args ...interface{}) {
 
 // Fatal logging
 func Fatal(args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Fatal(args...)
@@ -60,6 +75,9 @@ func Fatal(args ...interface{}) {
 
 // Fatalf logging
 func Fatalf(msg string, args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Fatalf(msg, args...)
@@ -67,6 +85,9 @@ func Fatalf(msg string, args ...interface{}) {
 
 // Error logging
 func Error(args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Error(args...)
@@ -74,6 +95,9 @@ func Error(args ...interface{}) {
 
 // Errorf logging
 func Errorf(msg string, args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Errorf(msg, args...)
@@ -81,6 +105,9 @@ func Errorf(msg string, args ...interface{}) {
 
 // Warn logging
 func Warn(args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Warn(args...)
@@ -88,6 +115,9 @@ func Warn(args ...interface{}) {
 
 // Warnf logging
 func Warnf(msg string, args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Warnf(msg, args...)
@@ -95,6 +125,9 @@ func Warnf(msg string, args ...interface{}) {
 
 // Info logging
 func Info(args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Info(args...)
@@ -102,6 +135,9 @@ func Info(args ...interface{}) {
 
 // Infof logging
 func Infof(msg string, args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Infof(msg, args...)
@@ -109,6 +145,9 @@ func Infof(msg string, args ...interface{}) {
 
 // Debug logging
 func Debug(args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Debug(args...)
@@ -116,6 +155,9 @@ func Debug(args ...interface{}) {
 
 // Debugf logging
 func Debugf(msg string, args ...interface{}) {
+	if logger == nil {
+		return
+	}
 	m.Lock()
 	defer m.Unlock()
 	logger.Debugf(msg, args...)
