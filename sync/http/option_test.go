@@ -4,14 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/stretchr/testify/assert"
 )
-
-func init() {
-	log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-}
 
 func TestSetPorts(t *testing.T) {
 	assert := assert.New(t)

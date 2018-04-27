@@ -33,112 +33,216 @@ func TestSetup(t *testing.T) {
 
 func TestSub(t *testing.T) {
 	assert := assert.New(t)
-	Setup(&testFactory{})
-	l := Sub(make(map[string]interface{}))
-	assert.NotNil(l)
+
+	t.Run("factory nil", func(t *testing.T) {
+		factory = nil
+		fields = make(map[string]interface{})
+		l := Sub(make(map[string]interface{}))
+		assert.Nil(l)
+	})
+	t.Run("success", func(t *testing.T) {
+		Setup(&testFactory{})
+		l := Sub(make(map[string]interface{}))
+		assert.NotNil(l)
+	})
 }
 
 func TestLog_AppendField(t *testing.T) {
 	assert := assert.New(t)
-	Setup(&testFactory{})
-	AppendField("test", "testing")
-	assert.Equal("testing", fields["test"])
+
+	t.Run("factory nil", func(t *testing.T) {
+		factory = nil
+		fields = make(map[string]interface{})
+		AppendField("test", "testing")
+		assert.Nil(fields["test"])
+	})
+	t.Run("success", func(t *testing.T) {
+		Setup(&testFactory{})
+		AppendField("test", "testing")
+		assert.Equal("testing", fields["test"])
+	})
 }
 
 func TestLog_Panic(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Panic("panic")
-	assert.Equal(1, l.panicCount)
+
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Panic("panic")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Panic("panic")
+		assert.Equal(1, l.panicCount)
+	})
 }
 
 func TestLog_Panicf(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Panicf("panic %s", "1")
-	assert.Equal(1, l.panicCount)
+
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Panicf("panic %s", "1")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Panicf("panic %s", "1")
+		assert.Equal(1, l.panicCount)
+	})
 }
 
 func TestLog_Fatal(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Fatal("fatal")
-	assert.Equal(1, l.fatalCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Fatal("fatal")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Fatal("fatal")
+		assert.Equal(1, l.fatalCount)
+	})
 }
 
 func TestLog_Fatalf(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Fatalf("fatal %s", "1")
-	assert.Equal(1, l.fatalCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Fatalf("fatal %s", "1")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Fatalf("fatal %s", "1")
+		assert.Equal(1, l.fatalCount)
+	})
 }
 
 func TestLog_Error(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Error("error")
-	assert.Equal(1, l.errorCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Error("error")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Error("error")
+		assert.Equal(1, l.errorCount)
+	})
 }
 
 func TestLog_Errorf(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Errorf("error %s", "1")
-	assert.Equal(1, l.errorCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Errorf("error %s", "1")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Errorf("error %s", "1")
+		assert.Equal(1, l.errorCount)
+	})
 }
 
 func TestLog_Warn(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Warn("warn")
-	assert.Equal(1, l.warnCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Warn("warn")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Warn("warn")
+		assert.Equal(1, l.warnCount)
+	})
 }
 
 func TestLog_Warnf(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Warnf("warn %s", "1")
-	assert.Equal(1, l.warnCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Warnf("warn %s", "1")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Warnf("warn %s", "1")
+		assert.Equal(1, l.warnCount)
+	})
 }
 
 func TestLog_Info(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Info("info")
-	assert.Equal(1, l.infoCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Info("info")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Info("info")
+		assert.Equal(1, l.infoCount)
+	})
 }
 
 func TestLog_Infof(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Infof("info %s", "1")
-	assert.Equal(1, l.infoCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Infof("info %s", "1")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Infof("info %s", "1")
+		assert.Equal(1, l.infoCount)
+	})
 }
 
 func TestLog_Debug(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Debug("debug")
-	assert.Equal(1, l.debugCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Debug("debug")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Debug("debug")
+		assert.Equal(1, l.debugCount)
+	})
 }
 
 func TestLog_Debugf(t *testing.T) {
 	assert := assert.New(t)
-	l := testLogger{}
-	logger = &l
-	Debugf("debug %s", "1")
-	assert.Equal(1, l.debugCount)
+	t.Run("logger nil", func(t *testing.T) {
+		logger = nil
+		Debugf("debug %s", "1")
+		assert.Nil(logger)
+	})
+	t.Run("success", func(t *testing.T) {
+		l := testLogger{}
+		logger = &l
+		Debugf("debug %s", "1")
+		assert.Equal(1, l.debugCount)
+	})
 }
 
 func TestLog_Concurrent(t *testing.T) {
