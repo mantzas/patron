@@ -32,51 +32,66 @@ func TestSetup(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	assert := assert.New(t)
-	Setup(newTestConfig())
+	err := Setup(newTestConfig())
+	assert.NoError(err)
 	key := "key"
 	value := "value"
-	Set(key, value)
-	v := Get(key)
+	err = Set(key, value)
+	assert.NoError(err)
+	v, err := Get(key)
+	assert.NoError(err)
 	assert.Equal(value, v)
 }
 
 func TestBool(t *testing.T) {
 	assert := assert.New(t)
-	Setup(newTestConfig())
+	err := Setup(newTestConfig())
+	assert.NoError(err)
 	key := "key"
 	value := true
-	Set(key, value)
-	v := GetBool(key)
+	err = Set(key, value)
+	assert.NoError(err)
+	v, err := GetBool(key)
+	assert.NoError(err)
 	assert.Equal(value, v)
 }
 
 func TestInt(t *testing.T) {
 	assert := assert.New(t)
-	Setup(newTestConfig())
+	err := Setup(newTestConfig())
+	assert.NoError(err)
 	key := "key"
-	value := 1
-	Set(key, value)
-	v := GetInt(key)
+	value := int64(1)
+	err = Set(key, value)
+	assert.NoError(err)
+	v, err := GetInt64(key)
+	assert.NoError(err)
 	assert.Equal(value, v)
 }
 
 func TestString(t *testing.T) {
 	assert := assert.New(t)
-	Setup(newTestConfig())
+	err := Setup(newTestConfig())
+	assert.NoError(err)
 	key := "key"
 	value := "value"
-	Set(key, value)
-	v := GetString(key)
+	err = Set(key, value)
+	assert.NoError(err)
+	v, err := GetString(key)
+	assert.NoError(err)
 	assert.Equal(value, v)
 }
 
 func TestFloat64(t *testing.T) {
 	assert := assert.New(t)
-	Setup(newTestConfig())
+	err := Setup(newTestConfig())
+	assert.NoError(err)
 	key := "key"
 	value := 3.2
-	Set(key, value)
-	v := GetFloat64(key)
+	err = Set(key, value)
+	assert.NoError(err)
+	v, err := GetFloat64(key)
+	assert.NoError(err)
 	assert.Equal(value, v)
 }
 
@@ -88,31 +103,32 @@ func newTestConfig() *testConfig {
 	return &testConfig{make(map[string]interface{})}
 }
 
-func (tc *testConfig) Set(key string, value interface{}) {
+func (tc *testConfig) Set(key string, value interface{}) error {
 	tc.store[key] = value
+	return nil
 }
 
 // Get returns the value of the key
-func (tc *testConfig) Get(key string) interface{} {
-	return tc.store[key].(string)
+func (tc *testConfig) Get(key string) (interface{}, error) {
+	return tc.store[key].(string), nil
 }
 
 // GetBool returns the bool value of the key
-func (tc *testConfig) GetBool(key string) bool {
-	return tc.store[key].(bool)
+func (tc *testConfig) GetBool(key string) (bool, error) {
+	return tc.store[key].(bool), nil
 }
 
 // GetInt returns the int value of the key
-func (tc *testConfig) GetInt(key string) int {
-	return tc.store[key].(int)
+func (tc *testConfig) GetInt64(key string) (int64, error) {
+	return tc.store[key].(int64), nil
 }
 
 // GetString returns the string value of the key
-func (tc *testConfig) GetString(key string) string {
-	return tc.store[key].(string)
+func (tc *testConfig) GetString(key string) (string, error) {
+	return tc.store[key].(string), nil
 }
 
 // GetFloat64 returns the float64 value of the key
-func (tc *testConfig) GetFloat64(key string) float64 {
-	return tc.store[key].(float64)
+func (tc *testConfig) GetFloat64(key string) (float64, error) {
+	return tc.store[key].(float64), nil
 }

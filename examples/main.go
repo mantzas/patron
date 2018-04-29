@@ -31,8 +31,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
-
+func init() {
 	// Set up config (should come from flag, env, file etc)
 	err := config.Setup(viper.New())
 	if err != nil {
@@ -40,19 +39,41 @@ func main() {
 		os.Exit(1)
 	}
 
-	config.Set("log_level", log.InfoLevel)
-	config.Set("rabbitmq_url", "amqp://localhost:8081")
+	err = config.Set("log_level", log.InfoLevel)
+	if err != nil {
+		fmt.Printf("failed to set log level config %v", err)
+		os.Exit(1)
+	}
+	err = config.Set("rabbitmq_url", "amqp://localhost:8081")
+	if err != nil {
+		fmt.Printf("failed to set rabbitmq URL config %v", err)
+		os.Exit(1)
+	}
+}
+
+func main() {
 
 	// Set up logging
-	lvl := config.Get("log_level").(log.Level)
-	err = log.Setup(zerolog.DefaultFactory(lvl))
+	lvl, err := config.Get("log_level")
+	if err != nil {
+		fmt.Printf("failed to get log level config %v", err)
+		os.Exit(1)
+	}
+
+	err = log.Setup(zerolog.DefaultFactory(lvl.(log.Level)))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)
 	}
 
+	rabbitmqURL, err := config.GetString("rabbitmq_url")
+	if err != nil {
+		fmt.Printf("failed to get rabbitmq URL config %v", err)
+		os.Exit(1)
+	}
+
 	// setting up a amqp processor
-	amqpSrv, err := amqp.New(config.GetString("rabbitmq_url"), "test", &helloProcessor{})
+	amqpSrv, err := amqp.New(rabbitmqURL, "test", &helloProcessor{})
 	if err != nil {
 		fmt.Print("failed to create AMQP service", err)
 		os.Exit(1)

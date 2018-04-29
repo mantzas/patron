@@ -17,9 +17,11 @@ func TestGet(t *testing.T) {
 	key := "key"
 	value := "value"
 	c := New()
-	c.Set(key, value)
-	v := c.Get(key)
+	err := c.Set(key, value)
+	assert.NoError(err)
+	v, err := c.Get(key)
 	assert.Equal(value, v)
+	assert.NoError(err)
 }
 
 func TestBool(t *testing.T) {
@@ -27,19 +29,23 @@ func TestBool(t *testing.T) {
 	key := "key"
 	value := true
 	c := New()
-	c.Set(key, value)
-	v := c.GetBool(key)
+	err := c.Set(key, value)
+	assert.NoError(err)
+	v, err := c.GetBool(key)
 	assert.Equal(value, v)
+	assert.NoError(err)
 }
 
-func TestInt(t *testing.T) {
+func TestInt64(t *testing.T) {
 	assert := assert.New(t)
 	key := "key"
-	value := 1
+	value := int64(1)
 	c := New()
-	c.Set(key, value)
-	v := c.GetInt(key)
+	err := c.Set(key, value)
+	assert.NoError(err)
+	v, err := c.GetInt64(key)
 	assert.Equal(value, v)
+	assert.NoError(err)
 }
 
 func TestString(t *testing.T) {
@@ -47,9 +53,11 @@ func TestString(t *testing.T) {
 	key := "key"
 	value := "value"
 	c := New()
-	c.Set(key, value)
-	v := c.GetString(key)
+	err := c.Set(key, value)
+	assert.NoError(err)
+	v, err := c.GetString(key)
 	assert.Equal(value, v)
+	assert.NoError(err)
 }
 
 func TestFloat64(t *testing.T) {
@@ -57,7 +65,9 @@ func TestFloat64(t *testing.T) {
 	key := "key"
 	value := 3.2
 	c := New()
-	c.Set(key, value)
-	v := c.GetFloat64(key)
+	err := c.Set(key, value)
+	assert.NoError(err)
+	v, err := c.GetFloat64(key)
 	assert.Equal(value, v)
+	assert.NoError(err)
 }
