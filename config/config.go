@@ -6,12 +6,12 @@ import (
 
 // Config interface which has to be implemented in order to be used here
 type Config interface {
-	Set(key string, value interface{})
-	Get(key string) interface{}
-	GetBool(key string) bool
-	GetInt(key string) int
-	GetString(key string) string
-	GetFloat64(key string) float64
+	Set(key string, value interface{}) error
+	Get(key string) (interface{}, error)
+	GetBool(key string) (bool, error)
+	GetInt64(key string) (int64, error)
+	GetString(key string) (string, error)
+	GetFloat64(key string) (float64, error)
 }
 
 var config Config
@@ -27,31 +27,31 @@ func Setup(c Config) error {
 }
 
 // Set a key and a value to config
-func Set(key string, value interface{}) {
-	config.Set(key, value)
+func Set(key string, value interface{}) error {
+	return config.Set(key, value)
 }
 
 // Get returns the value of the key
-func Get(key string) interface{} {
+func Get(key string) (interface{}, error) {
 	return config.Get(key)
 }
 
 // GetBool returns the bool value of the key
-func GetBool(key string) bool {
+func GetBool(key string) (bool, error) {
 	return config.GetBool(key)
 }
 
-// GetInt returns the int value of the key
-func GetInt(key string) int {
-	return config.GetInt(key)
+// GetInt64 returns the int64 value of the key
+func GetInt64(key string) (int64, error) {
+	return config.GetInt64(key)
 }
 
 // GetString returns the string value of the key
-func GetString(key string) string {
+func GetString(key string) (string, error) {
 	return config.GetString(key)
 }
 
 // GetFloat64 returns the float64 value of the key
-func GetFloat64(key string) float64 {
+func GetFloat64(key string) (float64, error) {
 	return config.GetFloat64(key)
 }
