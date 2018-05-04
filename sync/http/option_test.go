@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSetPorts(t *testing.T) {
+func TestPort(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
 		name    string
@@ -20,8 +20,7 @@ func TestSetPorts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Service{}
-			err := SetPorts(tt.port)(&s)
-
+			err := Port(tt.port)(&s)
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
@@ -45,8 +44,7 @@ func TestSetRoutes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Service{}
-			err := SetRoutes(tt.rr)(&s)
-
+			err := Routes(tt.rr)(&s)
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
@@ -70,8 +68,7 @@ func TestSetHealthCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Service{}
-			err := SetHealthCheck(tt.hcf)(&s)
-
+			err := HealthCheck(tt.hcf)(&s)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(s.hc)

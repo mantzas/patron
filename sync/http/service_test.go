@@ -17,7 +17,7 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{"success with no options", testCreateHandler, []Option{}, false},
-		{"success with options", testCreateHandler, []Option{SetPorts(50000)}, false},
+		{"success with options", testCreateHandler, []Option{Port(50000)}, false},
 		{"failed with missing handler gen", nil, []Option{}, true},
 	}
 	for _, tt := range tests {

@@ -109,8 +109,8 @@ func main() {
 	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, index))
 
 	options := []sync_http.Option{
-		sync_http.SetPorts(50000),
-		sync_http.SetRoutes(routes),
+		sync_http.Port(50000),
+		sync_http.Routes(routes),
 	}
 
 	httpSrv, err := sync_http.New(httprouter.CreateHandler, options...)
