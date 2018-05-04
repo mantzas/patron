@@ -92,7 +92,6 @@ func (s *Server) Shutdown() error {
 	wg := sync.WaitGroup{}
 	wg.Add(len(s.services))
 	agr := agr_errors.New()
-
 	for _, srv := range s.services {
 
 		go func(srv Service, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {

@@ -232,6 +232,21 @@
   version = "v1.2.1"
 
 [[projects]]
+  name = "go.opencensus.io"
+  packages = [
+    "internal",
+    "internal/tagencoding",
+    "stats",
+    "stats/internal",
+    "stats/view",
+    "tag",
+    "trace",
+    "trace/internal"
+  ]
+  revision = "10cec2c05ea2cfb8b0d856711daedc49d8a45c56"
+  version = "v0.9.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -259,6 +274,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7aaa96dda5e8a2887d4a11906575b9ddff2651cc67e7fdcab62196f79d353ef5"
+  inputs-digest = "8a7cf6f3bcc066d44106c45a9910e47cbc4cc8e0ac17f59aa6eede02131e64c0"
   solver-name = "gps-cdcl"
   solver-version = 1

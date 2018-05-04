@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/async/amqp"
@@ -14,7 +15,21 @@ import (
 	"github.com/mantzas/patron/log/zerolog"
 	sync_http "github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/sync/http/httprouter"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
 )
+
+type logExporter struct{}
+
+// ExportView logs the view data.
+func (e *logExporter) ExportView(vd *view.Data) {
+	log.Infof("view export: %v", *vd)
+}
+
+// ExportSpan logs the trace span.
+func (e *logExporter) ExportSpan(vd *trace.SpanData) {
+	log.Infof("span export: %v", *vd)
+}
 
 type helloProcessor struct {
 }
@@ -49,6 +64,16 @@ func init() {
 		fmt.Printf("failed to set rabbitmq URL config %v", err)
 		os.Exit(1)
 	}
+
+	exporter := &logExporter{}
+	view.RegisterExporter(exporter)
+	trace.RegisterExporter(exporter)
+
+	// Always trace for this demo.
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+
+	// Report stats at every second.
+	view.SetReportingPeriod(10 * time.Second)
 }
 
 func main() {
@@ -73,7 +98,7 @@ func main() {
 	}
 
 	// setting up a amqp processor
-	amqpSrv, err := amqp.New(rabbitmqURL, "test", &helloProcessor{})
+	_, err = amqp.New(rabbitmqURL, "test", &helloProcessor{})
 	if err != nil {
 		fmt.Print("failed to create AMQP service", err)
 		os.Exit(1)
@@ -94,7 +119,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv, err := patron.New("test", httpSrv, amqpSrv)
+	patron.Metric(&logExporter{}, 5*time.Second)
+
+	srv, err := patron.New("test", httpSrv /*, amqpSrv*/)
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)

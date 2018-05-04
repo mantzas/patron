@@ -2,11 +2,12 @@ package http
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"sync"
 
 	"github.com/mantzas/patron/log"
+	"github.com/pkg/errors"
+	"go.opencensus.io/stats/view"
 )
 
 const (
@@ -44,6 +45,9 @@ func New(hg handlerGen, options ...Option) (*Service, error) {
 
 	s.routes = append(s.routes, healthCheckRoute(s.hc))
 	s.srv = createHTTPServer(s.port, s.hg(s.routes))
+	if err := view.Register(defaultServerViews...); err != nil {
+		return nil, errors.Wrap(err, "failed to register default server views")
+	}
 	return &s, nil
 }
 
