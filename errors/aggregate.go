@@ -45,7 +45,6 @@ func (a *Aggregate) Error() string {
 	a.m.Lock()
 	defer a.m.Unlock()
 	b := strings.Builder{}
-
 	for _, err := range a.errors {
 		_, err1 := b.WriteString(err.Error())
 		if err1 != nil {
@@ -56,6 +55,5 @@ func (a *Aggregate) Error() string {
 			log.Errorf("failed to write newline")
 		}
 	}
-
 	return b.String()
 }
