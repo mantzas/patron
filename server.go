@@ -24,7 +24,7 @@ type Server struct {
 }
 
 // New creates a new server
-func New(name string, services ...Service) (*Server, error) {
+func New(name string, services []Service, oo ...Option) (*Server, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -43,6 +43,13 @@ func New(name string, services ...Service) (*Server, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	s := Server{name, services, ctx, cancel}
+
+	for _, o := range oo {
+		err := o(&s)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	s.setupTermSignal()
 	return &s, nil
@@ -92,7 +99,6 @@ func (s *Server) Shutdown() error {
 	wg := sync.WaitGroup{}
 	wg.Add(len(s.services))
 	agr := agr_errors.New()
-
 	for _, srv := range s.services {
 
 		go func(srv Service, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {

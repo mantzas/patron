@@ -8,8 +8,8 @@ import (
 // Option defines a option for the HTTP service
 type Option func(*Service) error
 
-// SetPorts option for setting the ports of the http service
-func SetPorts(port int) Option {
+// Port option for setting the ports of the http service
+func Port(port int) Option {
 	return func(s *Service) error {
 		if port <= 0 || port > 65535 {
 			return errors.New("invalid port")
@@ -20,8 +20,8 @@ func SetPorts(port int) Option {
 	}
 }
 
-// SetRoutes option for setting the routes of the http service
-func SetRoutes(rr []Route) Option {
+// Routes option for setting the routes of the http service
+func Routes(rr []Route) Option {
 	return func(s *Service) error {
 		if len(rr) == 0 {
 			return errors.New("routes are empty")
@@ -32,8 +32,8 @@ func SetRoutes(rr []Route) Option {
 	}
 }
 
-// SetHealthCheck option for setting the health check function
-func SetHealthCheck(hcf HealthCheckFunc) Option {
+// HealthCheck option for setting the health check function
+func HealthCheck(hcf HealthCheckFunc) Option {
 	return func(s *Service) error {
 		if hcf == nil {
 			return errors.New("health check function is not defined")
