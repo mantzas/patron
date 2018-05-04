@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -28,14 +27,6 @@ func (e *logExporter) ExportView(vd *view.Data) {
 // ExportSpan logs the trace span.
 func (e *logExporter) ExportSpan(vd *trace.SpanData) {
 	log.Infof("span export: %v", *vd)
-}
-
-type helloProcessor struct {
-}
-
-func (hp helloProcessor) Process(ctx context.Context, msg []byte) error {
-	log.Infof("message: %s", string(msg))
-	return nil
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
