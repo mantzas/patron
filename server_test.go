@@ -3,6 +3,7 @@ package patron
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -10,22 +11,28 @@ import (
 
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
+
+	services := []Service{&testService{}}
+	options := []Option{Metric(&testExporter{}, 5*time.Second)}
+
 	type args struct {
 		name     string
 		services []Service
+		options  []Option
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", []Service{&testService{}}}, false},
-		{"failed missing name", args{"", []Service{&testService{}}}, true},
-		{"failed missing services", args{"test", []Service{}}, true},
+		{"success", args{"test", services, options}, false},
+		{"failed invalid option", args{"test", services, []Option{Metric(&testExporter{}, 10*time.Millisecond)}}, true},
+		{"failed missing name", args{"", services, options}, true},
+		{"failed missing services", args{"test", []Service{}, options}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.services...)
+			got, err := New(tt.args.name, tt.args.services, tt.args.options...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -39,15 +46,16 @@ func TestNewServer(t *testing.T) {
 
 func TestServer_Run_Shutdown(t *testing.T) {
 	assert := assert.New(t)
+
 	tests := []struct {
 		name            string
-		service         Service
+		service         []Service
 		wantRunErr      bool
 		wantShutdownErr bool
 	}{
-		{"success", &testService{}, false, false},
-		{"failed to run", &testService{true, false}, true, false},
-		{"failed to shutdown", &testService{false, true}, false, true},
+		{"success", []Service{&testService{}}, false, false},
+		{"failed to run", []Service{&testService{true, false}}, true, false},
+		{"failed to shutdown", []Service{&testService{false, true}}, false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -3,6 +3,7 @@ package patron
 import (
 	"time"
 
+	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -26,6 +27,7 @@ func Metric(e view.Exporter, rp time.Duration) Option {
 		}
 		view.RegisterExporter(e)
 		view.SetReportingPeriod(rp)
+		log.Infof("metric set with report duration %v", rp)
 		return nil
 	}
 }
@@ -38,6 +40,7 @@ func Trace(e trace.Exporter, cfg trace.Config) Option {
 		}
 		trace.RegisterExporter(e)
 		trace.ApplyConfig(cfg)
+		log.Info("trace set")
 		return nil
 	}
 }

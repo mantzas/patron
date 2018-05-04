@@ -29,15 +29,15 @@ type Service struct {
 }
 
 // New returns a new service
-func New(hg handlerGen, options ...Option) (*Service, error) {
+func New(hg handlerGen, oo ...Option) (*Service, error) {
 	if hg == nil {
 		return nil, errors.New("http handler generator is required")
 	}
 
 	s := Service{hg, defaultHealthCheck, port, []Route{}, nil, sync.Mutex{}}
 
-	for _, opt := range options {
-		err := opt(&s)
+	for _, o := range oo {
+		err := o(&s)
 		if err != nil {
 			return nil, err
 		}
