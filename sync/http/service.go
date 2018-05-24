@@ -2,13 +2,17 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 	"go.opencensus.io/stats/view"
 )
+
+type handlerGen func([]Route) http.Handler
 
 const (
 	port = 50000
@@ -65,4 +69,14 @@ func (s *Service) Shutdown(ctx context.Context) error {
 	defer s.m.Unlock()
 	log.Info("shutting down service")
 	return s.srv.Shutdown(ctx)
+}
+
+func createHTTPServer(port int, sm http.Handler) *http.Server {
+	return &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 60 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      sm,
+	}
 }
