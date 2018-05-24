@@ -3,26 +3,25 @@ package sync
 import (
 	"context"
 	"io"
-)
 
-// Unmarshaller definition of a function for unmarshalling a model.
-type Unmarshaller func(data io.ReadCloser, v interface{}) error
+	"github.com/mantzas/patron/encoding"
+)
 
 // Request definition of the sync request model.
 type Request struct {
-	Headers      map[string]string
-	Fields       map[string]string
-	Raw          io.ReadCloser
-	unmarshaller Unmarshaller
+	Headers map[string]string
+	Fields  map[string]string
+	Raw     io.ReadCloser
+	decode  encoding.Decode
 }
 
 // NewRequest creates a new request item
-func NewRequest(h map[string]string, f map[string]string, r io.ReadCloser, u Unmarshaller) *Request {
+func NewRequest(h map[string]string, f map[string]string, r io.ReadCloser, d encoding.Decode) *Request {
 	return &Request{
-		Headers:      h,
-		Fields:       f,
-		Raw:          r,
-		unmarshaller: u,
+		Headers: h,
+		Fields:  f,
+		Raw:     r,
+		decode:  d,
 	}
 }
 
