@@ -9,6 +9,49 @@ import (
 	"github.com/mantzas/patron/log"
 )
 
+type responseWriter struct {
+	status              int
+	statusHeaderWritten bool
+	w                   http.ResponseWriter
+}
+
+func newResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{-1, false, w}
+}
+
+// Status returns the http response status
+func (w *responseWriter) Status() int {
+	return w.status
+}
+
+// Header returns the header
+func (w *responseWriter) Header() http.Header {
+	return w.w.Header()
+}
+
+// Write to the internal ResponseWriter and sets the status if not set already
+func (w *responseWriter) Write(d []byte) (int, error) {
+
+	value, err := w.w.Write(d)
+	if err != nil {
+		return value, err
+	}
+
+	if !w.statusHeaderWritten {
+		w.status = http.StatusOK
+		w.statusHeaderWritten = true
+	}
+
+	return value, err
+}
+
+// WriteHeader writes the internal header and saves the status for retrieval
+func (w *responseWriter) WriteHeader(code int) {
+	w.status = code
+	w.w.WriteHeader(code)
+	w.statusHeaderWritten = true
+}
+
 // DefaultMiddleware which handles Logging and Recover middleware
 func DefaultMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return LoggingMetricMiddleware(RecoveryMiddleware(next))
@@ -17,7 +60,7 @@ func DefaultMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // LoggingMetricMiddleware for handling logging and metrics
 func LoggingMetricMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		lw := NewResponseWriter(w)
+		lw := newResponseWriter(w)
 		st := time.Now()
 		next(lw, r)
 		latency := float64(time.Since(st)) / float64(time.Millisecond)

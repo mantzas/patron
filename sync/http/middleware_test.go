@@ -52,3 +52,17 @@ func TestMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestResponseWriter(t *testing.T) {
+	assert := assert.New(t)
+	rc := httptest.NewRecorder()
+	rw := newResponseWriter(rc)
+
+	rw.Write([]byte("test"))
+	rw.WriteHeader(202)
+
+	assert.Equal(202, rw.status, "status expected 202 but got %d", rw.status)
+	assert.Len(rw.Header(), 1, "header count expected to be 1")
+	assert.True(rw.statusHeaderWritten, "expected to be true")
+	assert.Equal("test", rc.Body.String(), "body expected to be test but was %s", rc.Body.String())
+}
