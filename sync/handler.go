@@ -39,3 +39,31 @@ func NewResponse(p interface{}) *Response {
 type Handler interface {
 	Handle(context.Context, *Request) (*Response, error)
 }
+
+type ValidationError struct {
+}
+
+func (e *ValidationError) Error() string {
+	return ""
+}
+
+type UnauthorizedError struct {
+}
+
+func (e *UnauthorizedError) Error() string {
+	return ""
+}
+
+type ForbiddenError struct {
+}
+
+func (e *ForbiddenError) Error() string {
+	return ""
+}
+
+type NotFoundError struct {
+}
+
+func (e *NotFoundError) Error() string {
+	return ""
+}
