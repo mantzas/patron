@@ -40,6 +40,7 @@ type Handler interface {
 	Handle(context.Context, *Request) (*Response, error)
 }
 
+// ValidationError defines a validation error.
 type ValidationError struct {
 }
 
@@ -47,6 +48,7 @@ func (e *ValidationError) Error() string {
 	return ""
 }
 
+// UnauthorizedError defines a authorization error.
 type UnauthorizedError struct {
 }
 
@@ -54,6 +56,7 @@ func (e *UnauthorizedError) Error() string {
 	return ""
 }
 
+// ForbiddenError defines a access error.
 type ForbiddenError struct {
 }
 
@@ -61,6 +64,7 @@ func (e *ForbiddenError) Error() string {
 	return ""
 }
 
+// NotFoundError defines a not found error.
 type NotFoundError struct {
 }
 
