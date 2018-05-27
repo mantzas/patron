@@ -50,49 +50,42 @@ func handler(hnd sync.Handler) http.HandlerFunc {
 
 func extractHeaders(r *http.Request) map[string]string {
 
-	var h map[string]string
+	h := make(map[string]string)
 
-	for name, headers := range r.Header {
-		if len(headers) == 0 {
-			continue
-		}
-		h[name] = headers[0]
+	for name, hdr := range r.Header {
+		h[name] = hdr[0]
 	}
 	return h
 }
 
 func extractFields(r *http.Request) map[string]string {
 
-	var f map[string]string
+	f := make(map[string]string)
 
 	for name, values := range r.URL.Query() {
-		if len(values) == 0 {
-			continue
-		}
 		f[name] = values[0]
 	}
 	return f
 }
 
-func determineEncoding(headers map[string]string) (encoding.Decode, encoding.Encode, error) {
+func determineEncoding(hdr map[string]string) (encoding.Decode, encoding.Encode, error) {
 
-	c, err := determineContentType(headers)
+	c, err := determineContentType(hdr)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	switch c {
-	case JSONContentType:
-	case JSONContentTypeCharset:
+	case JSONContentType, JSONContentTypeCharset:
 		return json.Decode, json.Encode, nil
 
 	}
 	return nil, nil, errors.Errorf("accept header %s is unsupported", c)
 }
 
-func determineContentType(headers map[string]string) (string, error) {
-	ah, aOk := headers[AcceptHeader]
-	ch, cOk := headers[ContentTypeHeader]
+func determineContentType(hdr map[string]string) (string, error) {
+	ah, aOk := hdr[AcceptHeader]
+	ch, cOk := hdr[ContentTypeHeader]
 	if !aOk && !cOk {
 		return "", errors.New("accept and content type header is missing")
 
@@ -102,7 +95,10 @@ func determineContentType(headers map[string]string) (string, error) {
 		return "", errors.New("accept and content type header are different")
 	}
 
-	return ah, nil
+	if ah != "" {
+		return ah, nil
+	}
+	return ch, nil
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.Encode) error {
@@ -117,12 +113,11 @@ func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, e
 		return err
 	}
 
-	w.Write(p)
-
 	if r.Method == http.MethodPost {
 		w.WriteHeader(http.StatusCreated)
 	}
 
+	w.Write(p)
 	return nil
 }
 
