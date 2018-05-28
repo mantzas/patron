@@ -38,10 +38,10 @@ func Test_extractFields(t *testing.T) {
 func Test_determineEncoding(t *testing.T) {
 
 	assert := assert.New(t)
-	hdrContentJSON := make(map[string]string, 0)
+	hdrContentJSON := make(map[string]string)
 	hdrContentJSON[ContentTypeHeader] = JSONContentTypeCharset
-	hdrEmptyHeader := make(map[string]string, 0)
-	hdrUnsupportedEncoding := make(map[string]string, 0)
+	hdrEmptyHeader := make(map[string]string)
+	hdrUnsupportedEncoding := make(map[string]string)
 	hdrUnsupportedEncoding[ContentTypeHeader] = "application/xml"
 
 	type args struct {
@@ -185,7 +185,7 @@ func Test_handler(t *testing.T) {
 		{"unsupported content type", args{errReq, nil}, http.StatusUnsupportedMediaType},
 		{"success handling", args{req, testHandler{false, "test"}}, http.StatusOK},
 		{"error handling", args{req, testHandler{true, "test"}}, http.StatusInternalServerError},
-		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool, 0)}}, http.StatusInternalServerError},
+		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

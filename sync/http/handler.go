@@ -77,7 +77,6 @@ func determineEncoding(hdr map[string]string) (string, encoding.Decode, encoding
 	switch c {
 	case JSONContentType, JSONContentTypeCharset:
 		return c, json.Decode, json.Encode, nil
-
 	}
 	return "", nil, nil, errors.Errorf("accept header %s is unsupported", c)
 }
@@ -107,8 +106,8 @@ func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, e
 		w.WriteHeader(http.StatusCreated)
 	}
 
-	w.Write(p)
-	return nil
+	_, err = w.Write(p)
+	return err
 }
 
 func handleError(w http.ResponseWriter, err error) {

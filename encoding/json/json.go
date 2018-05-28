@@ -6,8 +6,7 @@ import (
 )
 
 // Decode a JSON input in the form of a read closer.
-func Decode(data io.ReadCloser, v interface{}) error {
-	defer data.Close()
+func Decode(data io.Reader, v interface{}) error {
 	return json.NewDecoder(data).Decode(v)
 }
 
