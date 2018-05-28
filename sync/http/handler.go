@@ -12,11 +12,6 @@ import (
 const (
 	// ContentTypeHeader HTTP constant
 	ContentTypeHeader string = "Content-Type"
-
-	// JSONContentType JSON definition
-	JSONContentType string = "application/json"
-	// JSONContentTypeCharset JSON definition with charset
-	JSONContentTypeCharset string = "application/json; charset=utf-8"
 )
 
 func handler(hnd sync.Handler) http.HandlerFunc {
@@ -33,7 +28,6 @@ func handler(hnd sync.Handler) http.HandlerFunc {
 		prepareResponse(w, ct)
 
 		req := sync.NewRequest(h, extractFields(r), r.Body, dec)
-
 		rsp, err := hnd.Handle(r.Context(), req)
 		if err != nil {
 			handleError(w, err)
@@ -75,7 +69,7 @@ func determineEncoding(hdr map[string]string) (string, encoding.Decode, encoding
 	}
 
 	switch c {
-	case JSONContentType, JSONContentTypeCharset:
+	case json.ContentType, json.ContentTypeCharset:
 		return c, json.Decode, json.Encode, nil
 	}
 	return "", nil, nil, errors.Errorf("accept header %s is unsupported", c)

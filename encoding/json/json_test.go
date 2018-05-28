@@ -16,5 +16,7 @@ func TestEncodeDecode(t *testing.T) {
 	err = Decode(b, &data)
 	assert.NoError(err)
 	assert.Equal("string", data)
-
+	err = DecodeRaw(j, &data)
+	assert.NoError(err)
+	assert.Equal("string", data)
 }

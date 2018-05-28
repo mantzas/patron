@@ -2,12 +2,12 @@ package async
 
 import "context"
 
-// MockMesssageProcessor definition for test usage
-type MockMesssageProcessor struct {
+// MockProcessor definition for test usage
+type MockProcessor struct {
 }
 
 // Process a message for testing purposes
-func (mmp MockMesssageProcessor) Process(ctx context.Context, msg []byte) error {
+func (mp MockProcessor) Process(ctx context.Context, msg *Message) error {
 
 	return nil
 }

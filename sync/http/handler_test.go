@@ -39,7 +39,7 @@ func Test_determineEncoding(t *testing.T) {
 
 	assert := assert.New(t)
 	hdrContentJSON := make(map[string]string)
-	hdrContentJSON[ContentTypeHeader] = JSONContentTypeCharset
+	hdrContentJSON[ContentTypeHeader] = json.ContentTypeCharset
 	hdrEmptyHeader := make(map[string]string)
 	hdrUnsupportedEncoding := make(map[string]string)
 	hdrUnsupportedEncoding[ContentTypeHeader] = "application/xml"
@@ -70,7 +70,7 @@ func Test_determineEncoding(t *testing.T) {
 				assert.NoError(err)
 				assert.NotNil(got)
 				assert.NotNil(got1)
-				assert.Equal(JSONContentTypeCharset, ct)
+				assert.Equal(json.ContentTypeCharset, ct)
 			}
 		})
 	}
@@ -169,7 +169,7 @@ func Test_handler(t *testing.T) {
 	assert.NoError(err)
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
-	req.Header.Set(ContentTypeHeader, JSONContentType)
+	req.Header.Set(ContentTypeHeader, json.ContentType)
 
 	// success handling
 	// failure handling
@@ -199,6 +199,6 @@ func Test_handler(t *testing.T) {
 func Test_prepareResponse(t *testing.T) {
 	assert := assert.New(t)
 	rsp := httptest.NewRecorder()
-	prepareResponse(rsp, JSONContentTypeCharset)
-	assert.Equal(JSONContentTypeCharset, rsp.Header().Get(ContentTypeHeader))
+	prepareResponse(rsp, json.ContentTypeCharset)
+	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(ContentTypeHeader))
 }

@@ -1,7 +1,6 @@
 package async
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/mantzas/patron/encoding/json"
@@ -10,7 +9,7 @@ import (
 
 func TestNewMessage(t *testing.T) {
 	assert := assert.New(t)
-	assert.NotNil(NewMessage(nil, nil, nil))
+	assert.NotNil(NewMessage(nil, nil))
 }
 
 func TestMessage_Decode(t *testing.T) {
@@ -19,9 +18,7 @@ func TestMessage_Decode(t *testing.T) {
 	j, err := json.Encode("string")
 	assert.NoError(err)
 
-	b := bytes.NewBuffer(j)
-
-	req := NewMessage(nil, b, json.Decode)
+	req := NewMessage(j, json.DecodeRaw)
 	assert.NotNil(req)
 
 	var data string

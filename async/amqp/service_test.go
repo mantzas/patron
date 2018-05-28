@@ -19,9 +19,9 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"url", "queue", &async.MockMesssageProcessor{}}, false},
-		{"failed with invalid url", args{"", "queue", &async.MockMesssageProcessor{}}, true},
-		{"failed with invalid queue name", args{"url", "", &async.MockMesssageProcessor{}}, true},
+		{"success", args{"url", "queue", &async.MockProcessor{}}, false},
+		{"failed with invalid url", args{"", "queue", &async.MockProcessor{}}, true},
+		{"failed with invalid queue name", args{"url", "", &async.MockProcessor{}}, true},
 		{"failed with invalid processor", args{"url", "queue", nil}, true},
 	}
 	for _, tt := range tests {

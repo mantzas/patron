@@ -65,7 +65,18 @@ func (s *Service) Run(ctx context.Context) error {
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
 				go func() {
-					err := s.p.Process(ctx, msg.Value)
+
+					ct, err := determineContentType(msg.Headers)
+					if err != nil {
+						failCh <- errors.Wrap(err, "failed to determine content type")
+					}
+
+					dec, err := async.DetermineDecoder(ct)
+					if err != nil {
+						failCh <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
+					}
+
+					err = s.p.Process(ctx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
 					}
@@ -117,4 +128,9 @@ func (s *Service) consumers() (chan *sarama.ConsumerMessage, chan *sarama.Consum
 	}
 
 	return chMsg, chErr, nil
+}
+
+func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
+
+	return "", nil
 }
