@@ -70,3 +70,12 @@ type NotFoundError struct {
 func (e *NotFoundError) Error() string {
 	return e.err
 }
+
+// ServiceUnavailableError defines a service unavailable error.
+type ServiceUnavailableError struct {
+	err string
+}
+
+func (e *ServiceUnavailableError) Error() string {
+	return e.err
+}

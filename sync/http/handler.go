@@ -10,8 +10,6 @@ import (
 )
 
 const (
-	// AcceptHeader HTTP constant
-	AcceptHeader string = "Accept"
 	// ContentTypeHeader HTTP constant
 	ContentTypeHeader string = "Content-Type"
 
@@ -27,11 +25,12 @@ func handler(hnd sync.Handler) http.HandlerFunc {
 
 		h := extractHeaders(r)
 
-		dec, enc, err := determineEncoding(h)
+		ct, dec, enc, err := determineEncoding(h)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 			return
 		}
+		prepareResponse(w, ct)
 
 		req := sync.NewRequest(h, extractFields(r), r.Body, dec)
 
@@ -68,37 +67,28 @@ func extractFields(r *http.Request) map[string]string {
 	return f
 }
 
-func determineEncoding(hdr map[string]string) (encoding.Decode, encoding.Encode, error) {
+func determineEncoding(hdr map[string]string) (string, encoding.Decode, encoding.Encode, error) {
 
 	c, err := determineContentType(hdr)
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, err
 	}
 
 	switch c {
 	case JSONContentType, JSONContentTypeCharset:
-		return json.Decode, json.Encode, nil
+		return c, json.Decode, json.Encode, nil
 
 	}
-	return nil, nil, errors.Errorf("accept header %s is unsupported", c)
+	return "", nil, nil, errors.Errorf("accept header %s is unsupported", c)
 }
 
 func determineContentType(hdr map[string]string) (string, error) {
-	ah, aOk := hdr[AcceptHeader]
-	ch, cOk := hdr[ContentTypeHeader]
-	if !aOk && !cOk {
+	h, ok := hdr[ContentTypeHeader]
+	if !ok {
 		return "", errors.New("accept and content type header is missing")
 
 	}
-
-	if (aOk && cOk) && (ah != ch) {
-		return "", errors.New("accept and content type header are different")
-	}
-
-	if ah != "" {
-		return ah, nil
-	}
-	return ch, nil
+	return h, nil
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.Encode) error {
@@ -131,7 +121,13 @@ func handleError(w http.ResponseWriter, err error) {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 	case *sync.NotFoundError:
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	case *sync.ServiceUnavailableError:
+		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 	default:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
+}
+
+func prepareResponse(w http.ResponseWriter, ct string) {
+	w.Header().Set(ContentTypeHeader, ct)
 }

@@ -38,16 +38,11 @@ func Test_extractFields(t *testing.T) {
 func Test_determineEncoding(t *testing.T) {
 
 	assert := assert.New(t)
-	hdrAcceptJSON := make(map[string]string, 0)
-	hdrAcceptJSON[AcceptHeader] = JSONContentType
 	hdrContentJSON := make(map[string]string, 0)
 	hdrContentJSON[ContentTypeHeader] = JSONContentTypeCharset
 	hdrEmptyHeader := make(map[string]string, 0)
-	hdrBothDifferentJSON := make(map[string]string, 0)
-	hdrBothDifferentJSON[AcceptHeader] = JSONContentType
-	hdrBothDifferentJSON[ContentTypeHeader] = JSONContentTypeCharset
 	hdrUnsupportedEncoding := make(map[string]string, 0)
-	hdrUnsupportedEncoding[AcceptHeader] = "application/xml"
+	hdrUnsupportedEncoding[ContentTypeHeader] = "application/xml"
 
 	type args struct {
 		hdr map[string]string
@@ -59,23 +54,23 @@ func Test_determineEncoding(t *testing.T) {
 		encode  encoding.Encode
 		wantErr bool
 	}{
-		{"accept json", args{hdrAcceptJSON}, json.Decode, json.Encode, false},
 		{"content type json", args{hdrContentJSON}, json.Decode, json.Encode, false},
 		{"empty header", args{hdrEmptyHeader}, nil, nil, true},
-		{"both different", args{hdrBothDifferentJSON}, nil, nil, true},
 		{"unsupported encoding", args{hdrUnsupportedEncoding}, nil, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := determineEncoding(tt.args.hdr)
+			ct, got, got1, err := determineEncoding(tt.args.hdr)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
 				assert.Nil(got1)
+				assert.Empty(ct)
 			} else {
 				assert.NoError(err)
 				assert.NotNil(got)
 				assert.NotNil(got1)
+				assert.Equal(JSONContentTypeCharset, ct)
 			}
 		})
 	}
@@ -143,6 +138,7 @@ func Test_handleError(t *testing.T) {
 		{"unauthorized request", args{&sync.UnauthorizedError{}}, http.StatusUnauthorized},
 		{"forbidden request", args{&sync.ForbiddenError{}}, http.StatusForbidden},
 		{"not found error", args{&sync.NotFoundError{}}, http.StatusNotFound},
+		{"service unavailable error", args{&sync.ServiceUnavailableError{}}, http.StatusServiceUnavailable},
 		{"default error", args{errors.New("Test")}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
@@ -173,7 +169,7 @@ func Test_handler(t *testing.T) {
 	assert.NoError(err)
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
-	req.Header.Set(AcceptHeader, JSONContentType)
+	req.Header.Set(ContentTypeHeader, JSONContentType)
 
 	// success handling
 	// failure handling
@@ -198,4 +194,11 @@ func Test_handler(t *testing.T) {
 			assert.Equal(tt.expectedCode, rsp.Code)
 		})
 	}
+}
+
+func Test_prepareResponse(t *testing.T) {
+	assert := assert.New(t)
+	rsp := httptest.NewRecorder()
+	prepareResponse(rsp, JSONContentTypeCharset)
+	assert.Equal(JSONContentTypeCharset, rsp.Header().Get(ContentTypeHeader))
 }

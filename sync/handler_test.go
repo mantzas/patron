@@ -29,6 +29,12 @@ func TestNotFoundError_Error(t *testing.T) {
 	assert.Equal("TEST", v.Error())
 }
 
+func TestServiceUnavailableError_Error(t *testing.T) {
+	assert := assert.New(t)
+	v := ServiceUnavailableError{"TEST"}
+	assert.Equal("TEST", v.Error())
+}
+
 func TestNewRequest(t *testing.T) {
 	assert := assert.New(t)
 	req := NewRequest(nil, nil, nil, nil)
