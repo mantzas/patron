@@ -17,12 +17,7 @@ type Request struct {
 
 // NewRequest creates a new request item
 func NewRequest(h map[string]string, f map[string]string, r io.ReadCloser, d encoding.Decode) *Request {
-	return &Request{
-		Headers: h,
-		Fields:  f,
-		Raw:     r,
-		decode:  d,
-	}
+	return &Request{h, f, r, d}
 }
 
 // Response definition of the sync response model.
@@ -42,32 +37,36 @@ type Handler interface {
 
 // ValidationError defines a validation error.
 type ValidationError struct {
+	err string
 }
 
 func (e *ValidationError) Error() string {
-	return ""
+	return e.err
 }
 
 // UnauthorizedError defines a authorization error.
 type UnauthorizedError struct {
+	err string
 }
 
 func (e *UnauthorizedError) Error() string {
-	return ""
+	return e.err
 }
 
 // ForbiddenError defines a access error.
 type ForbiddenError struct {
+	err string
 }
 
 func (e *ForbiddenError) Error() string {
-	return ""
+	return e.err
 }
 
 // NotFoundError defines a not found error.
 type NotFoundError struct {
+	err string
 }
 
 func (e *NotFoundError) Error() string {
-	return ""
+	return e.err
 }
