@@ -10,7 +10,7 @@ import (
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
-		mp       async.MessageProcessor
+		p        async.Processor
 		clientID string
 		brokers  []string
 		topics   []string
@@ -28,7 +28,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.mp, tt.args.clientID, tt.args.brokers, tt.args.topics)
+			got, err := New(tt.args.p, tt.args.clientID, tt.args.brokers, tt.args.topics)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)

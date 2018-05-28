@@ -12,7 +12,7 @@ import (
 
 // Service implementation of a kafka consumer
 type Service struct {
-	mp      async.MessageProcessor
+	p       async.Processor
 	brokers []string
 	topics  []string
 	cfg     *sarama.Config
@@ -20,8 +20,8 @@ type Service struct {
 }
 
 // New returns a new client
-func New(mp async.MessageProcessor, clientID string, brokers []string, topics []string) (*Service, error) {
-	if mp == nil {
+func New(p async.Processor, clientID string, brokers []string, topics []string) (*Service, error) {
+	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
 
@@ -41,7 +41,7 @@ func New(mp async.MessageProcessor, clientID string, brokers []string, topics []
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Service{mp, brokers, topics, config, nil}, nil
+	return &Service{p, brokers, topics, config, nil}, nil
 }
 
 // Run starts the async processing
@@ -65,7 +65,7 @@ func (s *Service) Run(ctx context.Context) error {
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
 				go func() {
-					err := s.mp.Process(ctx, msg.Value)
+					err := s.p.Process(ctx, msg.Value)
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
 					}

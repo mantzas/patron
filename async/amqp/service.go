@@ -16,14 +16,14 @@ import (
 type Service struct {
 	url   string
 	queue string
-	mp    async.MessageProcessor
+	mp    async.Processor
 	tag   string
 	ch    *amqp.Channel
 	conn  *amqp.Connection
 }
 
 // New returns a new client
-func New(url, queue string, mp async.MessageProcessor) (*Service, error) {
+func New(url, queue string, mp async.Processor) (*Service, error) {
 
 	if url == "" {
 		return nil, errors.New("rabbitmq url is required")

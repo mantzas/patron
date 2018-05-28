@@ -12,7 +12,7 @@ func TestNew(t *testing.T) {
 	type args struct {
 		url   string
 		queue string
-		mp    async.MessageProcessor
+		p     async.Processor
 	}
 	tests := []struct {
 		name    string
@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.url, tt.args.queue, tt.args.mp)
+			got, err := New(tt.args.url, tt.args.queue, tt.args.p)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
