@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/mantzas/patron/config/viper"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
+	"github.com/mantzas/patron/sync"
 	sync_http "github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/sync/http/httprouter"
 	"go.opencensus.io/stats/view"
@@ -29,11 +31,11 @@ func (e *logExporter) ExportSpan(vd *trace.SpanData) {
 	log.Infof("span export: %v", *vd)
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Hello from patron!"))
-	if err != nil {
-		log.Errorf("failed to write response %v", err)
-	}
+type indexHandler struct {
+}
+
+func (ih indexHandler) Handle(context.Context, *sync.Request) (*sync.Response, error) {
+	return sync.NewResponse("Hello from patron!"), nil
 }
 
 func init() {
@@ -68,7 +70,7 @@ func main() {
 
 	// Set up routes
 	routes := make([]sync_http.Route, 0)
-	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, index))
+	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexHandler{}))
 
 	options := []sync_http.Option{
 		sync_http.Port(50000),
