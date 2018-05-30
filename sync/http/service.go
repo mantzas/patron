@@ -9,7 +9,6 @@ import (
 
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
-	"go.opencensus.io/stats/view"
 )
 
 type handlerGen func([]Route) http.Handler
@@ -51,9 +50,6 @@ func New(hg handlerGen, oo ...Option) (*Service, error) {
 	s.routes = append(s.routes, profilingRoutes()...)
 
 	s.srv = createHTTPServer(s.port, s.hg(s.routes))
-	if err := view.Register(defaultServerViews...); err != nil {
-		return nil, errors.Wrap(err, "failed to register default server views")
-	}
 	return &s, nil
 }
 

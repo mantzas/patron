@@ -3,7 +3,6 @@ package patron
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +12,7 @@ func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
 
 	services := []Service{&testService{}}
-	options := []Option{Metric(&testExporter{}, 5*time.Second)}
+	options := []Option{}
 
 	type args struct {
 		name     string
@@ -26,7 +25,6 @@ func TestNewServer(t *testing.T) {
 		wantErr bool
 	}{
 		{"success", args{"test", services, options}, false},
-		{"failed invalid option", args{"test", services, []Option{Metric(&testExporter{}, 10*time.Millisecond)}}, true},
 		{"failed missing name", args{"", services, options}, true},
 		{"failed missing services", args{"test", []Service{}, options}, true},
 	}
