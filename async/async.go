@@ -13,6 +13,22 @@ type Processor interface {
 	Process(context.Context, *Message) error
 }
 
+// Message definition of a async message.
+type Message struct {
+	data   []byte
+	decode encoding.DecodeRaw
+}
+
+// NewMessage creates a new message.
+func NewMessage(d []byte, dec encoding.DecodeRaw) *Message {
+	return &Message{d, dec}
+}
+
+// Decode a the raw message into the given value.
+func (m *Message) Decode(v interface{}) error {
+	return m.decode(m.data, v)
+}
+
 // DetermineDecoder determines the decoder based on the content type.
 func DetermineDecoder(contentType string) (encoding.DecodeRaw, error) {
 	switch contentType {
