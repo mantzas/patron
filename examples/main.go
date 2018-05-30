@@ -7,9 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/mantzas/patron/config/env"
+
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/config"
-	"github.com/mantzas/patron/config/viper"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync"
@@ -39,14 +40,21 @@ func (ih indexHandler) Handle(context.Context, *sync.Request) (*sync.Response, e
 }
 
 func init() {
+
+	cfg, err := env.New(nil)
+	if err != nil {
+		fmt.Printf("failed to setup env config %v", err)
+		os.Exit(1)
+	}
+
 	// Set up config (should come from flag, env, file etc)
-	err := config.Setup(viper.New())
+	err = config.Setup(cfg)
 	if err != nil {
 		fmt.Printf("failed to setup config %v", err)
 		os.Exit(1)
 	}
 
-	err = config.Set("log_level", log.InfoLevel)
+	err = config.Set("LOG_LEVEL", "info")
 	if err != nil {
 		fmt.Printf("failed to set log level config %v", err)
 		os.Exit(1)
@@ -56,13 +64,13 @@ func init() {
 func main() {
 
 	// Set up logging
-	lvl, err := config.Get("log_level")
+	lvl, err := config.GetString("LOG_LEVEL")
 	if err != nil {
 		fmt.Printf("failed to get log level config %v", err)
 		os.Exit(1)
 	}
 
-	err = log.Setup(zerolog.DefaultFactory(lvl.(log.Level)))
+	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)
