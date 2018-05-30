@@ -48,6 +48,8 @@ func New(hg handlerGen, oo ...Option) (*Service, error) {
 	}
 
 	s.routes = append(s.routes, healthCheckRoute(s.hc))
+	s.routes = append(s.routes, profilingRoutes()...)
+
 	s.srv = createHTTPServer(s.port, s.hg(s.routes))
 	if err := view.Register(defaultServerViews...); err != nil {
 		return nil, errors.Wrap(err, "failed to register default server views")

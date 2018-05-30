@@ -35,7 +35,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestService_ListenAndServer_Shutdown(t *testing.T) {
+func TestService_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	s, err := New(testCreateHandler)
 	assert.NoError(err)
@@ -43,6 +43,7 @@ func TestService_ListenAndServer_Shutdown(t *testing.T) {
 		err = s.Run(context.TODO())
 		assert.NoError(err)
 	}()
+	assert.Len(s.routes, 11)
 	err = s.Shutdown(context.TODO())
 	assert.NoError(err)
 }
