@@ -11,13 +11,18 @@ import (
 type Request struct {
 	Headers map[string]string
 	Fields  map[string]string
-	Raw     io.ReadCloser
+	Raw     io.Reader
 	decode  encoding.Decode
 }
 
 // NewRequest creates a new request item
-func NewRequest(h map[string]string, f map[string]string, r io.ReadCloser, d encoding.Decode) *Request {
+func NewRequest(h map[string]string, f map[string]string, r io.Reader, d encoding.Decode) *Request {
 	return &Request{h, f, r, d}
+}
+
+// Decode a the raw message into the given value.
+func (r *Request) Decode(v interface{}) error {
+	return r.decode(r.Raw, v)
 }
 
 // Response definition of the sync response model.

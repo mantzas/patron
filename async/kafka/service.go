@@ -6,13 +6,14 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
+	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
 
 // Service implementation of a kafka consumer
 type Service struct {
-	mp      async.MessageProcessor
+	p       async.Processor
 	brokers []string
 	topics  []string
 	cfg     *sarama.Config
@@ -20,8 +21,8 @@ type Service struct {
 }
 
 // New returns a new client
-func New(mp async.MessageProcessor, clientID string, brokers []string, topics []string) (*Service, error) {
-	if mp == nil {
+func New(p async.Processor, clientID string, brokers []string, topics []string) (*Service, error) {
+	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
 
@@ -41,7 +42,7 @@ func New(mp async.MessageProcessor, clientID string, brokers []string, topics []
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Service{mp, brokers, topics, config, nil}, nil
+	return &Service{p, brokers, topics, config, nil}, nil
 }
 
 // Run starts the async processing
@@ -65,7 +66,18 @@ func (s *Service) Run(ctx context.Context) error {
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
 				go func() {
-					err := s.mp.Process(ctx, msg.Value)
+
+					ct, err := determineContentType(msg.Headers)
+					if err != nil {
+						failCh <- errors.Wrap(err, "failed to determine content type")
+					}
+
+					dec, err := async.DetermineDecoder(ct)
+					if err != nil {
+						failCh <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
+					}
+
+					err = s.p.Process(ctx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
 					}
@@ -117,4 +129,15 @@ func (s *Service) consumers() (chan *sarama.ConsumerMessage, chan *sarama.Consum
 	}
 
 	return chMsg, chErr, nil
+}
+
+func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
+
+	for _, h := range hdr {
+		if string(h.Key) == encoding.ContentTypeHeader {
+			return string(h.Value), nil
+		}
+	}
+
+	return "", errors.New("content type header is missing")
 }

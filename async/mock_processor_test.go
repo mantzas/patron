@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMockMesssageProcessor_Process(t *testing.T) {
+func TestMockProcessor_Process(t *testing.T) {
 	assert := assert.New(t)
-	m := MockMesssageProcessor{}
-	assert.NoError(m.Process(context.TODO(), []byte{}))
+	m := MockProcessor{}
+	assert.NoError(m.Process(context.TODO(), &Message{}))
 }

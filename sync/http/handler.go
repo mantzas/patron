@@ -9,16 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	// ContentTypeHeader HTTP constant
-	ContentTypeHeader string = "Content-Type"
-
-	// JSONContentType JSON definition
-	JSONContentType string = "application/json"
-	// JSONContentTypeCharset JSON definition with charset
-	JSONContentTypeCharset string = "application/json; charset=utf-8"
-)
-
 func handler(hnd sync.Handler) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +23,6 @@ func handler(hnd sync.Handler) http.HandlerFunc {
 		prepareResponse(w, ct)
 
 		req := sync.NewRequest(h, extractFields(r), r.Body, dec)
-
 		rsp, err := hnd.Handle(r.Context(), req)
 		if err != nil {
 			handleError(w, err)
@@ -75,15 +64,14 @@ func determineEncoding(hdr map[string]string) (string, encoding.Decode, encoding
 	}
 
 	switch c {
-	case JSONContentType, JSONContentTypeCharset:
+	case json.ContentType, json.ContentTypeCharset:
 		return c, json.Decode, json.Encode, nil
-
 	}
 	return "", nil, nil, errors.Errorf("accept header %s is unsupported", c)
 }
 
 func determineContentType(hdr map[string]string) (string, error) {
-	h, ok := hdr[ContentTypeHeader]
+	h, ok := hdr[encoding.ContentTypeHeader]
 	if !ok {
 		return "", errors.New("accept and content type header is missing")
 
@@ -107,8 +95,8 @@ func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, e
 		w.WriteHeader(http.StatusCreated)
 	}
 
-	w.Write(p)
-	return nil
+	_, err = w.Write(p)
+	return err
 }
 
 func handleError(w http.ResponseWriter, err error) {
@@ -129,5 +117,5 @@ func handleError(w http.ResponseWriter, err error) {
 }
 
 func prepareResponse(w http.ResponseWriter, ct string) {
-	w.Header().Set(ContentTypeHeader, ct)
+	w.Header().Set(encoding.ContentTypeHeader, ct)
 }

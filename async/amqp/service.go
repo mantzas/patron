@@ -2,6 +2,7 @@ package amqp
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mantzas/patron/async"
 	agr_errors "github.com/mantzas/patron/errors"
@@ -16,28 +17,28 @@ import (
 type Service struct {
 	url   string
 	queue string
-	mp    async.MessageProcessor
+	p     async.Processor
 	tag   string
 	ch    *amqp.Channel
 	conn  *amqp.Connection
 }
 
 // New returns a new client
-func New(url, queue string, mp async.MessageProcessor) (*Service, error) {
+func New(url, queue string, p async.Processor) (*Service, error) {
 
 	if url == "" {
-		return nil, errors.New("rabbitmq url is required")
+		return nil, errors.New("RabbitMQ url is required")
 	}
 
 	if queue == "" {
-		return nil, errors.New("rabbitmq queue name is required")
+		return nil, errors.New("RabbitMQ queue name is required")
 	}
 
-	if mp == nil {
+	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
 
-	return &Service{url, queue, mp, "", nil, nil}, nil
+	return &Service{url, queue, p, "", nil, nil}, nil
 }
 
 // Run starts the async processing
@@ -73,10 +74,14 @@ func (s *Service) Run(ctx context.Context) error {
 		log.Infof("processing message %s", d.MessageId)
 
 		go func(d *amqp.Delivery, a *agr_errors.Aggregate) {
-
-			err := s.mp.Process(ctx, d.Body)
+			dec, err := async.DetermineDecoder(d.ContentType)
 			if err != nil {
-				a.Append(errors.Wrapf(err, "failed to process message %s", d.MessageId))
+				s.handlerMessageError(d, a, err, fmt.Sprintf("failed to determine encoding %s. Sending NACK", d.ContentType))
+				return
+			}
+			err = s.p.Process(ctx, async.NewMessage(d.Body, dec))
+			if err != nil {
+				s.handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
 				return
 			}
 			err = d.Ack(false)
@@ -113,4 +118,12 @@ func (s *Service) Shutdown(ctx context.Context) error {
 		return agr
 	}
 	return nil
+}
+
+func (s *Service) handlerMessageError(d *amqp.Delivery, a *agr_errors.Aggregate, err error, msg string) {
+	a.Append(errors.Wrap(err, msg))
+	err = d.Nack(false, true)
+	if err != nil {
+		a.Append(errors.Wrapf(err, "failed to NACK message", d.MessageId))
+	}
 }

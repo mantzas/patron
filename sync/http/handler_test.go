@@ -38,11 +38,11 @@ func Test_extractFields(t *testing.T) {
 func Test_determineEncoding(t *testing.T) {
 
 	assert := assert.New(t)
-	hdrContentJSON := make(map[string]string, 0)
-	hdrContentJSON[ContentTypeHeader] = JSONContentTypeCharset
-	hdrEmptyHeader := make(map[string]string, 0)
-	hdrUnsupportedEncoding := make(map[string]string, 0)
-	hdrUnsupportedEncoding[ContentTypeHeader] = "application/xml"
+	hdrContentJSON := make(map[string]string)
+	hdrContentJSON[encoding.ContentTypeHeader] = json.ContentTypeCharset
+	hdrEmptyHeader := make(map[string]string)
+	hdrUnsupportedEncoding := make(map[string]string)
+	hdrUnsupportedEncoding[encoding.ContentTypeHeader] = "application/xml"
 
 	type args struct {
 		hdr map[string]string
@@ -70,7 +70,7 @@ func Test_determineEncoding(t *testing.T) {
 				assert.NoError(err)
 				assert.NotNil(got)
 				assert.NotNil(got1)
-				assert.Equal(JSONContentTypeCharset, ct)
+				assert.Equal(json.ContentTypeCharset, ct)
 			}
 		})
 	}
@@ -169,7 +169,7 @@ func Test_handler(t *testing.T) {
 	assert.NoError(err)
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
-	req.Header.Set(ContentTypeHeader, JSONContentType)
+	req.Header.Set(encoding.ContentTypeHeader, json.ContentType)
 
 	// success handling
 	// failure handling
@@ -185,7 +185,7 @@ func Test_handler(t *testing.T) {
 		{"unsupported content type", args{errReq, nil}, http.StatusUnsupportedMediaType},
 		{"success handling", args{req, testHandler{false, "test"}}, http.StatusOK},
 		{"error handling", args{req, testHandler{true, "test"}}, http.StatusInternalServerError},
-		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool, 0)}}, http.StatusInternalServerError},
+		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -199,6 +199,6 @@ func Test_handler(t *testing.T) {
 func Test_prepareResponse(t *testing.T) {
 	assert := assert.New(t)
 	rsp := httptest.NewRecorder()
-	prepareResponse(rsp, JSONContentTypeCharset)
-	assert.Equal(JSONContentTypeCharset, rsp.Header().Get(ContentTypeHeader))
+	prepareResponse(rsp, json.ContentTypeCharset)
+	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
 }
