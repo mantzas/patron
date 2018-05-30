@@ -9,11 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	// ContentTypeHeader HTTP constant
-	ContentTypeHeader string = "Content-Type"
-)
-
 func handler(hnd sync.Handler) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +71,7 @@ func determineEncoding(hdr map[string]string) (string, encoding.Decode, encoding
 }
 
 func determineContentType(hdr map[string]string) (string, error) {
-	h, ok := hdr[ContentTypeHeader]
+	h, ok := hdr[encoding.ContentTypeHeader]
 	if !ok {
 		return "", errors.New("accept and content type header is missing")
 
@@ -122,5 +117,5 @@ func handleError(w http.ResponseWriter, err error) {
 }
 
 func prepareResponse(w http.ResponseWriter, ct string) {
-	w.Header().Set(ContentTypeHeader, ct)
+	w.Header().Set(encoding.ContentTypeHeader, ct)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
+	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
@@ -132,5 +133,11 @@ func (s *Service) consumers() (chan *sarama.ConsumerMessage, chan *sarama.Consum
 
 func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
 
-	return "", nil
+	for _, h := range hdr {
+		if string(h.Key) == encoding.ContentTypeHeader {
+			return string(h.Value), nil
+		}
+	}
+
+	return "", errors.New("content type header is missing")
 }

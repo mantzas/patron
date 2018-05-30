@@ -39,10 +39,10 @@ func Test_determineEncoding(t *testing.T) {
 
 	assert := assert.New(t)
 	hdrContentJSON := make(map[string]string)
-	hdrContentJSON[ContentTypeHeader] = json.ContentTypeCharset
+	hdrContentJSON[encoding.ContentTypeHeader] = json.ContentTypeCharset
 	hdrEmptyHeader := make(map[string]string)
 	hdrUnsupportedEncoding := make(map[string]string)
-	hdrUnsupportedEncoding[ContentTypeHeader] = "application/xml"
+	hdrUnsupportedEncoding[encoding.ContentTypeHeader] = "application/xml"
 
 	type args struct {
 		hdr map[string]string
@@ -169,7 +169,7 @@ func Test_handler(t *testing.T) {
 	assert.NoError(err)
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
-	req.Header.Set(ContentTypeHeader, json.ContentType)
+	req.Header.Set(encoding.ContentTypeHeader, json.ContentType)
 
 	// success handling
 	// failure handling
@@ -200,5 +200,5 @@ func Test_prepareResponse(t *testing.T) {
 	assert := assert.New(t)
 	rsp := httptest.NewRecorder()
 	prepareResponse(rsp, json.ContentTypeCharset)
-	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(ContentTypeHeader))
+	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
 }

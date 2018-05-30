@@ -8,11 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	// ContentTypeHeader constant
-	ContentTypeHeader string = "Content-Type"
-)
-
 // Processor interface for implementing processing of messages
 type Processor interface {
 	Process(context.Context, *Message) error
