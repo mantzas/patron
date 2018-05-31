@@ -54,11 +54,11 @@ func (w *responseWriter) WriteHeader(code int) {
 
 // DefaultMiddleware which handles Logging and Recover middleware
 func DefaultMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return LoggingMetricMiddleware(RecoveryMiddleware(next))
+	return LoggingMiddleware(RecoveryMiddleware(next))
 }
 
-// LoggingMetricMiddleware for handling logging and metrics
-func LoggingMetricMiddleware(next http.HandlerFunc) http.HandlerFunc {
+// LoggingMiddleware for handling logging and metrics
+func LoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		lw := newResponseWriter(w)
 		st := time.Now()
@@ -66,7 +66,6 @@ func LoggingMetricMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		latency := float64(time.Since(st)) / float64(time.Millisecond)
 		status := strconv.Itoa(lw.Status())
 		log.Infof("method=%s route=%s status=%s time=%f", r.Method, r.URL.Path, status, latency)
-		recordMetric(r.Context(), r.URL.Host, r.Method, r.URL.Path, status, latency)
 	}
 }
 

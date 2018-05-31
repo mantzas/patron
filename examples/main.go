@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/mantzas/patron/config/env"
 
@@ -16,21 +15,7 @@ import (
 	"github.com/mantzas/patron/sync"
 	sync_http "github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/sync/http/httprouter"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/trace"
 )
-
-type logExporter struct{}
-
-// ExportView logs the view data.
-func (e *logExporter) ExportView(vd *view.Data) {
-	log.Infof("view export: %v", *vd)
-}
-
-// ExportSpan logs the trace span.
-func (e *logExporter) ExportSpan(vd *trace.SpanData) {
-	log.Infof("span export: %v", *vd)
-}
 
 type indexHandler struct {
 }
@@ -91,13 +76,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	le := logExporter{}
-	opts := []patron.Option{
-		patron.Metric(&le, 5*time.Second),
-		patron.Trace(&le, trace.Config{DefaultSampler: trace.AlwaysSample()}),
-	}
-
-	srv, err := patron.New("test", []patron.Service{httpSrv}, opts...)
+	srv, err := patron.New("test", []patron.Service{httpSrv})
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)
