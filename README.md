@@ -121,6 +121,33 @@ Two methods are supported:
 
 ### Sync
 
+The implementation of the processor is responsible to create a `Request` by providing everything that is needed (Headers, Fields, decoder, raw io.Reader) pass it to the implementation by invoking the `Process` method and handle the `Response` or the `error` returned by the processor.
+
+The sync processor package contains only a interface definition of the processor along the models needed:
+
+```go
+type Processor interface {
+  Process(context.Context, *Request) (*Response, error)
+}
+```
+
+The `Request` model contains the following properties (which are provided when calling the "constructor" `NewRequest`)
+
+- Headers, which may contains any headers associated with the request
+- Fields, which may contain any fields associated with the request
+- Raw, the raw request data (if any) in the form of a `io.Reader`
+- decode, which is a function of type `encoding.Decode` that decodes the raw reader
+
+A exported function exists for decoding the raw io.Reader in the form of
+
+```go
+Decode(v interface{}) error
+```
+
+The `Response` model contains the following properties (which are provided when calling the "constructor" `NewResponse`)
+
+- Payload, which may hold a struct of type `interface{}`
+
 #### HTTP
 
 ### Async
