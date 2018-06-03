@@ -152,6 +152,20 @@ The `Response` model contains the following properties (which are provided when 
 
 ### Async
 
+The implementation of the async processor follows exactly the same principle as the sync processor.
+The main difference is that:
+
+- The `Request` is the `Message` and contains only data as `[]byte`
+- There is no `Response`, so the processor may return a error
+
+```go
+type Processor interface {
+  Process(context.Context, *Message) error
+}
+```
+
+Everything else is exactly the same.
+
 #### RabbitMQ
 
 #### Kafka
