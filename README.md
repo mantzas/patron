@@ -8,11 +8,10 @@ Patron provides abstractions for the following functionality:
 
 - config
 - logging
-- metric
-- tracing (TBD)
+- metrics and tracing (TBD)
 - service
-  - async message processing
-  - sync processing (http)
+  - async message processing (RabbitMQ, Kafka)
+  - sync processing (HTTP)
 - server
 
 ## Config
@@ -35,11 +34,10 @@ After implementing the interface a instance has to be provided to the `Setup` me
 The following implementations are provided as sub-packages:
 
 - env, support for env files and env vars
-- viper, support for the excellent [viper](https://github.com/spf13/viper) library
 
 ### env
 
-The env package supports getting env vars from the system. It allows further to provide a file that contain env vars, separated by a `=`, which are set up on the environment. In order to setup config just do the following:
+The env package supports getting env vars from the system. It allows further to provide a file that contain env vars, separated by a equal sign `=`, which are then set up on the environment. In order to setup config just do the following:
 
 ```go
 c,err := env.New({reader to the config file})
@@ -47,18 +45,7 @@ c,err := env.New({reader to the config file})
 config.Setup(c)
 ```
 
-### viper
-
-[Viper](https://github.com/spf13/viper) is a much more complete configuration library. Check the documentation to see what's available. In order to setup config just do the following:
-
-```go
-// setup viper by using the library
-c,err := viper.New({reader to the config file})
-// error checking
-config.Setup(c)
-```
-
-## Log
+## Logging
 
 The log package is designed to be a leveled logger with field support.
 
@@ -70,14 +57,14 @@ The log package defines two interfaces (Logger and Factory) that have to be impl
   // handle error
 ```
 
-The package supports log levels which are the following
+The implementations should support following log levels:
 
-- Debug, which logs the message with debug level
-- Info, which logs the message with info level
-- Warn, which logs the message with warn level
-- Error, which logs the message with error level
-- Panic, which logs the message with panic level and panics
-- Fatal, which logs the message with fatal level and terminates the application
+- Debug, which should log the message with debug level
+- Info, which should log the message with info level
+- Warn, which should log the message with warn level
+- Error, which should log the message with error level
+- Panic, which should log the message with panic level and panics
+- Fatal, which should log the message with fatal level and terminates the application
 
 The first four (Debug, Info, Warn and Error) give the opportunity to differentiate the messages by severity. The last two (Panic and Fatal) do the same and do additional actions (panic and termination).
 
@@ -127,3 +114,13 @@ Two methods are supported:
 
 - Create, which creates a logger with the specified fields (or nil)
 - CreateSub, which creates a sub-logger that accepts a logger and fields and creates a sub-logger with the fields merged into the new one.
+
+## Metrics and Tracing (TBD)
+
+## Server
+
+## Services
+
+### Sync
+
+### Async
