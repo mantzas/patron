@@ -35,9 +35,9 @@ func NewResponse(p interface{}) *Response {
 	return &Response{p}
 }
 
-// Handler definition of a generic sync handler.
-type Handler interface {
-	Handle(context.Context, *Request) (*Response, error)
+// Processor definition of a generic sync processor.
+type Processor interface {
+	Process(context.Context, *Request) (*Response, error)
 }
 
 // ValidationError defines a validation error.

@@ -117,10 +117,16 @@ Two methods are supported:
 
 ## Metrics and Tracing (TBD)
 
-## Server
-
-## Services
+## Processors
 
 ### Sync
 
+#### HTTP
+
 ### Async
+
+#### RabbitMQ
+
+#### Kafka
+
+## Server

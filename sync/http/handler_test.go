@@ -155,7 +155,7 @@ type testHandler struct {
 	resp interface{}
 }
 
-func (th testHandler) Handle(ctx context.Context, req *sync.Request) (*sync.Response, error) {
+func (th testHandler) Process(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 	if th.err {
 		return nil, errors.New("TEST")
 	}
@@ -175,7 +175,7 @@ func Test_handler(t *testing.T) {
 	// failure handling
 	type args struct {
 		req *http.Request
-		hnd sync.Handler
+		hnd sync.Processor
 	}
 	tests := []struct {
 		name         string
