@@ -21,8 +21,8 @@ var (
 	defaultHealthCheck = func() HealthStatus { return Healthy }
 )
 
-// Service implementation of HTTP
-type Service struct {
+// Component implementation of HTTP.
+type Component struct {
 	hg     handlerGen
 	hc     HealthCheckFunc
 	port   int
@@ -31,13 +31,13 @@ type Service struct {
 	m      sync.Mutex
 }
 
-// New returns a new service
-func New(hg handlerGen, oo ...Option) (*Service, error) {
+// New returns a new component.
+func New(hg handlerGen, oo ...Option) (*Component, error) {
 	if hg == nil {
 		return nil, errors.New("http handler generator is required")
 	}
 
-	s := Service{hg, defaultHealthCheck, port, []Route{}, nil, sync.Mutex{}}
+	s := Component{hg, defaultHealthCheck, port, []Route{}, nil, sync.Mutex{}}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -53,19 +53,19 @@ func New(hg handlerGen, oo ...Option) (*Service, error) {
 	return &s, nil
 }
 
-// Run starts the processing
-func (s *Service) Run(ctx context.Context) error {
+// Run starts the HTTP server.
+func (s *Component) Run(ctx context.Context) error {
 	s.m.Lock()
 	defer s.m.Unlock()
-	log.Infof("service listening on port %d", s.port)
+	log.Infof("component listening on port %d", s.port)
 	return s.srv.ListenAndServe()
 }
 
-// Shutdown the service
-func (s *Service) Shutdown(ctx context.Context) error {
+// Shutdown the component.
+func (s *Component) Shutdown(ctx context.Context) error {
 	s.m.Lock()
 	defer s.m.Unlock()
-	log.Info("shutting down service")
+	log.Info("shutting down component")
 	return s.srv.Shutdown(ctx)
 }
 

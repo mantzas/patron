@@ -17,10 +17,10 @@ import (
 	"github.com/mantzas/patron/sync/http/httprouter"
 )
 
-type indexHandler struct {
+type indexProcessor struct {
 }
 
-func (ih indexHandler) Handle(context.Context, *sync.Request) (*sync.Response, error) {
+func (ih indexProcessor) Process(context.Context, *sync.Request) (*sync.Response, error) {
 	return sync.NewResponse("Hello from patron!"), nil
 }
 
@@ -63,20 +63,20 @@ func main() {
 
 	// Set up routes
 	routes := make([]sync_http.Route, 0)
-	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexHandler{}))
+	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}))
 
 	options := []sync_http.Option{
 		sync_http.Port(50000),
 		sync_http.Routes(routes),
 	}
 
-	httpSrv, err := sync_http.New(httprouter.CreateHandler, options...)
+	httpCp, err := sync_http.New(httprouter.CreateHandler, options...)
 	if err != nil {
 		fmt.Print("failed to create HTTP service", err)
 		os.Exit(1)
 	}
 
-	srv, err := patron.New("test", []patron.Service{httpSrv})
+	srv, err := patron.New("test", []patron.Component{httpCp})
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)

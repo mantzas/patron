@@ -11,26 +11,26 @@ import (
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
 
-	services := []Service{&testService{}}
+	cps := []Component{&testComponent{}}
 	options := []Option{}
 
 	type args struct {
-		name     string
-		services []Service
-		options  []Option
+		name    string
+		cps     []Component
+		options []Option
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", services, options}, false},
-		{"failed missing name", args{"", services, options}, true},
-		{"failed missing services", args{"test", []Service{}, options}, true},
+		{"success", args{"test", cps, options}, false},
+		{"failed missing name", args{"", cps, options}, true},
+		{"failed missing components", args{"test", []Component{}, options}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.services, tt.args.options...)
+			got, err := New(tt.args.name, tt.args.cps, tt.args.options...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -47,18 +47,18 @@ func TestServer_Run_Shutdown(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		service         []Service
+		cps             []Component
 		wantRunErr      bool
 		wantShutdownErr bool
 	}{
-		{"success", []Service{&testService{}}, false, false},
-		{"failed to run", []Service{&testService{true, false}}, true, false},
-		{"failed to shutdown", []Service{&testService{false, true}}, false, true},
+		{"success", []Component{&testComponent{}}, false, false},
+		{"failed to run", []Component{&testComponent{true, false}}, true, false},
+		{"failed to shutdown", []Component{&testComponent{false, true}}, false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s, err := New("test", tt.service)
+			s, err := New("test", tt.cps)
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {
@@ -76,19 +76,19 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	}
 }
 
-type testService struct {
+type testComponent struct {
 	errorRunning     bool
 	errorShutingDown bool
 }
 
-func (ts testService) Run(ctx context.Context) error {
+func (ts testComponent) Run(ctx context.Context) error {
 	if ts.errorRunning {
-		return errors.New("failed to run service")
+		return errors.New("failed to run component")
 	}
 	return nil
 }
 
-func (ts testService) Shutdown(ctx context.Context) error {
+func (ts testComponent) Shutdown(ctx context.Context) error {
 	if ts.errorShutingDown {
 		return errors.New("failed to shut down")
 	}

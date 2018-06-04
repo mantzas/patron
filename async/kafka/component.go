@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Service implementation of a kafka consumer
-type Service struct {
+// Component implementation of a kafka consumer.
+type Component struct {
 	p       async.Processor
 	brokers []string
 	topics  []string
@@ -20,8 +20,8 @@ type Service struct {
 	ms      sarama.Consumer
 }
 
-// New returns a new client
-func New(p async.Processor, clientID string, brokers []string, topics []string) (*Service, error) {
+// New returns a new component.
+func New(p async.Processor, clientID string, brokers []string, topics []string) (*Component, error) {
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
@@ -42,11 +42,11 @@ func New(p async.Processor, clientID string, brokers []string, topics []string) 
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Service{p, brokers, topics, config, nil}, nil
+	return &Component{p, brokers, topics, config, nil}, nil
 }
 
-// Run starts the async processing
-func (s *Service) Run(ctx context.Context) error {
+// Run starts the async processing.
+func (s *Component) Run(ctx context.Context) error {
 
 	ms, err := sarama.NewConsumer(s.brokers, s.cfg)
 	if err != nil {
@@ -91,12 +91,12 @@ func (s *Service) Run(ctx context.Context) error {
 	return <-failCh
 }
 
-// Shutdown the service
-func (s *Service) Shutdown(ctx context.Context) error {
+// Shutdown the component.
+func (s *Component) Shutdown(ctx context.Context) error {
 	return errors.Wrap(s.ms.Close(), "failed to close consumer")
 }
 
-func (s *Service) consumers() (chan *sarama.ConsumerMessage, chan *sarama.ConsumerError, error) {
+func (s *Component) consumers() (chan *sarama.ConsumerMessage, chan *sarama.ConsumerError, error) {
 	chMsg := make(chan *sarama.ConsumerMessage)
 	chErr := make(chan *sarama.ConsumerError)
 

@@ -14,8 +14,8 @@ type Route struct {
 }
 
 // NewRoute returns a new route from a generic handler
-func NewRoute(p string, m string, h sync.Handler) Route {
-	return Route{p, m, DefaultMiddleware(handler(h))}
+func NewRoute(p string, m string, pr sync.Processor) Route {
+	return Route{p, m, DefaultMiddleware(handler(pr))}
 }
 
 // NewRouteRaw returns a new route from a HTTP handler

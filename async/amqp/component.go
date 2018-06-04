@@ -13,8 +13,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Service implementation of a AMQP client
-type Service struct {
+// Component implementation of a AMQP client
+type Component struct {
 	url   string
 	queue string
 	p     async.Processor
@@ -24,7 +24,7 @@ type Service struct {
 }
 
 // New returns a new client
-func New(url, queue string, p async.Processor) (*Service, error) {
+func New(url, queue string, p async.Processor) (*Component, error) {
 
 	if url == "" {
 		return nil, errors.New("RabbitMQ url is required")
@@ -38,11 +38,11 @@ func New(url, queue string, p async.Processor) (*Service, error) {
 		return nil, errors.New("work processor is required")
 	}
 
-	return &Service{url, queue, p, "", nil, nil}, nil
+	return &Component{url, queue, p, "", nil, nil}, nil
 }
 
-// Run starts the async processing
-func (s *Service) Run(ctx context.Context) error {
+// Run starts the async processing.
+func (s *Component) Run(ctx context.Context) error {
 
 	conn, err := amqp.Dial(s.url)
 	if err != nil {
@@ -99,8 +99,8 @@ func (s *Service) Run(ctx context.Context) error {
 	return nil
 }
 
-// Shutdown the service
-func (s *Service) Shutdown(ctx context.Context) error {
+// Shutdown the component.
+func (s *Component) Shutdown(ctx context.Context) error {
 
 	agr := agr_errors.New()
 
@@ -120,7 +120,7 @@ func (s *Service) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) handlerMessageError(d *amqp.Delivery, a *agr_errors.Aggregate, err error, msg string) {
+func (s *Component) handlerMessageError(d *amqp.Delivery, a *agr_errors.Aggregate, err error, msg string) {
 	a.Append(errors.Wrap(err, msg))
 	err = d.Nack(false, true)
 	if err != nil {

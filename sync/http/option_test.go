@@ -19,7 +19,7 @@ func TestPort(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := Service{}
+			s := Component{}
 			err := Port(tt.port)(&s)
 			if tt.wantErr {
 				assert.Error(err)
@@ -43,7 +43,7 @@ func TestSetRoutes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := Service{}
+			s := Component{}
 			err := Routes(tt.rr)(&s)
 			if tt.wantErr {
 				assert.Error(err)
@@ -67,7 +67,7 @@ func TestSetHealthCheck(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := Service{}
+			s := Component{}
 			err := HealthCheck(tt.hcf)(&s)
 			if tt.wantErr {
 				assert.Error(err)
