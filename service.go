@@ -1,9 +1,127 @@
 package patron
 
-import "context"
+import (
+	"context"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
-// Service interface for implementing services
-type Service interface {
+	agr_errors "github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/log"
+	"github.com/pkg/errors"
+)
+
+const (
+	shutdownTimeout    = 5 * time.Second
+	minReportingPeriod = 1 * time.Second
+)
+
+// Option defines a option for the HTTP service.
+type Option func(*Service) error
+
+// Component interface for implementing components.
+type Component interface {
 	Run(ctx context.Context) error
 	Shutdown(ctx context.Context) error
+}
+
+// Service definition.
+type Service struct {
+	name   string
+	cps    []Component
+	Ctx    context.Context
+	Cancel context.CancelFunc
+}
+
+// New creates a new service
+func New(name string, cps []Component, oo ...Option) (*Service, error) {
+
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
+
+	if len(cps) == 0 {
+		return nil, errors.New("components not provided")
+	}
+
+	log.AppendField("srv", name)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	log.AppendField("host", hostname)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	s := Service{name, cps, ctx, cancel}
+
+	for _, o := range oo {
+		err := o(&s)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	s.setupTermSignal()
+	return &s, nil
+}
+
+func (s *Service) setupTermSignal() {
+	go func() {
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+		<-stop
+		log.Info("term signal received, cancelling")
+		s.Cancel()
+	}()
+}
+
+// Run starts up all service components and monitors for errors.
+func (s *Service) Run() error {
+
+	errCh := make(chan error)
+
+	for _, cp := range s.cps {
+		go func(c Component, ctx context.Context) {
+			errCh <- c.Run(ctx)
+		}(cp, s.Ctx)
+	}
+
+	select {
+	case err := <-errCh:
+		log.Error("component returned a error")
+		err1 := s.Shutdown()
+		if err1 != nil {
+			return errors.Wrapf(err, "failed to shutdown %v", err1)
+		}
+		return err
+	case <-s.Ctx.Done():
+		log.Info("stop signal received")
+		return s.Shutdown()
+	}
+}
+
+// Shutdown performs a shutdown on all components with the setup timeout.
+func (s *Service) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	log.Info("shutting down components")
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(s.cps))
+	agr := agr_errors.New()
+	for _, cp := range s.cps {
+
+		go func(c Component, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {
+			defer w.Done()
+			agr.Append(c.Shutdown(ctx))
+		}(cp, ctx, &wg, agr)
+	}
+
+	wg.Wait()
+	if agr.Count() > 0 {
+		return agr
+	}
+	return nil
 }

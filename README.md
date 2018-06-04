@@ -4,15 +4,15 @@ Patron is a framework for creating microservices.
 
 Patron is french for `template` or `pattern`, but it means also `boss` which we found out later (no pun intended).
 
-Patron provides abstractions for the following functionality:
+Patron provides abstractions for the following functionality of the framework:
 
-- config
+- configuration
 - logging
 - metrics and tracing (TBD)
+- components and processors
+  - asynchronous message processing (RabbitMQ, Kafka)
+  - synchronous processing (HTTP)
 - service
-  - async message processing (RabbitMQ, Kafka)
-  - sync processing (HTTP)
-- server
 
 ## Config
 
@@ -119,7 +119,7 @@ Two methods are supported:
 
 ## Processors
 
-### Sync
+### Synchronous
 
 The implementation of the processor is responsible to create a `Request` by providing everything that is needed (Headers, Fields, decoder, raw io.Reader) pass it to the implementation by invoking the `Process` method and handle the `Response` or the `error` returned by the processor.
 
@@ -148,9 +148,7 @@ The `Response` model contains the following properties (which are provided when 
 
 - Payload, which may hold a struct of type `interface{}`
 
-#### HTTP
-
-### Async
+### Asynchronous
 
 The implementation of the async processor follows exactly the same principle as the sync processor.
 The main difference is that:
@@ -166,8 +164,68 @@ type Processor interface {
 
 Everything else is exactly the same.
 
-#### RabbitMQ
+## Service
 
-#### Kafka
+The `Service` has the role of glueing all of the above together, which are:
 
-## Server
+- setting up logging
+- setting up termination by user
+- starting and stopping components
+- handling component errors
+
+### Component
+
+A `Component` is a interface that exposes the following API:
+
+```go
+type Component interface {
+  Run(ctx context.Context) error
+  Shutdown(ctx context.Context) error
+}
+```
+
+The above API gives the `Service` the control over a component in order to start and stop it gracefully. The framework divides the components in 2 categories:
+
+- synchronous, which are components that follow the request/response pattern and
+- asynchronous, which consume messages from a source but don't respond anything back
+
+The following component implementations are available:
+
+- HTTP (sync)
+- RabbitMQ (async)
+- Kafka (async)
+
+Adding to the above list is as easy as implementing a `Component` and a `Processor` for that component.
+
+## Example
+
+Setting up a new service with a HTTP `Component` is as easy as the following code:
+
+```go
+  // Set up HTTP routes
+  routes := make([]sync_http.Route, 0)
+  routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}))
+
+  // Create a HTTP component with the above routes
+  httpCp, err := sync_http.New(httprouter.CreateHandler, sync_http.Routes(routes))
+  if err != nil {
+    fmt.Print("failed to create HTTP service", err)
+    os.Exit(1)
+  }
+
+  // Create a new service
+  srv, err := patron.New("test", []patron.Component{httpCp})
+  if err != nil {
+    fmt.Printf("failed to create service %v", err)
+    os.Exit(1)
+  }
+
+  // Run the service
+  err = srv.Run()
+  if err != nil {
+    fmt.Printf("failed to create service %v", err)
+    os.Exit(1)
+  }
+```
+
+The above is pretty much self-explanatory.

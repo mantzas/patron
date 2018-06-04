@@ -70,13 +70,13 @@ func main() {
 		sync_http.Routes(routes),
 	}
 
-	httpSrv, err := sync_http.New(httprouter.CreateHandler, options...)
+	httpCp, err := sync_http.New(httprouter.CreateHandler, options...)
 	if err != nil {
 		fmt.Print("failed to create HTTP service", err)
 		os.Exit(1)
 	}
 
-	srv, err := patron.New("test", []patron.Service{httpSrv})
+	srv, err := patron.New("test", []patron.Component{httpCp})
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)
