@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+type kafkaContextKey string
+
 // Component implementation of a kafka consumer.
 type Component struct {
 	p       async.Processor
@@ -46,15 +48,15 @@ func New(p async.Processor, clientID string, brokers []string, topics []string) 
 }
 
 // Run starts the async processing.
-func (s *Component) Run(ctx context.Context) error {
+func (c *Component) Run(ctx context.Context) error {
 
-	ms, err := sarama.NewConsumer(s.brokers, s.cfg)
+	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
 	if err != nil {
 		return errors.Wrap(err, "failed to create consumer")
 	}
-	s.ms = ms
+	c.ms = ms
 
-	chMsg, chErr, err := s.consumers()
+	chMsg, chErr, err := c.consumers()
 	if err != nil {
 		return errors.Wrap(err, "failed to get consumers")
 	}
@@ -77,7 +79,7 @@ func (s *Component) Run(ctx context.Context) error {
 						failCh <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
 					}
 
-					err = s.p.Process(ctx, async.NewMessage(msg.Value, dec))
+					err = c.p.Process(ctx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
 					}
@@ -92,25 +94,25 @@ func (s *Component) Run(ctx context.Context) error {
 }
 
 // Shutdown the component.
-func (s *Component) Shutdown(ctx context.Context) error {
-	return errors.Wrap(s.ms.Close(), "failed to close consumer")
+func (c *Component) Shutdown(ctx context.Context) error {
+	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
-func (s *Component) consumers() (chan *sarama.ConsumerMessage, chan *sarama.ConsumerError, error) {
+func (c *Component) consumers() (chan *sarama.ConsumerMessage, chan *sarama.ConsumerError, error) {
 	chMsg := make(chan *sarama.ConsumerMessage)
 	chErr := make(chan *sarama.ConsumerError)
 
-	for _, topic := range s.topics {
+	for _, topic := range c.topics {
 		if strings.Contains(topic, "__consumer_offsets") {
 			continue
 		}
 
-		partitions, err := s.ms.Partitions(topic)
+		partitions, err := c.ms.Partitions(topic)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to get partitions")
 		}
 
-		consumer, err := s.ms.ConsumePartition(topic, partitions[0], sarama.OffsetOldest)
+		consumer, err := c.ms.ConsumePartition(topic, partitions[0], sarama.OffsetOldest)
 		if nil != err {
 			return nil, nil, errors.Wrap(err, "failed to get partition consumer")
 		}
@@ -140,4 +142,15 @@ func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
 	}
 
 	return "", errors.New("content type header is missing")
+}
+
+func createContext(ctx context.Context, hdr []*sarama.RecordHeader) (context.Context, context.CancelFunc) {
+
+	chCtx, cnl := context.WithCancel(ctx)
+
+	for _, v := range hdr {
+		chCtx = context.WithValue(chCtx, kafkaContextKey(string(v.Key)), string(v.Value))
+	}
+
+	return chCtx, cnl
 }

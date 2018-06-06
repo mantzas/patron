@@ -13,18 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_extractHeaders(t *testing.T) {
-	assert := assert.New(t)
-	r, err := http.NewRequest("GET", "/", nil)
-	assert.NoError(err)
-	r.Header.Set("KEY1", "VALUE1")
-	r.Header.Set("KEY2", "VALUE2")
-	m := extractHeaders(r)
-	assert.Len(m, 2)
-	assert.Equal("VALUE1", m["Key1"])
-	assert.Equal("VALUE2", m["Key2"])
-}
-
 func Test_extractFields(t *testing.T) {
 	assert := assert.New(t)
 	r, err := http.NewRequest("GET", "/test?value1=1&value2=2", nil)
@@ -38,14 +26,14 @@ func Test_extractFields(t *testing.T) {
 func Test_determineEncoding(t *testing.T) {
 
 	assert := assert.New(t)
-	hdrContentJSON := make(map[string]string)
-	hdrContentJSON[encoding.ContentTypeHeader] = json.ContentTypeCharset
-	hdrEmptyHeader := make(map[string]string)
-	hdrUnsupportedEncoding := make(map[string]string)
-	hdrUnsupportedEncoding[encoding.ContentTypeHeader] = "application/xml"
+	hdrContentJSON := http.Header{}
+	hdrContentJSON.Add(encoding.ContentTypeHeader, json.ContentTypeCharset)
+	hdrEmptyHeader := http.Header{}
+	hdrUnsupportedEncoding := http.Header{}
+	hdrUnsupportedEncoding.Add(encoding.ContentTypeHeader, "application/xml")
 
 	type args struct {
-		hdr map[string]string
+		hdr http.Header
 	}
 	tests := []struct {
 		name    string
