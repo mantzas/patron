@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/mantzas/patron/encoding"
@@ -9,21 +10,23 @@ import (
 	"github.com/pkg/errors"
 )
 
+type httpContextKey string
+
 func handler(hnd sync.Processor) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		h := extractHeaders(r)
-
-		ct, dec, enc, err := determineEncoding(h)
+		ct, dec, enc, err := determineEncoding(r.Header)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 			return
 		}
 		prepareResponse(w, ct)
 
-		req := sync.NewRequest(h, extractFields(r), r.Body, dec)
-		rsp, err := hnd.Process(r.Context(), req)
+		ctx := createContext(r)
+
+		req := sync.NewRequest(extractFields(r), r.Body, dec)
+		rsp, err := hnd.Process(ctx, req)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -36,16 +39,6 @@ func handler(hnd sync.Processor) http.HandlerFunc {
 	}
 }
 
-func extractHeaders(r *http.Request) map[string]string {
-
-	h := make(map[string]string)
-
-	for name, hdr := range r.Header {
-		h[name] = hdr[0]
-	}
-	return h
-}
-
 func extractFields(r *http.Request) map[string]string {
 
 	f := make(map[string]string)
@@ -56,7 +49,7 @@ func extractFields(r *http.Request) map[string]string {
 	return f
 }
 
-func determineEncoding(hdr map[string]string) (string, encoding.Decode, encoding.Encode, error) {
+func determineEncoding(hdr http.Header) (string, encoding.Decode, encoding.Encode, error) {
 
 	c, err := determineContentType(hdr)
 	if err != nil {
@@ -70,13 +63,23 @@ func determineEncoding(hdr map[string]string) (string, encoding.Decode, encoding
 	return "", nil, nil, errors.Errorf("accept header %s is unsupported", c)
 }
 
-func determineContentType(hdr map[string]string) (string, error) {
+func determineContentType(hdr http.Header) (string, error) {
 	h, ok := hdr[encoding.ContentTypeHeader]
 	if !ok {
 		return "", errors.New("accept and content type header is missing")
 
 	}
-	return h, nil
+	return h[0], nil
+}
+
+func createContext(r *http.Request) context.Context {
+	ctx := r.Context()
+
+	for k, v := range r.Header {
+		ctx = context.WithValue(ctx, httpContextKey(k), v)
+	}
+
+	return ctx
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.Encode) error {

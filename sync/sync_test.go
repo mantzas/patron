@@ -39,7 +39,7 @@ func TestServiceUnavailableError_Error(t *testing.T) {
 
 func TestNewRequest(t *testing.T) {
 	assert := assert.New(t)
-	req := NewRequest(nil, nil, nil, nil)
+	req := NewRequest(nil, nil, nil)
 	assert.NotNil(req)
 }
 
@@ -48,7 +48,7 @@ func TestRequest_Decode(t *testing.T) {
 	j, err := json.Encode("string")
 	assert.NoError(err)
 	b := bytes.NewBuffer(j)
-	req := NewRequest(nil, nil, b, json.Decode)
+	req := NewRequest(nil, b, json.Decode)
 	assert.NotNil(req)
 	var data string
 	err = req.Decode(&data)
