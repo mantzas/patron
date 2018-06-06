@@ -145,7 +145,6 @@ func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
 }
 
 func createContext(ctx context.Context, hdr []*sarama.RecordHeader) (context.Context, context.CancelFunc) {
-
 	chCtx, cnl := context.WithCancel(ctx)
 
 	for _, v := range hdr {

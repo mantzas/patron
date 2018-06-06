@@ -129,12 +129,11 @@ func handlerMessageError(d *amqp.Delivery, a *agr_errors.Aggregate, err error, m
 	a.Append(errors.Wrap(err, msg))
 	err = d.Nack(false, true)
 	if err != nil {
-		a.Append(errors.Wrapf(err, "failed to NACK message", d.MessageId))
+		a.Append(errors.Wrapf(err, "failed to NACK message %s", d.MessageId))
 	}
 }
 
 func createContext(ctx context.Context, hdr amqp.Table) (context.Context, context.CancelFunc) {
-
 	chCtx, cnl := context.WithCancel(ctx)
 
 	for k, v := range hdr {
