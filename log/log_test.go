@@ -1,7 +1,6 @@
 package log
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -243,26 +242,6 @@ func TestLog_Debugf(t *testing.T) {
 		Debugf("debug %s", "1")
 		assert.Equal(1, l.debugCount)
 	})
-}
-
-func TestLog_Concurrent(t *testing.T) {
-	assert := assert.New(t)
-	Setup(&testFactory{})
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(2)
-	go func() {
-		Debugf("debug %s", "1")
-		wg.Done()
-	}()
-	go func() {
-		Debugf("debug %s", "2")
-		wg.Done()
-	}()
-
-	wg.Wait()
-	assert.Equal(2, logger.(*testLogger).debugCount)
 }
 
 type testFactory struct {
