@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/mantzas/patron/config/env"
-	jaeger "github.com/uber/jaeger-client-go"
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/config"
@@ -62,20 +61,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	reporter := jaeger.NewInMemoryReporter()
-	tr, trCloser := jaeger.NewTracer("test", jaeger.NewConstSampler(true), reporter)
-	defer trCloser.Close()
-
 	// Set up routes
 	routes := make([]sync_http.Route, 0)
-	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}))
+	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}, true))
 
 	options := []sync_http.Option{
 		sync_http.Port(50000),
 		sync_http.Routes(routes),
 	}
 
-	httpCp, err := sync_http.New(tr, httprouter.CreateHandler, options...)
+	httpCp, err := sync_http.New(httprouter.CreateHandler, options...)
 	if err != nil {
 		fmt.Print("failed to create HTTP service", err)
 		os.Exit(1)

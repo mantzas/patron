@@ -7,6 +7,7 @@ import (
 	"github.com/mantzas/patron/async"
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
@@ -44,7 +45,7 @@ func New(url, queue string, p async.Processor) (*Component, error) {
 }
 
 // Run starts the async processing.
-func (c *Component) Run(ctx context.Context) error {
+func (c *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
 
 	conn, err := amqp.Dial(c.url)
 	if err != nil {

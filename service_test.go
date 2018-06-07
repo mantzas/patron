@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -81,7 +83,7 @@ type testComponent struct {
 	errorShutingDown bool
 }
 
-func (ts testComponent) Run(ctx context.Context) error {
+func (ts testComponent) Run(ctx context.Context, tr opentracing.Tracer) error {
 	if ts.errorRunning {
 		return errors.New("failed to run component")
 	}

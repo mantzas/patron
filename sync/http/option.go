@@ -26,12 +26,7 @@ func Routes(rr []Route) Option {
 		if len(rr) == 0 {
 			return errors.New("routes are empty")
 		}
-
-		for _, r := range rr {
-			r.Handler = DefaultMiddleware(s.tr, r.Pattern, r.Handler)
-			s.routes = append(s.routes, r)
-		}
-
+		s.routes = append(s.routes, rr...)
 		log.Info("routes set")
 		return nil
 	}

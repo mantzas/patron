@@ -34,5 +34,5 @@ func healthCheckRoute(hcf HealthCheckFunc) Route {
 			w.WriteHeader(http.StatusOK)
 		}
 	}
-	return NewRouteRaw("/health", http.MethodGet, f)
+	return NewRouteRaw("/health", http.MethodGet, f, false)
 }
