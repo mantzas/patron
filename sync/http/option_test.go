@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	jaeger "github.com/uber/jaeger-client-go"
 )
 
 func TestPort(t *testing.T) {
@@ -33,22 +34,27 @@ func TestPort(t *testing.T) {
 
 func TestSetRoutes(t *testing.T) {
 	assert := assert.New(t)
+	reporter := jaeger.NewInMemoryReporter()
+	tr, trCloser := jaeger.NewTracer("test", jaeger.NewConstSampler(true), reporter)
+	defer trCloser.Close()
 	tests := []struct {
 		name    string
 		rr      []Route
 		wantErr bool
 	}{
-		{"success", []Route{NewRoute("/", http.MethodGet, nil)}, false},
-		{"error for no routes", nil, true},
+		{"success", []Route{NewRoute("/", http.MethodGet, testHandler{})}, false},
+		//{"error for no routes", nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := Component{}
+			s := Component{tr: tr}
 			err := Routes(tt.rr)(&s)
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
-				assert.Equal(tt.rr, s.routes)
+				assert.Len(s.routes, 1)
+				assert.Equal(tt.rr[0].Method, s.routes[0].Method)
+				assert.Equal(tt.rr[0].Pattern, s.routes[0].Pattern)
 				assert.NoError(err)
 			}
 		})

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/uber/jaeger-client-go"
 )
 
 func testHandle(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +47,11 @@ func TestMiddleware(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			DefaultMiddleware(tt.args.next)(tt.args.w, r)
+			reporter := jaeger.NewInMemoryReporter()
+			tr, trCloser := jaeger.NewTracer("test", jaeger.NewConstSampler(true), reporter)
+			defer trCloser.Close()
+
+			DefaultMiddleware(tr, "path", tt.args.next)(tt.args.w, r)
 
 			assert.Equal(tt.expectedCode, tt.args.w.Code, "default middleware expected %d but got %d", tt.expectedCode, tt.args.w.Code)
 		})

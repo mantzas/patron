@@ -6,24 +6,40 @@ import (
 	"testing"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+	jaeger "github.com/uber/jaeger-client-go"
+
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
+func ErrorOption() Option {
+	return func(s *Component) error {
+		return errors.New("TEST")
+	}
+}
+
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
+	reporter := jaeger.NewInMemoryReporter()
+	tr, trCloser := jaeger.NewTracer("test", jaeger.NewConstSampler(true), reporter)
+	defer trCloser.Close()
 	tests := []struct {
 		name    string
+		tr      opentracing.Tracer
 		hg      handlerGen
 		options []Option
 		wantErr bool
 	}{
-		{"success with no options", testCreateHandler, []Option{}, false},
-		{"success with options", testCreateHandler, []Option{Port(50000)}, false},
-		{"failed with missing handler gen", nil, []Option{}, true},
+		{"success with no options", tr, testCreateHandler, []Option{}, false},
+		{"success with options", tr, testCreateHandler, []Option{Port(50000)}, false},
+		{"failed with error option", tr, testCreateHandler, []Option{ErrorOption()}, true},
+		{"failed with missing tracer", nil, nil, []Option{}, true},
+		{"failed with missing handler gen", nil, testCreateHandler, []Option{}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.hg, tt.options...)
+			got, err := New(tt.tr, tt.hg, tt.options...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -37,7 +53,10 @@ func TestNew(t *testing.T) {
 
 func TestComponent_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	s, err := New(testCreateHandler)
+	reporter := jaeger.NewInMemoryReporter()
+	tr, trCloser := jaeger.NewTracer("test", jaeger.NewConstSampler(true), reporter)
+	defer trCloser.Close()
+	s, err := New(tr, testCreateHandler)
 	assert.NoError(err)
 	go func() {
 		err = s.Run(context.TODO())

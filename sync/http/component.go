@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/mantzas/patron/log"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -23,21 +23,25 @@ var (
 
 // Component implementation of HTTP.
 type Component struct {
+	tr     opentracing.Tracer
 	hg     handlerGen
 	hc     HealthCheckFunc
 	port   int
 	routes []Route
 	srv    *http.Server
-	m      sync.Mutex
 }
 
 // New returns a new component.
-func New(hg handlerGen, oo ...Option) (*Component, error) {
+func New(tr opentracing.Tracer, hg handlerGen, oo ...Option) (*Component, error) {
+	if tr == nil {
+		return nil, errors.New("tracer is required")
+	}
+
 	if hg == nil {
 		return nil, errors.New("http handler generator is required")
 	}
 
-	s := Component{hg, defaultHealthCheck, port, []Route{}, nil, sync.Mutex{}}
+	s := Component{tr, hg, defaultHealthCheck, port, []Route{}, nil}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -55,16 +59,12 @@ func New(hg handlerGen, oo ...Option) (*Component, error) {
 
 // Run starts the HTTP server.
 func (s *Component) Run(ctx context.Context) error {
-	s.m.Lock()
-	defer s.m.Unlock()
 	log.Infof("component listening on port %d", s.port)
 	return s.srv.ListenAndServe()
 }
 
 // Shutdown the component.
 func (s *Component) Shutdown(ctx context.Context) error {
-	s.m.Lock()
-	defer s.m.Unlock()
 	log.Info("shutting down component")
 	return s.srv.Shutdown(ctx)
 }

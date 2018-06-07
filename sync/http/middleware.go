@@ -3,10 +3,10 @@ package http
 import (
 	"errors"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/mantzas/patron/log"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 type responseWriter struct {
@@ -53,20 +53,31 @@ func (w *responseWriter) WriteHeader(code int) {
 }
 
 // DefaultMiddleware which handles Logging and Recover middleware
-func DefaultMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return LoggingMiddleware(RecoveryMiddleware(next))
+func DefaultMiddleware(tr opentracing.Tracer, path string, next http.HandlerFunc) http.HandlerFunc {
+	return TracingMiddleware(tr, path, RecoveryMiddleware(next))
 }
 
-// LoggingMiddleware for handling logging and metrics
-func LoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
+// TracingMiddleware for handling tracing and metrics
+func TracingMiddleware(tr opentracing.Tracer, path string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		sp := tr.StartSpan(opName(r.Method, path), ext.RPCServerOption(ctx))
+		ext.HTTPMethod.Set(sp, r.Method)
+		ext.HTTPUrl.Set(sp, r.URL.String())
+		ext.Component.Set(sp, "http")
+		r = r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
 		lw := newResponseWriter(w)
-		st := time.Now()
+
 		next(lw, r)
-		latency := float64(time.Since(st)) / float64(time.Millisecond)
-		status := strconv.Itoa(lw.Status())
-		log.Infof("method=%s route=%s status=%s time=%f", r.Method, r.URL.Path, status, latency)
+
+		ext.HTTPStatusCode.Set(sp, uint16(lw.Status()))
+		sp.Finish()
 	}
+}
+
+func opName(method, path string) string {
+	return "HTTP " + method + " " + path
 }
 
 // RecoveryMiddleware for recovering from failed requests

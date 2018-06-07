@@ -109,10 +109,10 @@ func (s *Service) Shutdown() error {
 	log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(s.cps))
 	agr := agr_errors.New()
 	for _, cp := range s.cps {
 
+		wg.Add(1)
 		go func(c Component, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {
 			defer w.Done()
 			agr.Append(c.Shutdown(ctx))
