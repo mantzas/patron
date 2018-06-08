@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/mantzas/patron/encoding"
@@ -9,8 +8,6 @@ import (
 	"github.com/mantzas/patron/sync"
 	"github.com/pkg/errors"
 )
-
-type httpContextKey string
 
 func handler(hnd sync.Processor) http.HandlerFunc {
 
@@ -23,10 +20,8 @@ func handler(hnd sync.Processor) http.HandlerFunc {
 		}
 		prepareResponse(w, ct)
 
-		ctx := createContext(r)
-
 		req := sync.NewRequest(extractFields(r), r.Body, dec)
-		rsp, err := hnd.Process(ctx, req)
+		rsp, err := hnd.Process(r.Context(), req)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -70,16 +65,6 @@ func determineContentType(hdr http.Header) (string, error) {
 
 	}
 	return h[0], nil
-}
-
-func createContext(r *http.Request) context.Context {
-	ctx := r.Context()
-
-	for k, v := range r.Header {
-		ctx = context.WithValue(ctx, httpContextKey(k), v)
-	}
-
-	return ctx
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.Encode) error {

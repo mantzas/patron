@@ -5,10 +5,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Option defines a option for the HTTP service
+// Option defines a option for the HTTP service.
 type Option func(*Component) error
 
-// Port option for setting the ports of the http service
+// Port option for setting the ports of the http service.
 func Port(port int) Option {
 	return func(s *Component) error {
 		if port <= 0 || port > 65535 {
@@ -20,7 +20,7 @@ func Port(port int) Option {
 	}
 }
 
-// Routes option for setting the routes of the http service
+// Routes option for setting the routes of the http service.
 func Routes(rr []Route) Option {
 	return func(s *Component) error {
 		if len(rr) == 0 {
@@ -32,7 +32,7 @@ func Routes(rr []Route) Option {
 	}
 }
 
-// HealthCheck option for setting the health check function
+// HealthCheck option for setting the health check function.
 func HealthCheck(hcf HealthCheckFunc) Option {
 	return func(s *Component) error {
 		if hcf == nil {

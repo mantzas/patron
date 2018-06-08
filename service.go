@@ -21,9 +21,6 @@ const (
 	minReportingPeriod = 1 * time.Second
 )
 
-// Option defines a option for the HTTP service.
-type Option func(*Service) error
-
 // Component interface for implementing components.
 type Component interface {
 	Run(ctx context.Context, tr opentracing.Tracer) error
@@ -58,7 +55,7 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 	}
 	log.AppendField("host", hostname)
 
-	tr, trCloser := jaeger.NewTracer(name, jaeger.NewConstSampler(true), jaeger.NewInMemoryReporter())
+	tr, trCloser := jaeger.NewTracer(name, jaeger.NewConstSampler(true), jaeger.NewNullReporter())
 	ctx, cancel := context.WithCancel(context.Background())
 	s := Service{name, tr, trCloser, cps, ctx, cancel}
 

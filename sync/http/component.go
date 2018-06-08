@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/mantzas/patron/log"
@@ -27,6 +28,7 @@ type Component struct {
 	hc     HealthCheckFunc
 	port   int
 	routes []Route
+	m      sync.Mutex
 	srv    *http.Server
 }
 
@@ -36,7 +38,7 @@ func New(hg handlerGen, oo ...Option) (*Component, error) {
 		return nil, errors.New("http handler generator is required")
 	}
 
-	s := Component{hg, defaultHealthCheck, port, []Route{}, nil}
+	s := Component{hg, defaultHealthCheck, port, []Route{}, sync.Mutex{}, nil}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -53,7 +55,7 @@ func New(hg handlerGen, oo ...Option) (*Component, error) {
 
 // Run starts the HTTP server.
 func (s *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
-
+	s.m.Lock()
 	log.Infof("applying tracing to routes")
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {
@@ -61,13 +63,15 @@ func (s *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
 		}
 	}
 	s.srv = createHTTPServer(s.port, s.hg(s.routes))
-
+	s.m.Unlock()
 	log.Infof("component listening on port %d", s.port)
 	return s.srv.ListenAndServe()
 }
 
 // Shutdown the component.
 func (s *Component) Shutdown(ctx context.Context) error {
+	s.m.Lock()
+	defer s.m.Unlock()
 	log.Info("shutting down component")
 	return s.srv.Shutdown(ctx)
 }
