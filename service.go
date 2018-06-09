@@ -2,7 +2,6 @@ package patron
 
 import (
 	"context"
-	"io"
 	"os"
 	"os/signal"
 	"sync"
@@ -11,9 +10,8 @@ import (
 
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
-	"github.com/opentracing/opentracing-go"
+	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
-	"github.com/uber/jaeger-client-go"
 )
 
 const (
@@ -23,18 +21,16 @@ const (
 
 // Component interface for implementing components.
 type Component interface {
-	Run(ctx context.Context, tr opentracing.Tracer) error
+	Run(ctx context.Context) error
 	Shutdown(ctx context.Context) error
 }
 
 // Service definition.
 type Service struct {
-	name     string
-	tr       opentracing.Tracer
-	trCloser io.Closer
-	cps      []Component
-	Ctx      context.Context
-	Cancel   context.CancelFunc
+	name   string
+	cps    []Component
+	Ctx    context.Context
+	Cancel context.CancelFunc
 }
 
 // New creates a new service
@@ -55,9 +51,8 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 	}
 	log.AppendField("host", hostname)
 
-	tr, trCloser := jaeger.NewTracer(name, jaeger.NewConstSampler(true), jaeger.NewNullReporter())
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name, tr, trCloser, cps, ctx, cancel}
+	s := Service{name, cps, ctx, cancel}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -87,7 +82,7 @@ func (s *Service) Run() error {
 
 	for _, cp := range s.cps {
 		go func(c Component, ctx context.Context) {
-			errCh <- c.Run(ctx, s.tr)
+			errCh <- c.Run(ctx)
 		}(cp, s.Ctx)
 	}
 
@@ -109,7 +104,7 @@ func (s *Service) Run() error {
 func (s *Service) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-	defer s.trCloser.Close()
+	defer trace.Close()
 	log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}

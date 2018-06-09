@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/uber/jaeger-client-go"
-
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,12 +45,10 @@ func TestNew(t *testing.T) {
 
 func TestComponent_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	tr, trCloser := jaeger.NewTracer("test", jaeger.NewConstSampler(true), jaeger.NewInMemoryReporter())
-	defer trCloser.Close()
 	s, err := New(testCreateHandler)
 	assert.NoError(err)
 	go func() {
-		s.Run(context.TODO(), tr)
+		s.Run(context.TODO())
 	}()
 	time.Sleep(100 * time.Millisecond)
 	assert.Len(s.routes, 11)

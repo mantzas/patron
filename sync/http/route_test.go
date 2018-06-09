@@ -17,7 +17,7 @@ func TestNewRoute(t *testing.T) {
 
 func TestNewRouteRaw(t *testing.T) {
 	assert := assert.New(t)
-	r := NewRouteRaw("/index", http.MethodGet, nil, false)
+	r := NewRouteRaw("/index", http.MethodGet, nil)
 	assert.Equal("/index", r.Pattern)
 	assert.Equal("GET", r.Method)
 	assert.False(r.Trace)

@@ -4,11 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/opentracing/opentracing-go"
-
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
+
+func ErrorOption() Option {
+	return func(s *Service) error {
+		return errors.New("TEST")
+	}
+}
 
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
@@ -29,6 +33,7 @@ func TestNewServer(t *testing.T) {
 		{"success", args{"test", cps, options}, false},
 		{"failed missing name", args{"", cps, options}, true},
 		{"failed missing components", args{"test", []Component{}, options}, true},
+		{"failed error option", args{"test", cps, []Option{ErrorOption()}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -83,7 +88,7 @@ type testComponent struct {
 	errorShutingDown bool
 }
 
-func (ts testComponent) Run(ctx context.Context, tr opentracing.Tracer) error {
+func (ts testComponent) Run(ctx context.Context) error {
 	if ts.errorRunning {
 		return errors.New("failed to run component")
 	}

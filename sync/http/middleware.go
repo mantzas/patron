@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/mantzas/patron/log"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+	"github.com/mantzas/patron/trace"
 )
 
 type responseWriter struct {
@@ -53,26 +52,17 @@ func (w *responseWriter) WriteHeader(code int) {
 }
 
 // DefaultMiddleware which handles Logging and Recover middleware
-func DefaultMiddleware(tr opentracing.Tracer, path string, next http.HandlerFunc) http.HandlerFunc {
-	return TracingMiddleware(tr, path, RecoveryMiddleware(next))
+func DefaultMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
+	return TracingMiddleware(path, RecoveryMiddleware(next))
 }
 
 // TracingMiddleware for handling tracing and metrics
-func TracingMiddleware(tr opentracing.Tracer, path string, next http.HandlerFunc) http.HandlerFunc {
+func TracingMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		sp := tr.StartSpan(opName(r.Method, path), ext.RPCServerOption(ctx))
-		ext.HTTPMethod.Set(sp, r.Method)
-		ext.HTTPUrl.Set(sp, r.URL.String())
-		ext.Component.Set(sp, "http")
-		r = r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
+		sp := trace.StartHTTPSpan(path, r)
 		lw := newResponseWriter(w)
-
 		next(lw, r)
-
-		ext.HTTPStatusCode.Set(sp, uint16(lw.Status()))
-		sp.Finish()
+		trace.FinishHTTPSpan(sp, lw.Status())
 	}
 }
 

@@ -20,6 +20,6 @@ func NewRoute(p string, m string, pr sync.Processor, trace bool) Route {
 }
 
 // NewRouteRaw returns a new route from a HTTP handler
-func NewRouteRaw(p string, m string, h http.HandlerFunc, trace bool) Route {
-	return Route{p, m, h, trace}
+func NewRouteRaw(p string, m string, h http.HandlerFunc) Route {
+	return Route{p, m, h, false}
 }

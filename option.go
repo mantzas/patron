@@ -2,6 +2,7 @@ package patron
 
 import (
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 	"github.com/uber/jaeger-client-go"
 )
@@ -19,9 +20,7 @@ func Tracing(sampler jaeger.Sampler, reporter jaeger.Reporter, options ...jaeger
 			return errors.New("reporter is required")
 		}
 
-		tr, trCloser := jaeger.NewTracer(s.name, sampler, reporter, options...)
-		s.tr = tr
-		s.trCloser = trCloser
+		trace.Setup(s.name, sampler, reporter, options...)
 		log.Info("tracing set")
 		return nil
 	}

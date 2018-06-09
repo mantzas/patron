@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/log"
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -54,12 +53,12 @@ func New(hg handlerGen, oo ...Option) (*Component, error) {
 }
 
 // Run starts the HTTP server.
-func (s *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
+func (s *Component) Run(ctx context.Context) error {
 	s.m.Lock()
 	log.Infof("applying tracing to routes")
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {
-			s.routes[i].Handler = DefaultMiddleware(tr, s.routes[i].Pattern, s.routes[i].Handler)
+			s.routes[i].Handler = DefaultMiddleware(s.routes[i].Pattern, s.routes[i].Handler)
 		}
 	}
 	s.srv = createHTTPServer(s.port, s.hg(s.routes))
