@@ -66,10 +66,6 @@ func TracingMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func opName(method, path string) string {
-	return "HTTP " + method + " " + path
-}
-
 // RecoveryMiddleware for recovering from failed requests
 func RecoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

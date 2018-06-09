@@ -59,6 +59,8 @@ func (s *Component) Run(ctx context.Context) error {
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {
 			s.routes[i].Handler = DefaultMiddleware(s.routes[i].Pattern, s.routes[i].Handler)
+		} else {
+			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
 		}
 	}
 	s.srv = createHTTPServer(s.port, s.hg(s.routes))

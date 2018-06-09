@@ -45,13 +45,14 @@ func TestNew(t *testing.T) {
 
 func TestComponent_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	s, err := New(testCreateHandler)
+	rr := []Route{NewRoute("/", "GET", nil, true)}
+	s, err := New(testCreateHandler, Routes(rr))
 	assert.NoError(err)
 	go func() {
 		s.Run(context.TODO())
 	}()
 	time.Sleep(100 * time.Millisecond)
-	assert.Len(s.routes, 11)
+	assert.Len(s.routes, 12)
 	err = s.Shutdown(context.TODO())
 	assert.NoError(err)
 }
