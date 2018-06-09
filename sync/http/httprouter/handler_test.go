@@ -9,6 +9,6 @@ import (
 
 func TestCreateHandler(t *testing.T) {
 	assert := assert.New(t)
-	h := CreateHandler([]patron_http.Route{patron_http.NewRoute("/", "GET", nil)})
+	h := CreateHandler([]patron_http.Route{patron_http.NewRoute("/", "GET", nil, false)})
 	assert.NotNil(h)
 }

@@ -3,10 +3,9 @@ package http
 import (
 	"errors"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/trace"
 )
 
 type responseWriter struct {
@@ -53,19 +52,17 @@ func (w *responseWriter) WriteHeader(code int) {
 }
 
 // DefaultMiddleware which handles Logging and Recover middleware
-func DefaultMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return LoggingMiddleware(RecoveryMiddleware(next))
+func DefaultMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
+	return TracingMiddleware(path, RecoveryMiddleware(next))
 }
 
-// LoggingMiddleware for handling logging and metrics
-func LoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
+// TracingMiddleware for handling tracing and metrics
+func TracingMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		sp := trace.StartHTTPSpan(path, r)
 		lw := newResponseWriter(w)
-		st := time.Now()
 		next(lw, r)
-		latency := float64(time.Since(st)) / float64(time.Millisecond)
-		status := strconv.Itoa(lw.Status())
-		log.Infof("method=%s route=%s status=%s time=%f", r.Method, r.URL.Path, status, latency)
+		trace.FinishHTTPSpan(sp, lw.Status())
 	}
 }
 

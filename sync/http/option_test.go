@@ -38,7 +38,7 @@ func TestSetRoutes(t *testing.T) {
 		rr      []Route
 		wantErr bool
 	}{
-		{"success", []Route{NewRoute("/", http.MethodGet, nil)}, false},
+		{"success", []Route{NewRoute("/", http.MethodGet, testHandler{}, true)}, false},
 		{"error for no routes", nil, true},
 	}
 	for _, tt := range tests {
@@ -48,7 +48,9 @@ func TestSetRoutes(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
-				assert.Equal(tt.rr, s.routes)
+				assert.Len(s.routes, 1)
+				assert.Equal(tt.rr[0].Method, s.routes[0].Method)
+				assert.Equal(tt.rr[0].Pattern, s.routes[0].Pattern)
 				assert.NoError(err)
 			}
 		})

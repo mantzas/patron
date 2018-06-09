@@ -2,21 +2,17 @@ package log
 
 import (
 	"errors"
-	"sync"
 )
 
 var factory Factory
 var logger Logger
 var fields = make(map[string]interface{})
-var m = sync.Mutex{}
 
 // Setup set's up a new factory to the global state
 func Setup(f Factory) error {
 	if f == nil {
 		return errors.New("factory is nil")
 	}
-	m.Lock()
-	defer m.Unlock()
 	factory = f
 	logger = f.Create(fields)
 	return nil
@@ -27,8 +23,6 @@ func AppendField(key string, value interface{}) {
 	if factory == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	fields[key] = value
 	logger = factory.Create(fields)
 }
@@ -38,8 +32,6 @@ func Sub(fields map[string]interface{}) Logger {
 	if factory == nil || logger == nil {
 		return nil
 	}
-	m.Lock()
-	defer m.Unlock()
 	return factory.CreateSub(logger, fields)
 }
 
@@ -48,8 +40,6 @@ func Panic(args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Panic(args...)
 }
 
@@ -58,8 +48,6 @@ func Panicf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Panicf(msg, args...)
 }
 
@@ -68,8 +56,6 @@ func Fatal(args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Fatal(args...)
 }
 
@@ -78,8 +64,6 @@ func Fatalf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Fatalf(msg, args...)
 }
 
@@ -88,8 +72,6 @@ func Error(args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Error(args...)
 }
 
@@ -98,8 +80,6 @@ func Errorf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Errorf(msg, args...)
 }
 
@@ -108,8 +88,6 @@ func Warn(args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Warn(args...)
 }
 
@@ -118,8 +96,6 @@ func Warnf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Warnf(msg, args...)
 }
 
@@ -128,8 +104,6 @@ func Info(args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Info(args...)
 }
 
@@ -138,8 +112,6 @@ func Infof(msg string, args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Infof(msg, args...)
 }
 
@@ -148,8 +120,6 @@ func Debug(args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Debug(args...)
 }
 
@@ -158,7 +128,5 @@ func Debugf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
 	}
-	m.Lock()
-	defer m.Unlock()
 	logger.Debugf(msg, args...)
 }

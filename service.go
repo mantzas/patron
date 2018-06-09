@@ -10,6 +10,7 @@ import (
 
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 )
 
@@ -17,9 +18,6 @@ const (
 	shutdownTimeout    = 5 * time.Second
 	minReportingPeriod = 1 * time.Second
 )
-
-// Option defines a option for the HTTP service.
-type Option func(*Service) error
 
 // Component interface for implementing components.
 type Component interface {
@@ -106,13 +104,14 @@ func (s *Service) Run() error {
 func (s *Service) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
+	defer trace.Close()
 	log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(s.cps))
 	agr := agr_errors.New()
 	for _, cp := range s.cps {
 
+		wg.Add(1)
 		go func(c Component, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {
 			defer w.Done()
 			agr.Append(c.Shutdown(ctx))

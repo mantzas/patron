@@ -8,6 +8,7 @@ import (
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/log"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -48,7 +49,7 @@ func New(p async.Processor, clientID string, brokers []string, topics []string) 
 }
 
 // Run starts the async processing.
-func (c *Component) Run(ctx context.Context) error {
+func (c *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
 
 	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
 	if err != nil {

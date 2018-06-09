@@ -6,8 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
+
+func ErrorOption() Option {
+	return func(s *Component) error {
+		return errors.New("TEST")
+	}
+}
 
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
@@ -19,6 +26,7 @@ func TestNew(t *testing.T) {
 	}{
 		{"success with no options", testCreateHandler, []Option{}, false},
 		{"success with options", testCreateHandler, []Option{Port(50000)}, false},
+		{"failed with error option", testCreateHandler, []Option{ErrorOption()}, true},
 		{"failed with missing handler gen", nil, []Option{}, true},
 	}
 	for _, tt := range tests {
@@ -37,13 +45,14 @@ func TestNew(t *testing.T) {
 
 func TestComponent_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	s, err := New(testCreateHandler)
+	rr := []Route{NewRoute("/", "GET", nil, true)}
+	s, err := New(testCreateHandler, Routes(rr))
 	assert.NoError(err)
 	go func() {
-		err = s.Run(context.TODO())
-		assert.NoError(err)
+		s.Run(context.TODO())
 	}()
-	assert.Len(s.routes, 11)
+	time.Sleep(100 * time.Millisecond)
+	assert.Len(s.routes, 12)
 	err = s.Shutdown(context.TODO())
 	assert.NoError(err)
 }

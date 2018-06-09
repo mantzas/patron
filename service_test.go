@@ -8,6 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func ErrorOption() Option {
+	return func(s *Service) error {
+		return errors.New("TEST")
+	}
+}
+
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
 
@@ -27,6 +33,7 @@ func TestNewServer(t *testing.T) {
 		{"success", args{"test", cps, options}, false},
 		{"failed missing name", args{"", cps, options}, true},
 		{"failed missing components", args{"test", []Component{}, options}, true},
+		{"failed error option", args{"test", cps, []Option{ErrorOption()}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
