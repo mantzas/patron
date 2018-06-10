@@ -81,7 +81,7 @@ func Close() error {
 // StartConsumerSpan start a new kafka consumer span.
 func StartConsumerSpan(name string, cmp Component, hdr map[string]string) opentracing.Span {
 	ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
-	sp := tr.StartSpan(name, ext.RPCServerOption(ctx))
+	sp := tr.StartSpan(name, consumerOption{ctx})
 	ext.Component.Set(sp, string(cmp))
 	return sp
 }
@@ -122,4 +122,15 @@ func (l jaegerLoggerAdapter) Error(msg string) {
 
 func (l jaegerLoggerAdapter) Infof(msg string, args ...interface{}) {
 	log.Infof(msg, args...)
+}
+
+type consumerOption struct {
+	ctx opentracing.SpanContext
+}
+
+func (r consumerOption) Apply(o *opentracing.StartSpanOptions) {
+	if r.ctx != nil {
+		opentracing.ChildOf(r.ctx).Apply(o)
+	}
+	ext.SpanKindConsumer.Apply(o)
 }
