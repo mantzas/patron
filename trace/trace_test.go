@@ -30,7 +30,20 @@ func TestSetup_Tracer_Close(t *testing.T) {
 	assert.NoError(err)
 }
 
-func TestStartFinishHTTPSpan(t *testing.T) {
+func TestStartFinishSpan(t *testing.T) {
+	assert := assert.New(t)
+	hdr := map[string]string{"key": "val"}
+	sp := StartConsumerSpan("test", "cmp", hdr)
+	assert.NotNil(sp)
+	assert.IsType(&jaeger.Span{}, sp)
+	jsp := sp.(*jaeger.Span)
+	assert.NotNil(jsp)
+	assert.Equal("test", jsp.OperationName())
+	FinishConsumerSpan(jsp, true)
+	assert.NotNil(jsp)
+}
+
+func TestHTTPStartFinishSpan(t *testing.T) {
 	assert := assert.New(t)
 	req, err := http.NewRequest("GET", "/", nil)
 	assert.NoError(err)

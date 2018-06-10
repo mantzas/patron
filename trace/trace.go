@@ -15,6 +15,18 @@ import (
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 )
 
+// Component enum definition.
+type Component string
+
+const (
+	// KafkaConsumerComponent definition.
+	KafkaConsumerComponent Component = "kafka-consumer"
+	// AMQPConsumerComponent definition.
+	AMQPConsumerComponent Component = "amqp-consumer"
+	// HTTPComponent definition.
+	HTTPComponent Component = "http"
+)
+
 var (
 	tr  opentracing.Tracer
 	cls io.Closer
@@ -64,6 +76,20 @@ func Tracer() opentracing.Tracer {
 func Close() error {
 	log.Info("closing tracer")
 	return cls.Close()
+}
+
+// StartConsumerSpan start a new kafka consumer span.
+func StartConsumerSpan(name string, cmp Component, hdr map[string]string) opentracing.Span {
+	ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
+	sp := tr.StartSpan(name, ext.RPCServerOption(ctx))
+	ext.Component.Set(sp, string(cmp))
+	return sp
+}
+
+// FinishConsumerSpan finished a kafka consumer span.
+func FinishConsumerSpan(sp opentracing.Span, hasError bool) {
+	ext.Error.Set(sp, hasError)
+	sp.Finish()
 }
 
 // StartHTTPSpan starts a new HTTP span.
