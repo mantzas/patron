@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/beorn7/perks"
+  packages = ["quantile"]
+  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
+
+[[projects]]
+  branch = "master"
   name = "github.com/bouk/monkey"
   packages = ["."]
   revision = "5df1f207ff77e025801505ae4d903133a0b4353f"
@@ -44,6 +50,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/golang/snappy"
   packages = ["."]
@@ -60,6 +72,12 @@
   packages = ["."]
   revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
   version = "v1.1"
+
+[[projects]]
+  name = "github.com/matttproud/golang_protobuf_extensions"
+  packages = ["pbutil"]
+  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+  version = "v1.0.1"
 
 [[projects]]
   name = "github.com/opentracing/opentracing-go"
@@ -96,6 +114,39 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/prometheus/client_golang"
+  packages = ["prometheus"]
+  revision = "c5b7fccd204277076155f10851dad72b76a49317"
+  version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/client_model"
+  packages = ["go"]
+  revision = "99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+  packages = [
+    "expfmt",
+    "internal/bitbucket.org/ww/goautoneg",
+    "model"
+  ]
+  revision = "7600349dcfe1abd18d72d3a1770870d9800a7801"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/procfs"
+  packages = [
+    ".",
+    "internal/util",
+    "nfs",
+    "xfs"
+  ]
+  revision = "94663424ae5ae9856b40a9f170762b4197024661"
+
+[[projects]]
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
@@ -126,12 +177,17 @@
   name = "github.com/uber/jaeger-client-go"
   packages = [
     ".",
+    "config",
     "internal/baggage",
+    "internal/baggage/remote",
     "internal/spanlog",
     "internal/throttler",
+    "internal/throttler/remote",
     "log",
+    "rpcmetrics",
     "thrift",
     "thrift-gen/agent",
+    "thrift-gen/baggage",
     "thrift-gen/jaeger",
     "thrift-gen/sampling",
     "thrift-gen/zipkincore",
@@ -142,7 +198,10 @@
 
 [[projects]]
   name = "github.com/uber/jaeger-lib"
-  packages = ["metrics"]
+  packages = [
+    "metrics",
+    "metrics/prometheus"
+  ]
   revision = "ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5"
   version = "v1.5.0"
 
@@ -155,6 +214,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "da55a0af5ac5561fa40e3c4a7403043ac355fd8ebb96cc44d45b42ae78a455b1"
+  inputs-digest = "c4a97c115f4597ed6931f996f64e11bac1f9d2697559dd77a47a105bb4478dd5"
   solver-name = "gps-cdcl"
   solver-version = 1
