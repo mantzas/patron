@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Shopify/sarama"
@@ -74,25 +73,5 @@ func Test_determineContentType(t *testing.T) {
 				assert.NoError(err)
 			}
 		})
-	}
-}
-
-func Test_createContext(t *testing.T) {
-	assert := assert.New(t)
-	hdr := []*sarama.RecordHeader{
-		&sarama.RecordHeader{
-			Key:   []byte("key1"),
-			Value: []byte("val1"),
-		},
-		&sarama.RecordHeader{
-			Key:   []byte("key2"),
-			Value: []byte("val2"),
-		},
-	}
-
-	ctx, cnl := createContext(context.Background(), hdr)
-	assert.NotNil(cnl)
-	for _, h := range hdr {
-		assert.Equal(string(h.Value), ctx.Value(kafkaContextKey(string(h.Key))))
 	}
 }

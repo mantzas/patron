@@ -4,23 +4,21 @@ import (
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
-	"github.com/uber/jaeger-client-go"
 )
 
 // Option defines a option for the HTTP service.
 type Option func(*Service) error
 
 // Tracing option for setting tracing.
-func Tracing(sampler jaeger.Sampler, reporter jaeger.Reporter, options ...jaeger.TracerOption) Option {
+func Tracing(agentAddress string) Option {
 	return func(s *Service) error {
-		if sampler == nil {
-			return errors.New("sampler is required")
+		if agentAddress == "" {
+			return errors.New("agent address is required")
 		}
-		if reporter == nil {
-			return errors.New("reporter is required")
+		err := trace.Initialize(s.name, agentAddress)
+		if err != nil {
+			return err
 		}
-
-		trace.Setup(s.name, sampler, reporter, options...)
 		log.Info("tracing set")
 		return nil
 	}

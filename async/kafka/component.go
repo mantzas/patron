@@ -12,8 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type kafkaContextKey string
-
 // Component implementation of a kafka consumer.
 type Component struct {
 	p       async.Processor
@@ -143,14 +141,4 @@ func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
 	}
 
 	return "", errors.New("content type header is missing")
-}
-
-func createContext(ctx context.Context, hdr []*sarama.RecordHeader) (context.Context, context.CancelFunc) {
-	chCtx, cnl := context.WithCancel(ctx)
-
-	for _, v := range hdr {
-		chCtx = context.WithValue(chCtx, kafkaContextKey(string(v.Key)), string(v.Value))
-	}
-
-	return chCtx, cnl
 }

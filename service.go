@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	shutdownTimeout    = 5 * time.Second
-	minReportingPeriod = 1 * time.Second
+	shutdownTimeout = 5 * time.Second
 )
 
 // Component interface for implementing components.
@@ -104,7 +103,12 @@ func (s *Service) Run() error {
 func (s *Service) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-	defer trace.Close()
+	defer func() {
+		err := trace.Close()
+		if err != nil {
+			log.Errorf("failed to close trace %v", err)
+		}
+	}()
 	log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}

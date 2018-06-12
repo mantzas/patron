@@ -44,6 +44,12 @@ func init() {
 		fmt.Printf("failed to set log level config %v", err)
 		os.Exit(1)
 	}
+
+	err = config.Set("JAEGER_LOCAL_ADDR", "0.0.0.0:6831")
+	if err != nil {
+		fmt.Printf("failed to set jaeger local address %v", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -58,6 +64,12 @@ func main() {
 	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
+		os.Exit(1)
+	}
+
+	jaegerAddr, err := config.GetString("JAEGER_LOCAL_ADDR")
+	if err != nil {
+		fmt.Printf("failed to get jaeger local address %v", err)
 		os.Exit(1)
 	}
 
@@ -76,7 +88,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv, err := patron.New("test", []patron.Component{httpCp})
+	srv, err := patron.New("test", []patron.Component{httpCp}, patron.Tracing(jaegerAddr))
 	if err != nil {
 		fmt.Printf("failed to create service %v", err)
 		os.Exit(1)

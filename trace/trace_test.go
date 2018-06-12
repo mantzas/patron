@@ -10,10 +10,11 @@ import (
 
 func TestSetup_Tracer_Close(t *testing.T) {
 	assert := assert.New(t)
-	Setup("TEST", jaeger.NewConstSampler(true), jaeger.NewNullReporter())
+	err := Initialize("TEST", "0.0.0.0:6831")
+	assert.NoError(err)
 	tr := Tracer()
 	assert.NotNil(tr)
-	err := Close()
+	err = Close()
 	assert.NoError(err)
 }
 
