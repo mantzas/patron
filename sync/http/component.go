@@ -48,6 +48,7 @@ func New(hg handlerGen, oo ...Option) (*Component, error) {
 
 	s.routes = append(s.routes, healthCheckRoute(s.hc))
 	s.routes = append(s.routes, profilingRoutes()...)
+	s.routes = append(s.routes, metricRoute())
 
 	return &s, nil
 }
