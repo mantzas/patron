@@ -15,7 +15,7 @@ func Tracing(agentAddress string) Option {
 		if agentAddress == "" {
 			return errors.New("agent address is required")
 		}
-		err := trace.Initialize(s.name, agentAddress)
+		err := trace.Setup(s.name, agentAddress)
 		if err != nil {
 			return err
 		}

@@ -8,9 +8,21 @@ import (
 	"github.com/uber/jaeger-client-go"
 )
 
+func TestInitialize_Tracer_Close(t *testing.T) {
+	assert := assert.New(t)
+	Initialize()
+	tr := Tracer()
+	assert.NotNil(tr)
+	Initialize()
+	tr1 := Tracer()
+	assert.Equal(tr, tr1)
+	err := Close()
+	assert.NoError(err)
+}
+
 func TestSetup_Tracer_Close(t *testing.T) {
 	assert := assert.New(t)
-	err := Initialize("TEST", "0.0.0.0:6831")
+	err := Setup("TEST", "0.0.0.0:6831")
 	assert.NoError(err)
 	tr := Tracer()
 	assert.NotNil(tr)
