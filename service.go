@@ -60,6 +60,7 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 		}
 	}
 
+	trace.Initialize()
 	s.setupTermSignal()
 	return &s, nil
 }

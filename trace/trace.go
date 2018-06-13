@@ -9,7 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
-	"github.com/uber/jaeger-client-go"
+	jaeger "github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/rpcmetrics"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
@@ -20,12 +20,16 @@ var (
 	cls io.Closer
 )
 
-func init() {
+// Initialize the tracer if it not already initialized.
+func Initialize() {
+	if tr != nil {
+		return
+	}
 	tr, cls = jaeger.NewTracer("patron", jaeger.NewConstSampler(true), jaeger.NewNullReporter())
 }
 
-// Initialize tracing by providing a local agent address.
-func Initialize(name, agentAddress string) error {
+// Setup tracing by providing a local agent address.
+func Setup(name, agentAddress string) error {
 	cfg := config.Configuration{
 		ServiceName: name,
 		Sampler: &config.SamplerConfig{
@@ -39,10 +43,11 @@ func Initialize(name, agentAddress string) error {
 		},
 	}
 	time.Sleep(100 * time.Millisecond)
+	metricsFactory := prometheus.New()
 	var err error
 	tr, cls, err = cfg.NewTracer(
 		config.Logger(jaegerLoggerAdapter{}),
-		config.Observer(rpcmetrics.NewObserver(prometheus.New().Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
+		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
 	)
 	if err != nil {
 		return errors.Wrap(err, "cannot initialize jaeger tracer")
