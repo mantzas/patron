@@ -15,6 +15,18 @@ import (
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 )
 
+// Component enum definition.
+type Component string
+
+const (
+	// KafkaConsumerComponent definition.
+	KafkaConsumerComponent Component = "kafka-consumer"
+	// AMQPConsumerComponent definition.
+	AMQPConsumerComponent Component = "amqp-consumer"
+	// HTTPComponent definition.
+	HTTPComponent Component = "http"
+)
+
 var (
 	tr  opentracing.Tracer
 	cls io.Closer
@@ -66,6 +78,20 @@ func Close() error {
 	return cls.Close()
 }
 
+// StartConsumerSpan start a new kafka consumer span.
+func StartConsumerSpan(name string, cmp Component, hdr map[string]string) opentracing.Span {
+	ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
+	sp := tr.StartSpan(name, consumerOption{ctx})
+	ext.Component.Set(sp, string(cmp))
+	return sp
+}
+
+// FinishConsumerSpan finished a kafka consumer span.
+func FinishConsumerSpan(sp opentracing.Span, hasError bool) {
+	ext.Error.Set(sp, hasError)
+	sp.Finish()
+}
+
 // StartHTTPSpan starts a new HTTP span.
 func StartHTTPSpan(path string, r *http.Request) opentracing.Span {
 	ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
@@ -96,4 +122,15 @@ func (l jaegerLoggerAdapter) Error(msg string) {
 
 func (l jaegerLoggerAdapter) Infof(msg string, args ...interface{}) {
 	log.Infof(msg, args...)
+}
+
+type consumerOption struct {
+	ctx opentracing.SpanContext
+}
+
+func (r consumerOption) Apply(o *opentracing.StartSpanOptions) {
+	if r.ctx != nil {
+		opentracing.ChildOf(r.ctx).Apply(o)
+	}
+	ext.SpanKindConsumer.Apply(o)
 }

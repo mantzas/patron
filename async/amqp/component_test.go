@@ -1,7 +1,6 @@
 package amqp
 
 import (
-	"context"
 	"testing"
 
 	"github.com/mantzas/patron/async"
@@ -14,6 +13,7 @@ import (
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
+		name  string
 		url   string
 		queue string
 		p     async.Processor
@@ -23,14 +23,15 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"url", "queue", &async.MockProcessor{}}, false},
-		{"failed with invalid url", args{"", "queue", &async.MockProcessor{}}, true},
-		{"failed with invalid queue name", args{"url", "", &async.MockProcessor{}}, true},
-		{"failed with invalid processor", args{"url", "queue", nil}, true},
+		{"success", args{"test", "url", "queue", &async.MockProcessor{}}, false},
+		{"failed with invalid name", args{"", "url", "queue", &async.MockProcessor{}}, true},
+		{"failed with invalid url", args{"test", "", "queue", &async.MockProcessor{}}, true},
+		{"failed with invalid queue name", args{"test", "url", "", &async.MockProcessor{}}, true},
+		{"failed with invalid processor", args{"test", "url", "queue", nil}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.url, tt.args.queue, tt.args.p)
+			got, err := New(tt.args.name, tt.args.url, tt.args.queue, tt.args.p)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -51,15 +52,4 @@ func Test_handlerMessageError(t *testing.T) {
 	handlerMessageError(d, agr, errors.New("test"), "message")
 	assert.Equal(2, agr.Count())
 	assert.Equal("message: test\nfailed to NACK message 1: delivery not initialized\n", agr.Error())
-}
-
-func Test_createContext(t *testing.T) {
-	assert := assert.New(t)
-	tbl := amqp.Table{}
-	tbl["key1"] = "val1"
-	tbl["key2"] = "val2"
-	ctx, cnl := createContext(context.Background(), tbl)
-	assert.NotNil(cnl)
-	assert.Equal(tbl["key1"], ctx.Value(amqpContextKey("key1")))
-	assert.Equal(tbl["key2"], ctx.Value(amqpContextKey("key2")))
 }

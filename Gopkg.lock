@@ -84,7 +84,8 @@
   packages = [
     ".",
     "ext",
-    "log"
+    "log",
+    "mocktracer"
   ]
   revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
   version = "v1.0.2"

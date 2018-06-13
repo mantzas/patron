@@ -8,12 +8,15 @@ import (
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/log"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 )
 
+type kafkaContextKey string
+
 // Component implementation of a kafka consumer.
 type Component struct {
+	name    string
 	p       async.Processor
 	brokers []string
 	topics  []string
@@ -22,7 +25,11 @@ type Component struct {
 }
 
 // New returns a new component.
-func New(p async.Processor, clientID string, brokers []string, topics []string) (*Component, error) {
+func New(name string, p async.Processor, clientID string, brokers []string, topics []string) (*Component, error) {
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
+
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
@@ -43,11 +50,11 @@ func New(p async.Processor, clientID string, brokers []string, topics []string) 
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Component{p, brokers, topics, config, nil}, nil
+	return &Component{name, p, brokers, topics, config, nil}, nil
 }
 
 // Run starts the async processing.
-func (c *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
+func (c *Component) Run(ctx context.Context) error {
 
 	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
 	if err != nil {
@@ -67,21 +74,29 @@ func (c *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
 				go func() {
+					sp := trace.StartConsumerSpan(c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
 					ct, err := determineContentType(msg.Headers)
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to determine content type")
+						trace.FinishConsumerSpan(sp, true)
+						return
 					}
 
 					dec, err := async.DetermineDecoder(ct)
 					if err != nil {
 						failCh <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
+						trace.FinishConsumerSpan(sp, true)
+						return
 					}
 
 					err = c.p.Process(ctx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
+						trace.FinishConsumerSpan(sp, true)
+						return
 					}
+					trace.FinishConsumerSpan(sp, false)
 				}()
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during consumption")
@@ -141,4 +156,12 @@ func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
 	}
 
 	return "", errors.New("content type header is missing")
+}
+
+func mapHeader(hh []*sarama.RecordHeader) map[string]string {
+	mp := make(map[string]string)
+	for _, h := range hh {
+		mp[string(h.Key)] = string(h.Value)
+	}
+	return mp
 }

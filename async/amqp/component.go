@@ -7,7 +7,7 @@ import (
 	"github.com/mantzas/patron/async"
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
@@ -18,6 +18,7 @@ type amqpContextKey string
 
 // Component implementation of a AMQP client
 type Component struct {
+	name  string
 	url   string
 	queue string
 	p     async.Processor
@@ -27,7 +28,11 @@ type Component struct {
 }
 
 // New returns a new client
-func New(url, queue string, p async.Processor) (*Component, error) {
+func New(name, url, queue string, p async.Processor) (*Component, error) {
+
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
 
 	if url == "" {
 		return nil, errors.New("RabbitMQ url is required")
@@ -41,11 +46,11 @@ func New(url, queue string, p async.Processor) (*Component, error) {
 		return nil, errors.New("work processor is required")
 	}
 
-	return &Component{url, queue, p, "", nil, nil}, nil
+	return &Component{name, url, queue, p, "", nil, nil}, nil
 }
 
 // Run starts the async processing.
-func (c *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
+func (c *Component) Run(ctx context.Context) error {
 
 	conn, err := amqp.Dial(c.url)
 	if err != nil {
@@ -77,24 +82,27 @@ func (c *Component) Run(ctx context.Context, tr opentracing.Tracer) error {
 		log.Infof("processing message %s", d.MessageId)
 
 		go func(d *amqp.Delivery, a *agr_errors.Aggregate) {
-
-			chCtx, _ := createContext(ctx, d.Headers)
+			sp := trace.StartConsumerSpan(c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
 
 			dec, err := async.DetermineDecoder(d.ContentType)
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to determine encoding %s. Sending NACK", d.ContentType))
+				trace.FinishConsumerSpan(sp, true)
 				return
 			}
-			err = c.p.Process(chCtx, async.NewMessage(d.Body, dec))
+			err = c.p.Process(ctx, async.NewMessage(d.Body, dec))
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
+				trace.FinishConsumerSpan(sp, true)
 				return
 			}
 			err = d.Ack(false)
 			if err != nil {
 				a.Append(errors.Wrapf(err, "failed to ACK message %s", d.MessageId))
+				trace.FinishConsumerSpan(sp, true)
 				return
 			}
+			trace.FinishConsumerSpan(sp, false)
 		}(&d, agr)
 
 		if agr.Count() > 0 {
@@ -134,12 +142,10 @@ func handlerMessageError(d *amqp.Delivery, a *agr_errors.Aggregate, err error, m
 	}
 }
 
-func createContext(ctx context.Context, hdr amqp.Table) (context.Context, context.CancelFunc) {
-	chCtx, cnl := context.WithCancel(ctx)
-
-	for k, v := range hdr {
-		chCtx = context.WithValue(chCtx, amqpContextKey(k), v)
+func mapHeader(hh amqp.Table) map[string]string {
+	mp := make(map[string]string)
+	for k, v := range hh {
+		mp[k] = v.(string)
 	}
-
-	return chCtx, cnl
+	return mp
 }
