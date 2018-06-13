@@ -7,6 +7,5 @@ import (
 )
 
 func metricRoute() Route {
-
 	return NewRouteRaw("/metric", http.MethodGet, promhttp.Handler().ServeHTTP)
 }

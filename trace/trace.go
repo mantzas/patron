@@ -39,10 +39,11 @@ func Initialize(name, agentAddress string) error {
 		},
 	}
 	time.Sleep(100 * time.Millisecond)
+	metricsFactory := prometheus.New()
 	var err error
 	tr, cls, err = cfg.NewTracer(
 		config.Logger(jaegerLoggerAdapter{}),
-		config.Observer(rpcmetrics.NewObserver(prometheus.New().Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
+		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
 	)
 	if err != nil {
 		return errors.Wrap(err, "cannot initialize jaeger tracer")
