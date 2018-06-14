@@ -6,6 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	key = "key"
+)
+
 func TestSetup(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
@@ -34,7 +38,6 @@ func TestGet(t *testing.T) {
 	assert := assert.New(t)
 	err := Setup(newTestConfig())
 	assert.NoError(err)
-	key := "key"
 	value := "value"
 	err = Set(key, value)
 	assert.NoError(err)
@@ -47,7 +50,6 @@ func TestBool(t *testing.T) {
 	assert := assert.New(t)
 	err := Setup(newTestConfig())
 	assert.NoError(err)
-	key := "key"
 	value := true
 	err = Set(key, value)
 	assert.NoError(err)
@@ -60,7 +62,6 @@ func TestInt(t *testing.T) {
 	assert := assert.New(t)
 	err := Setup(newTestConfig())
 	assert.NoError(err)
-	key := "key"
 	value := int64(1)
 	err = Set(key, value)
 	assert.NoError(err)
@@ -73,7 +74,6 @@ func TestString(t *testing.T) {
 	assert := assert.New(t)
 	err := Setup(newTestConfig())
 	assert.NoError(err)
-	key := "key"
 	value := "value"
 	err = Set(key, value)
 	assert.NoError(err)
@@ -86,7 +86,6 @@ func TestFloat64(t *testing.T) {
 	assert := assert.New(t)
 	err := Setup(newTestConfig())
 	assert.NoError(err)
-	key := "key"
 	value := 3.2
 	err = Set(key, value)
 	assert.NoError(err)

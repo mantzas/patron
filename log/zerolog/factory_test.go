@@ -1,8 +1,8 @@
 package zerolog
 
 import (
-	"bufio"
 	"bytes"
+	"io"
 	"testing"
 
 	"github.com/mantzas/patron/log"
@@ -55,8 +55,7 @@ func TestFactory_CreateSub(t *testing.T) {
 	}
 }
 
-func createFactory(b *bytes.Buffer) log.Factory {
-	writer := bufio.NewWriter(b)
-	l := zerolog.New(writer)
+func createFactory(wr io.Writer) log.Factory {
+	l := zerolog.New(wr)
 	return NewFactory(&l, log.DebugLevel)
 }

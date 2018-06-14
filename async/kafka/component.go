@@ -12,8 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type kafkaContextKey string
-
 // Component implementation of a kafka consumer.
 type Component struct {
 	name    string
