@@ -49,7 +49,8 @@ func TestComponent_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	s, err := New(testCreateHandler, Routes(rr))
 	assert.NoError(err)
 	go func() {
-		s.Run(context.TODO())
+		err := s.Run(context.TODO())
+		assert.Error(err)
 	}()
 	time.Sleep(100 * time.Millisecond)
 	assert.Len(s.routes, 13)

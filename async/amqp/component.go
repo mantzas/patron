@@ -14,8 +14,6 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type amqpContextKey string
-
 // Component implementation of a AMQP client
 type Component struct {
 	name  string

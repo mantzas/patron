@@ -40,7 +40,8 @@ func TestSub(t *testing.T) {
 		assert.Nil(l)
 	})
 	t.Run("success", func(t *testing.T) {
-		Setup(&testFactory{})
+		err := Setup(&testFactory{})
+		assert.NoError(err)
 		l := Sub(make(map[string]interface{}))
 		assert.NotNil(l)
 	})
@@ -56,7 +57,8 @@ func TestLog_AppendField(t *testing.T) {
 		assert.Nil(fields["test"])
 	})
 	t.Run("success", func(t *testing.T) {
-		Setup(&testFactory{})
+		err := Setup(&testFactory{})
+		assert.NoError(err)
 		AppendField("test", "testing")
 		assert.Equal("testing", fields["test"])
 	})

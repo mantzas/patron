@@ -58,7 +58,8 @@ func TestResponseWriter(t *testing.T) {
 	rc := httptest.NewRecorder()
 	rw := newResponseWriter(rc)
 
-	rw.Write([]byte("test"))
+	_, err := rw.Write([]byte("test"))
+	assert.NoError(err)
 	rw.WriteHeader(202)
 
 	assert.Equal(202, rw.status, "status expected 202 but got %d", rw.status)
