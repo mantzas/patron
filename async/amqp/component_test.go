@@ -16,17 +16,17 @@ func TestNew(t *testing.T) {
 		name  string
 		url   string
 		queue string
-		p     async.Processor
+		p     async.ProcessorFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", "url", "queue", &async.MockProcessor{}}, false},
-		{"failed with invalid name", args{"", "url", "queue", &async.MockProcessor{}}, true},
-		{"failed with invalid url", args{"test", "", "queue", &async.MockProcessor{}}, true},
-		{"failed with invalid queue name", args{"test", "url", "", &async.MockProcessor{}}, true},
+		{"success", args{"test", "url", "queue", async.MockProcessor{}.Process}, false},
+		{"failed with invalid name", args{"", "url", "queue", async.MockProcessor{}.Process}, true},
+		{"failed with invalid url", args{"test", "", "queue", async.MockProcessor{}.Process}, true},
+		{"failed with invalid queue name", args{"test", "url", "", async.MockProcessor{}.Process}, true},
 		{"failed with invalid processor", args{"test", "url", "queue", nil}, true},
 	}
 	for _, tt := range tests {

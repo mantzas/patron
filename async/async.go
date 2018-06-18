@@ -8,10 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Processor interface for implementing processing of messages
-type Processor interface {
-	Process(context.Context, *Message) error
-}
+// ProcessorFunc definition of a async processor.
+type ProcessorFunc func(context.Context, *Message) error
 
 // Message definition of a async message.
 type Message struct {

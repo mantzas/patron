@@ -13,7 +13,7 @@ func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
 		name     string
-		p        async.Processor
+		p        async.ProcessorFunc
 		clientID string
 		brokers  []string
 		topics   []string
@@ -23,12 +23,12 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", &async.MockProcessor{}, "clID", []string{"192.168.1.1"}, []string{"topic1"}}, false},
-		{"fails with missing name", args{"", &async.MockProcessor{}, "clID", []string{"192.168.1.1"}, []string{"topic1"}}, true},
+		{"success", args{"test", async.MockProcessor{}.Process, "clID", []string{"192.168.1.1"}, []string{"topic1"}}, false},
+		{"fails with missing name", args{"", async.MockProcessor{}.Process, "clID", []string{"192.168.1.1"}, []string{"topic1"}}, true},
 		{"fails with missing processor", args{"test", nil, "clID", []string{"192.168.1.1"}, []string{"topic1"}}, true},
-		{"fails with missing client id", args{"test", &async.MockProcessor{}, "", []string{"192.168.1.1"}, []string{"topic1"}}, true},
-		{"fails with missing brokers", args{"test", &async.MockProcessor{}, "clID", []string{}, []string{"topic1"}}, true},
-		{"fails with missing topics", args{"test", &async.MockProcessor{}, "clID", []string{"192.168.1.1"}, []string{}}, true},
+		{"fails with missing client id", args{"test", async.MockProcessor{}.Process, "", []string{"192.168.1.1"}, []string{"topic1"}}, true},
+		{"fails with missing brokers", args{"test", async.MockProcessor{}.Process, "clID", []string{}, []string{"topic1"}}, true},
+		{"fails with missing topics", args{"test", async.MockProcessor{}.Process, "clID", []string{"192.168.1.1"}, []string{}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

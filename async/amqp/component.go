@@ -19,14 +19,14 @@ type Component struct {
 	name  string
 	url   string
 	queue string
-	p     async.Processor
+	p     async.ProcessorFunc
 	tag   string
 	ch    *amqp.Channel
 	conn  *amqp.Connection
 }
 
 // New returns a new client
-func New(name, url, queue string, p async.Processor) (*Component, error) {
+func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -88,7 +88,7 @@ func (c *Component) Run(ctx context.Context) error {
 				trace.FinishConsumerSpan(sp, true)
 				return
 			}
-			err = c.p.Process(ctx, async.NewMessage(d.Body, dec))
+			err = c.p(ctx, async.NewMessage(d.Body, dec))
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
 				trace.FinishConsumerSpan(sp, true)
