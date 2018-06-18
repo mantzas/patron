@@ -163,7 +163,7 @@ func Test_handler(t *testing.T) {
 	// failure handling
 	type args struct {
 		req *http.Request
-		hnd sync.Processor
+		hnd sync.ProcessorFunc
 	}
 	tests := []struct {
 		name         string
@@ -171,9 +171,9 @@ func Test_handler(t *testing.T) {
 		expectedCode int
 	}{
 		{"unsupported content type", args{errReq, nil}, http.StatusUnsupportedMediaType},
-		{"success handling", args{req, testHandler{false, "test"}}, http.StatusOK},
-		{"error handling", args{req, testHandler{true, "test"}}, http.StatusInternalServerError},
-		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}}, http.StatusInternalServerError},
+		{"success handling", args{req, testHandler{false, "test"}.Process}, http.StatusOK},
+		{"error handling", args{req, testHandler{true, "test"}.Process}, http.StatusInternalServerError},
+		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}.Process}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

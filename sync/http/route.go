@@ -15,7 +15,7 @@ type Route struct {
 }
 
 // NewRoute returns a new route from a generic handler
-func NewRoute(p string, m string, pr sync.Processor, trace bool) Route {
+func NewRoute(p string, m string, pr sync.ProcessorFunc, trace bool) Route {
 	return Route{p, m, handler(pr), trace}
 }
 

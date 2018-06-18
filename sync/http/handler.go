@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func handler(hnd sync.Processor) http.HandlerFunc {
+func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -21,7 +21,7 @@ func handler(hnd sync.Processor) http.HandlerFunc {
 		prepareResponse(w, ct)
 
 		req := sync.NewRequest(extractFields(r), r.Body, dec)
-		rsp, err := hnd.Process(r.Context(), req)
+		rsp, err := hnd(r.Context(), req)
 		if err != nil {
 			handleError(w, err)
 			return

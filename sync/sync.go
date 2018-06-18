@@ -34,10 +34,8 @@ func NewResponse(p interface{}) *Response {
 	return &Response{p}
 }
 
-// Processor definition of a generic sync processor.
-type Processor interface {
-	Process(context.Context, *Request) (*Response, error)
-}
+// ProcessorFunc defines a function type for processing sync requests.
+type ProcessorFunc func(context.Context, *Request) (*Response, error)
 
 // ValidationError defines a validation error.
 type ValidationError struct {
