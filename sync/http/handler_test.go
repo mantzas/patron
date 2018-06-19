@@ -158,27 +158,31 @@ func Test_handler(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
 	req.Header.Set(encoding.ContentTypeHeader, json.ContentType)
+	pe := func(r *http.Request) map[string]string {
+		return make(map[string]string, 0)
+	}
 
 	// success handling
 	// failure handling
 	type args struct {
 		req *http.Request
 		hnd sync.ProcessorFunc
+		pe  ParamExtractor
 	}
 	tests := []struct {
 		name         string
 		args         args
 		expectedCode int
 	}{
-		{"unsupported content type", args{errReq, nil}, http.StatusUnsupportedMediaType},
-		{"success handling", args{req, testHandler{false, "test"}.Process}, http.StatusOK},
-		{"error handling", args{req, testHandler{true, "test"}.Process}, http.StatusInternalServerError},
-		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}.Process}, http.StatusInternalServerError},
+		{"unsupported content type", args{errReq, nil, nil}, http.StatusUnsupportedMediaType},
+		{"success handling", args{req, testHandler{false, "test"}.Process, pe}, http.StatusOK},
+		{"error handling", args{req, testHandler{true, "test"}.Process, pe}, http.StatusInternalServerError},
+		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}.Process, pe}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rsp := httptest.NewRecorder()
-			handler(tt.args.hnd).ServeHTTP(rsp, tt.args.req)
+			handler(tt.args.hnd, tt.args.pe).ServeHTTP(rsp, tt.args.req)
 			assert.Equal(tt.expectedCode, rsp.Code)
 		})
 	}

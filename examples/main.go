@@ -75,7 +75,7 @@ func main() {
 
 	// Set up routes
 	routes := make([]sync_http.Route, 0)
-	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}.Process, true))
+	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}.Process, httprouter.ParamExtractor, true))
 
 	options := []sync_http.Option{
 		sync_http.Port(50000),

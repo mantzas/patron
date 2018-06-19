@@ -9,7 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
+// ParamExtractor extracts parameters from the request.
+type ParamExtractor func(r *http.Request) map[string]string
+
+func handler(hnd sync.ProcessorFunc, pe ParamExtractor) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -20,7 +23,12 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 		}
 		prepareResponse(w, ct)
 
-		req := sync.NewRequest(extractFields(r), r.Body, dec)
+		f := extractFields(r)
+		for k, v := range pe(r) {
+			f[k] = v
+		}
+
+		req := sync.NewRequest(f, r.Body, dec)
 		rsp, err := hnd(r.Context(), req)
 		if err != nil {
 			handleError(w, err)

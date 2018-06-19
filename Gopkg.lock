@@ -68,10 +68,10 @@
   version = "0.2"
 
 [[projects]]
+  branch = "master"
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
-  revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
-  version = "v1.1"
+  revision = "adbc77eec0d91467376ca515bc3a14b8434d0f18"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -218,6 +218,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "995ea7d72a9e7976d4d945a9eced3a4a1237e9266eeabe136a7f3bc2ef8b7409"
+  inputs-digest = "ac1400164b629c835daeb1510a5df2f64e15bd8d72835df4fefb0e93a1069cfd"
   solver-name = "gps-cdcl"
   solver-version = 1
