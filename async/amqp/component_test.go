@@ -16,22 +16,22 @@ func TestNew(t *testing.T) {
 		name  string
 		url   string
 		queue string
-		p     async.ProcessorFunc
+		proc  async.ProcessorFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", "url", "queue", async.MockProcessor{}.Process}, false},
-		{"failed with invalid name", args{"", "url", "queue", async.MockProcessor{}.Process}, true},
-		{"failed with invalid url", args{"test", "", "queue", async.MockProcessor{}.Process}, true},
-		{"failed with invalid queue name", args{"test", "url", "", async.MockProcessor{}.Process}, true},
-		{"failed with invalid processor", args{"test", "url", "queue", nil}, true},
+		{"success", args{name: "test", url: "url", queue: "queue", proc: async.MockProcessor{}.Process}, false},
+		{"failed with invalid name", args{name: "", url: "url", queue: "queue", proc: async.MockProcessor{}.Process}, true},
+		{"failed with invalid url", args{name: "test", url: "", queue: "queue", proc: async.MockProcessor{}.Process}, true},
+		{"failed with invalid queue name", args{name: "test", url: "url", queue: "", proc: async.MockProcessor{}.Process}, true},
+		{"failed with invalid processor", args{name: "test", url: "url", queue: "queue", proc: nil}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.url, tt.args.queue, tt.args.p)
+			got, err := New(tt.args.name, tt.args.url, tt.args.queue, tt.args.proc)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)

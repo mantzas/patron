@@ -17,9 +17,9 @@ func TestTracing(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"failure due to empty agent address", args{"", "TEST"}, true},
-		{"failure due to service name missing", args{"0.0.0.0:6831", ""}, true},
-		{"success", args{"0.0.0.0:6831", "TEST"}, false},
+		{"failure due to empty agent address", args{addr: "", name: "TEST"}, true},
+		{"failure due to service name missing", args{addr: "0.0.0.0:6831", name: ""}, true},
+		{"success", args{addr: "0.0.0.0:6831", name: "TEST"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
