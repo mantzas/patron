@@ -85,22 +85,22 @@ func (c *Component) Run(ctx context.Context) error {
 			dec, err := async.DetermineDecoder(d.ContentType)
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to determine encoding %s. Sending NACK", d.ContentType))
-				trace.FinishConsumerSpan(sp, true)
+				trace.FinishSpan(sp, true)
 				return
 			}
 			err = c.proc(ctx, async.NewMessage(d.Body, dec))
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
-				trace.FinishConsumerSpan(sp, true)
+				trace.FinishSpan(sp, true)
 				return
 			}
 			err = d.Ack(false)
 			if err != nil {
 				a.Append(errors.Wrapf(err, "failed to ACK message %s", d.MessageId))
-				trace.FinishConsumerSpan(sp, true)
+				trace.FinishSpan(sp, true)
 				return
 			}
-			trace.FinishConsumerSpan(sp, false)
+			trace.FinishSpan(sp, false)
 		}(&d, agr)
 
 		if agr.Count() > 0 {

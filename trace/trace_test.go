@@ -1,40 +1,29 @@
 package trace
 
 import (
+	"context"
 	"net/http"
 	"testing"
+
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInitialize_Tracer_Close(t *testing.T) {
-	assert := assert.New(t)
-	Initialize()
-	tr := Tracer()
-	assert.NotNil(tr)
-	Initialize()
-	tr1 := Tracer()
-	assert.Equal(tr, tr1)
-	err := Close()
-	assert.NoError(err)
-}
-
 func TestSetup_Tracer_Close(t *testing.T) {
 	assert := assert.New(t)
 	err := Setup("TEST", "0.0.0.0:6831")
 	assert.NoError(err)
-	tr := Tracer()
-	assert.NotNil(tr)
 	err = Close()
 	assert.NoError(err)
 }
 
-func TestStartFinishSpan(t *testing.T) {
+func TestStartFinishConsumerSpan(t *testing.T) {
 	assert := assert.New(t)
 	mtr := mocktracer.New()
-	tr = mtr
+	opentracing.SetGlobalTracer(mtr)
 	hdr := map[string]string{"key": "val"}
 	sp := StartConsumerSpan("test", AMQPConsumerComponent, hdr)
 	assert.NotNil(sp)
@@ -42,7 +31,7 @@ func TestStartFinishSpan(t *testing.T) {
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)
 	assert.Equal("test", jsp.OperationName)
-	FinishConsumerSpan(sp, true)
+	FinishSpan(sp, true)
 	assert.NotNil(sp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(map[string]interface{}{
@@ -52,14 +41,37 @@ func TestStartFinishSpan(t *testing.T) {
 	}, rawSpan.Tags())
 }
 
+func TestStartFinishChildSpan(t *testing.T) {
+	assert := assert.New(t)
+	mtr := mocktracer.New()
+	opentracing.SetGlobalTracer(mtr)
+	sp, ctx := StartChildSpan(context.Background(), "opName", "cmp", opentracing.Tag{Key: "key", Value: "value"})
+	assert.NotNil(sp)
+	assert.NotNil(ctx)
+	sp.LogKV("log event")
+	assert.IsType(&mocktracer.MockSpan{}, sp)
+	jsp := sp.(*mocktracer.MockSpan)
+	assert.NotNil(jsp)
+	assert.Equal("opName", jsp.OperationName)
+	FinishSpan(sp, true)
+	assert.NotNil(sp)
+	rawSpan := mtr.FinishedSpans()[0]
+	assert.Equal(map[string]interface{}{
+		"component": "cmp",
+		"error":     true,
+		"key":       "value",
+	}, rawSpan.Tags())
+}
+
 func TestHTTPStartFinishSpan(t *testing.T) {
 	assert := assert.New(t)
 	mtr := mocktracer.New()
-	tr = mtr
+	opentracing.SetGlobalTracer(mtr)
 	req, err := http.NewRequest("GET", "/", nil)
 	assert.NoError(err)
-	sp := StartHTTPSpan("/", req)
+	sp, req := StartHTTPSpan("/", req)
 	assert.NotNil(sp)
+	assert.NotNil(req)
 	assert.IsType(&mocktracer.MockSpan{}, sp)
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/mantzas/patron/config/env"
+	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 
 	"github.com/mantzas/patron"
@@ -20,13 +21,15 @@ import (
 type indexProcessor struct {
 }
 
-func (ih indexProcessor) Process(context.Context, *sync.Request) (*sync.Response, error) {
-
+func (ih indexProcessor) Process(ctx context.Context, req *sync.Request) (*sync.Response, error) {
+	sp, ctx := trace.StartChildSpan(ctx, "google-client", "http-client")
+	sp.LogKV("action", "getting www.google.com")
 	rsp, err := http.DefaultClient.Get("https://www.google.com")
 	if err != nil {
+		trace.FinishSpan(sp, true)
 		return nil, errors.Wrap(err, "failed to get google.com")
 	}
-
+	defer trace.FinishSpan(sp, false)
 	return sync.NewResponse(fmt.Sprintf("got %s from google", rsp.Status)), nil
 }
 

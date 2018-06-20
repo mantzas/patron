@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mantzas/patron/trace"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,7 +28,6 @@ func testPanicHandleInt(w http.ResponseWriter, r *http.Request) {
 func TestMiddleware(t *testing.T) {
 	assert := assert.New(t)
 	r, _ := http.NewRequest("POST", "/test", nil)
-	trace.Initialize()
 
 	type args struct {
 		next http.HandlerFunc

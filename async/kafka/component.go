@@ -77,24 +77,24 @@ func (c *Component) Run(ctx context.Context) error {
 					ct, err := determineContentType(msg.Headers)
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to determine content type")
-						trace.FinishConsumerSpan(sp, true)
+						trace.FinishSpan(sp, true)
 						return
 					}
 
 					dec, err := async.DetermineDecoder(ct)
 					if err != nil {
 						failCh <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
-						trace.FinishConsumerSpan(sp, true)
+						trace.FinishSpan(sp, true)
 						return
 					}
 
 					err = c.proc(ctx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
-						trace.FinishConsumerSpan(sp, true)
+						trace.FinishSpan(sp, true)
 						return
 					}
-					trace.FinishConsumerSpan(sp, false)
+					trace.FinishSpan(sp, false)
 				}()
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during consumption")
