@@ -11,11 +11,11 @@ import (
 type responseWriter struct {
 	status              int
 	statusHeaderWritten bool
-	w                   http.ResponseWriter
+	writer              http.ResponseWriter
 }
 
 func newResponseWriter(w http.ResponseWriter) *responseWriter {
-	return &responseWriter{-1, false, w}
+	return &responseWriter{status: -1, statusHeaderWritten: false, writer: w}
 }
 
 // Status returns the http response status
@@ -25,13 +25,13 @@ func (w *responseWriter) Status() int {
 
 // Header returns the header
 func (w *responseWriter) Header() http.Header {
-	return w.w.Header()
+	return w.writer.Header()
 }
 
 // Write to the internal ResponseWriter and sets the status if not set already
 func (w *responseWriter) Write(d []byte) (int, error) {
 
-	value, err := w.w.Write(d)
+	value, err := w.writer.Write(d)
 	if err != nil {
 		return value, err
 	}
@@ -47,7 +47,7 @@ func (w *responseWriter) Write(d []byte) (int, error) {
 // WriteHeader writes the internal header and saves the status for retrieval
 func (w *responseWriter) WriteHeader(code int) {
 	w.status = code
-	w.w.WriteHeader(code)
+	w.writer.WriteHeader(code)
 	w.statusHeaderWritten = true
 }
 

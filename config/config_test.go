@@ -99,7 +99,7 @@ type testConfig struct {
 }
 
 func newTestConfig() *testConfig {
-	return &testConfig{make(map[string]interface{})}
+	return &testConfig{store: make(map[string]interface{})}
 }
 
 func (tc *testConfig) Set(key string, value interface{}) error {

@@ -81,7 +81,7 @@ func Close() error {
 // StartConsumerSpan start a new kafka consumer span.
 func StartConsumerSpan(name string, cmp Component, hdr map[string]string) opentracing.Span {
 	ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
-	sp := tr.StartSpan(name, consumerOption{ctx})
+	sp := tr.StartSpan(name, consumerOption{ctx: ctx})
 	ext.Component.Set(sp, string(cmp))
 	return sp
 }

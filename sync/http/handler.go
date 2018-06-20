@@ -117,9 +117,9 @@ func prepareResponse(w http.ResponseWriter, ct string) {
 func extractParams(r *http.Request) map[string]string {
 	par := httprouter.ParamsFromContext(r.Context())
 	if len(par) == 0 {
-		return make(map[string]string, 0)
+		return make(map[string]string)
 	}
-	p := make(map[string]string, 0)
+	p := make(map[string]string)
 	for _, v := range par {
 		p[v.Key] = v.Value
 	}

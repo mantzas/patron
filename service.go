@@ -28,8 +28,8 @@ type Component interface {
 type Service struct {
 	name   string
 	cps    []Component
-	Ctx    context.Context
-	Cancel context.CancelFunc
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // New creates a new service
@@ -51,7 +51,7 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 	log.AppendField("host", hostname)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name, cps, ctx, cancel}
+	s := Service{name: name, cps: cps, ctx: ctx, cancel: cancel}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -71,7 +71,7 @@ func (s *Service) setupTermSignal() {
 		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 		<-stop
 		log.Info("term signal received, cancelling")
-		s.Cancel()
+		s.cancel()
 	}()
 }
 
@@ -83,7 +83,7 @@ func (s *Service) Run() error {
 	for _, cp := range s.cps {
 		go func(c Component, ctx context.Context) {
 			errCh <- c.Run(ctx)
-		}(cp, s.Ctx)
+		}(cp, s.ctx)
 	}
 
 	select {
@@ -94,7 +94,7 @@ func (s *Service) Run() error {
 			return errors.Wrapf(err, "failed to shutdown %v", err1)
 		}
 		return err
-	case <-s.Ctx.Done():
+	case <-s.ctx.Done():
 		log.Info("stop signal received")
 		return s.Shutdown()
 	}

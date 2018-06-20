@@ -23,14 +23,14 @@ var (
 type Component struct {
 	hc     HealthCheckFunc
 	port   int
-	routes []Route
 	m      sync.Mutex
+	routes []Route
 	srv    *http.Server
 }
 
 // New returns a new component.
 func New(oo ...Option) (*Component, error) {
-	s := Component{defaultHealthCheck, port, []Route{}, sync.Mutex{}, nil}
+	s := Component{hc: defaultHealthCheck, port: port, routes: []Route{}, m: sync.Mutex{}, srv: nil}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -82,26 +82,11 @@ func createHTTPServer(port int, sm http.Handler) *http.Server {
 }
 
 func createHandler(routes []Route) http.Handler {
-
 	log.Infof("adding %d routes", len(routes))
-
 	router := httprouter.New()
 	for _, route := range routes {
 		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
 		log.Infof("added route %s %s", route.Method, route.Pattern)
 	}
 	return router
-}
-
-// ParamExtractor extracts parameters from the request.
-func ParamExtractor(r *http.Request) map[string]string {
-	par := httprouter.ParamsFromContext(r.Context())
-	if len(par) == 0 {
-		return make(map[string]string, 0)
-	}
-	p := make(map[string]string, 0)
-	for _, v := range par {
-		p[v.Key] = v.Value
-	}
-	return p
 }

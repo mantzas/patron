@@ -9,13 +9,13 @@ import (
 
 // Factory of the zero logger
 type Factory struct {
-	l   *zerolog.Logger
-	lvl log.Level
+	logger *zerolog.Logger
+	lvl    log.Level
 }
 
 // NewFactory returns a new zero logger factory
 func NewFactory(l *zerolog.Logger, lvl log.Level) log.Factory {
-	return &Factory{l, lvl}
+	return &Factory{logger: l, lvl: lvl}
 }
 
 // DefaultFactory returns a zero logger factory with default settings
@@ -26,7 +26,7 @@ func DefaultFactory(lvl log.Level) log.Factory {
 
 // Create a zero logger
 func (zf *Factory) Create(f map[string]interface{}) log.Logger {
-	return NewLogger(zf.l, zf.lvl, f)
+	return NewLogger(zf.logger, zf.lvl, f)
 }
 
 // CreateSub a zero sub logger with defined fields
@@ -42,6 +42,6 @@ func (zf *Factory) CreateSub(logger log.Logger, fields map[string]interface{}) l
 		all[k] = v
 	}
 
-	l := zf.l.With().Fields(fields).Logger()
+	l := zf.logger.With().Fields(fields).Logger()
 	return NewLogger(&l, zf.lvl, all)
 }

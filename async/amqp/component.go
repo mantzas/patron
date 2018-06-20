@@ -19,7 +19,7 @@ type Component struct {
 	name  string
 	url   string
 	queue string
-	p     async.ProcessorFunc
+	proc  async.ProcessorFunc
 	tag   string
 	ch    *amqp.Channel
 	conn  *amqp.Connection
@@ -44,7 +44,7 @@ func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
 		return nil, errors.New("work processor is required")
 	}
 
-	return &Component{name, url, queue, p, "", nil, nil}, nil
+	return &Component{name: name, url: url, queue: queue, proc: p, tag: "", ch: nil, conn: nil}, nil
 }
 
 // Run starts the async processing.
@@ -88,7 +88,7 @@ func (c *Component) Run(ctx context.Context) error {
 				trace.FinishConsumerSpan(sp, true)
 				return
 			}
-			err = c.p(ctx, async.NewMessage(d.Body, dec))
+			err = c.proc(ctx, async.NewMessage(d.Body, dec))
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
 				trace.FinishConsumerSpan(sp, true)

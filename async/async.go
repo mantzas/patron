@@ -19,7 +19,7 @@ type Message struct {
 
 // NewMessage creates a new message.
 func NewMessage(d []byte, dec encoding.DecodeRaw) *Message {
-	return &Message{d, dec}
+	return &Message{data: d, decode: dec}
 }
 
 // Decode a the raw message into the given value.

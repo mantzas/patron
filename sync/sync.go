@@ -16,7 +16,7 @@ type Request struct {
 
 // NewRequest creates a new request item
 func NewRequest(f map[string]string, r io.Reader, d encoding.Decode) *Request {
-	return &Request{f, r, d}
+	return &Request{Fields: f, Raw: r, decode: d}
 }
 
 // Decode a the raw message into the given value.
@@ -31,7 +31,7 @@ type Response struct {
 
 // NewResponse creates a new response.
 func NewResponse(p interface{}) *Response {
-	return &Response{p}
+	return &Response{Payload: p}
 }
 
 // ProcessorFunc defines a function type for processing sync requests.
@@ -48,7 +48,7 @@ func (e *ValidationError) Error() string {
 
 // NewValidationError creates a new validation error.
 func NewValidationError(msg string) *ValidationError {
-	return &ValidationError{msg}
+	return &ValidationError{err: msg}
 }
 
 // UnauthorizedError defines a authorization error.
@@ -62,7 +62,7 @@ func (e *UnauthorizedError) Error() string {
 
 // NewUnauthorizedError creates a new unauthorized error.
 func NewUnauthorizedError(msg string) *UnauthorizedError {
-	return &UnauthorizedError{msg}
+	return &UnauthorizedError{err: msg}
 }
 
 // ForbiddenError defines a access error.
@@ -76,7 +76,7 @@ func (e *ForbiddenError) Error() string {
 
 // NewForbiddenError creates a new forbidden error.
 func NewForbiddenError(msg string) *ForbiddenError {
-	return &ForbiddenError{msg}
+	return &ForbiddenError{err: msg}
 }
 
 // NotFoundError defines a not found error.
@@ -90,7 +90,7 @@ func (e *NotFoundError) Error() string {
 
 // NewNotFoundError creates a new not found error.
 func NewNotFoundError(msg string) *NotFoundError {
-	return &NotFoundError{msg}
+	return &NotFoundError{err: msg}
 }
 
 // ServiceUnavailableError defines a service unavailable error.
@@ -104,5 +104,5 @@ func (e *ServiceUnavailableError) Error() string {
 
 // NewServiceUnavailableError creates a new service unavailable error.
 func NewServiceUnavailableError(msg string) *ServiceUnavailableError {
-	return &ServiceUnavailableError{msg}
+	return &ServiceUnavailableError{err: msg}
 }

@@ -15,7 +15,7 @@ import (
 // Component implementation of a kafka consumer.
 type Component struct {
 	name    string
-	p       async.ProcessorFunc
+	proc    async.ProcessorFunc
 	brokers []string
 	topics  []string
 	cfg     *sarama.Config
@@ -48,7 +48,7 @@ func New(name string, p async.ProcessorFunc, clientID string, brokers []string, 
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Component{name, p, brokers, topics, config, nil}, nil
+	return &Component{name: name, proc: p, brokers: brokers, topics: topics, cfg: config, ms: nil}, nil
 }
 
 // Run starts the async processing.
@@ -88,7 +88,7 @@ func (c *Component) Run(ctx context.Context) error {
 						return
 					}
 
-					err = c.p(ctx, async.NewMessage(msg.Value, dec))
+					err = c.proc(ctx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
 						trace.FinishConsumerSpan(sp, true)
