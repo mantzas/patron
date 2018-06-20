@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/mantzas/patron/config/env"
+	"github.com/pkg/errors"
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/config"
@@ -20,7 +21,13 @@ type indexProcessor struct {
 }
 
 func (ih indexProcessor) Process(context.Context, *sync.Request) (*sync.Response, error) {
-	return sync.NewResponse("Hello from patron!"), nil
+
+	rsp, err := http.DefaultClient.Get("https://www.google.com")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get google.com")
+	}
+
+	return sync.NewResponse(fmt.Sprintf("got %s from google", rsp.Status)), nil
 }
 
 func init() {
