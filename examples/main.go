@@ -68,8 +68,7 @@ func main() {
 
 	jaegerAddr, err := config.GetString("JAEGER_LOCAL_ADDR")
 	if err != nil {
-		fmt.Printf("failed to get jaeger local address %v", err)
-		os.Exit(1)
+		log.Fatalf("failed to get jaeger local address %v", err)
 	}
 
 	// Set up routes
@@ -83,19 +82,16 @@ func main() {
 
 	httpCp, err := sync_http.New(options...)
 	if err != nil {
-		fmt.Print("failed to create HTTP service", err)
-		os.Exit(1)
+		log.Fatalf("failed to create HTTP service %v", err)
 	}
 
 	srv, err := patron.New("test", []patron.Component{httpCp}, patron.Tracing(jaegerAddr))
 	if err != nil {
-		fmt.Printf("failed to create service %v", err)
-		os.Exit(1)
+		log.Fatalf("failed to create service %v", err)
 	}
 
 	err = srv.Run()
 	if err != nil {
-		fmt.Printf("failed to create service %v", err)
-		os.Exit(1)
+		log.Fatalf("failed to create service %v", err)
 	}
 }
