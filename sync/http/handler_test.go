@@ -158,31 +158,27 @@ func Test_handler(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
 	req.Header.Set(encoding.ContentTypeHeader, json.ContentType)
-	pe := func(r *http.Request) map[string]string {
-		return make(map[string]string, 0)
-	}
 
 	// success handling
 	// failure handling
 	type args struct {
 		req *http.Request
 		hnd sync.ProcessorFunc
-		pe  ParamExtractor
 	}
 	tests := []struct {
 		name         string
 		args         args
 		expectedCode int
 	}{
-		{"unsupported content type", args{errReq, nil, nil}, http.StatusUnsupportedMediaType},
-		{"success handling", args{req, testHandler{false, "test"}.Process, pe}, http.StatusOK},
-		{"error handling", args{req, testHandler{true, "test"}.Process, pe}, http.StatusInternalServerError},
-		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}.Process, pe}, http.StatusInternalServerError},
+		{"unsupported content type", args{errReq, nil}, http.StatusUnsupportedMediaType},
+		{"success handling", args{req, testHandler{false, "test"}.Process}, http.StatusOK},
+		{"error handling", args{req, testHandler{true, "test"}.Process}, http.StatusInternalServerError},
+		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}.Process}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rsp := httptest.NewRecorder()
-			handler(tt.args.hnd, tt.args.pe).ServeHTTP(rsp, tt.args.req)
+			handler(tt.args.hnd).ServeHTTP(rsp, tt.args.req)
 			assert.Equal(tt.expectedCode, rsp.Code)
 		})
 	}
@@ -193,4 +189,21 @@ func Test_prepareResponse(t *testing.T) {
 	rsp := httptest.NewRecorder()
 	prepareResponse(rsp, json.ContentTypeCharset)
 	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
+}
+
+func Test_extractParams(t *testing.T) {
+	assert := assert.New(t)
+	req, err := http.NewRequest(http.MethodGet, "/users/1/status", nil)
+	assert.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+	var fields map[string]string
+
+	proc := func(_ context.Context, req *sync.Request) (*sync.Response, error) {
+		fields = req.Fields
+		return nil, nil
+	}
+
+	h := createHandler([]Route{NewRoute("/users/:id/status", "GET", proc, false)})
+	h.ServeHTTP(httptest.NewRecorder(), req)
+	assert.Equal("1", fields["id"])
 }

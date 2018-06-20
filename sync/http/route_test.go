@@ -9,7 +9,7 @@ import (
 
 func TestNewRoute(t *testing.T) {
 	assert := assert.New(t)
-	r := NewRoute("/index", http.MethodGet, nil, nil, true)
+	r := NewRoute("/index", http.MethodGet, nil, true)
 	assert.Equal("/index", r.Pattern)
 	assert.Equal("GET", r.Method)
 	assert.True(r.Trace)

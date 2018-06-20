@@ -3,16 +3,14 @@ package http
 import (
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/sync"
 	"github.com/pkg/errors"
 )
 
-// ParamExtractor extracts parameters from the request.
-type ParamExtractor func(r *http.Request) map[string]string
-
-func handler(hnd sync.ProcessorFunc, pe ParamExtractor) http.HandlerFunc {
+func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -24,7 +22,7 @@ func handler(hnd sync.ProcessorFunc, pe ParamExtractor) http.HandlerFunc {
 		prepareResponse(w, ct)
 
 		f := extractFields(r)
-		for k, v := range pe(r) {
+		for k, v := range extractParams(r) {
 			f[k] = v
 		}
 
@@ -114,4 +112,16 @@ func handleError(w http.ResponseWriter, err error) {
 
 func prepareResponse(w http.ResponseWriter, ct string) {
 	w.Header().Set(encoding.ContentTypeHeader, ct)
+}
+
+func extractParams(r *http.Request) map[string]string {
+	par := httprouter.ParamsFromContext(r.Context())
+	if len(par) == 0 {
+		return make(map[string]string, 0)
+	}
+	p := make(map[string]string, 0)
+	for _, v := range par {
+		p[v.Key] = v.Value
+	}
+	return p
 }

@@ -7,11 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/log"
-	"github.com/pkg/errors"
 )
-
-type handlerGen func([]Route) http.Handler
 
 const (
 	port = 50000
@@ -23,7 +21,6 @@ var (
 
 // Component implementation of HTTP.
 type Component struct {
-	hg     handlerGen
 	hc     HealthCheckFunc
 	port   int
 	routes []Route
@@ -32,12 +29,8 @@ type Component struct {
 }
 
 // New returns a new component.
-func New(hg handlerGen, oo ...Option) (*Component, error) {
-	if hg == nil {
-		return nil, errors.New("http handler generator is required")
-	}
-
-	s := Component{hg, defaultHealthCheck, port, []Route{}, sync.Mutex{}, nil}
+func New(oo ...Option) (*Component, error) {
+	s := Component{defaultHealthCheck, port, []Route{}, sync.Mutex{}, nil}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -64,7 +57,7 @@ func (s *Component) Run(ctx context.Context) error {
 			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
 		}
 	}
-	s.srv = createHTTPServer(s.port, s.hg(s.routes))
+	s.srv = createHTTPServer(s.port, createHandler(s.routes))
 	s.m.Unlock()
 	log.Infof("component listening on port %d", s.port)
 	return s.srv.ListenAndServe()
@@ -86,4 +79,29 @@ func createHTTPServer(port int, sm http.Handler) *http.Server {
 		IdleTimeout:  120 * time.Second,
 		Handler:      sm,
 	}
+}
+
+func createHandler(routes []Route) http.Handler {
+
+	log.Infof("adding %d routes", len(routes))
+
+	router := httprouter.New()
+	for _, route := range routes {
+		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
+		log.Infof("added route %s %s", route.Method, route.Pattern)
+	}
+	return router
+}
+
+// ParamExtractor extracts parameters from the request.
+func ParamExtractor(r *http.Request) map[string]string {
+	par := httprouter.ParamsFromContext(r.Context())
+	if len(par) == 0 {
+		return make(map[string]string, 0)
+	}
+	p := make(map[string]string, 0)
+	for _, v := range par {
+		p[v.Key] = v.Value
+	}
+	return p
 }

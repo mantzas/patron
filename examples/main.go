@@ -14,7 +14,6 @@ import (
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync"
 	sync_http "github.com/mantzas/patron/sync/http"
-	"github.com/mantzas/patron/sync/http/httprouter"
 )
 
 type indexProcessor struct {
@@ -75,14 +74,14 @@ func main() {
 
 	// Set up routes
 	routes := make([]sync_http.Route, 0)
-	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}.Process, httprouter.ParamExtractor, true))
+	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}.Process, true))
 
 	options := []sync_http.Option{
 		sync_http.Port(50000),
 		sync_http.Routes(routes),
 	}
 
-	httpCp, err := sync_http.New(httprouter.CreateHandler, options...)
+	httpCp, err := sync_http.New(options...)
 	if err != nil {
 		fmt.Print("failed to create HTTP service", err)
 		os.Exit(1)
