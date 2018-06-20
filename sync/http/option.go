@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
 
@@ -15,7 +14,6 @@ func Port(port int) Option {
 			return errors.New("invalid port")
 		}
 		s.port = port
-		log.Infof("port set to %d", port)
 		return nil
 	}
 }
@@ -27,7 +25,6 @@ func Routes(rr []Route) Option {
 			return errors.New("routes are empty")
 		}
 		s.routes = append(s.routes, rr...)
-		log.Info("routes set")
 		return nil
 	}
 }
@@ -39,7 +36,6 @@ func HealthCheck(hcf HealthCheckFunc) Option {
 			return errors.New("health check function is not defined")
 		}
 		s.hc = hcf
-		log.Info("health check function set")
 		return nil
 	}
 }
