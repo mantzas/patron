@@ -32,12 +32,12 @@ var (
 )
 
 // Setup tracing by providing a local agent address.
-func Setup(name, agentAddress string) error {
+func Setup(name, agentAddress, samplerType string, samplerParam float64) error {
 	cfg := config.Configuration{
 		ServiceName: name,
 		Sampler: &config.SamplerConfig{
-			Type:  "const",
-			Param: 1,
+			Type:  samplerType,
+			Param: samplerParam,
 		},
 		Reporter: &config.ReporterConfig{
 			LogSpans:            false,

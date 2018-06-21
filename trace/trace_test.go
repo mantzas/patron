@@ -14,7 +14,7 @@ import (
 
 func TestSetup_Tracer_Close(t *testing.T) {
 	assert := assert.New(t)
-	err := Setup("TEST", "0.0.0.0:6831")
+	err := Setup("TEST", "0.0.0.0:6831", "const", 1)
 	assert.NoError(err)
 	err = Close()
 	assert.NoError(err)

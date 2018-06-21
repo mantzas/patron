@@ -63,7 +63,8 @@ func main() {
 		log.Fatalf("failed to create HTTP service %v", err)
 	}
 
-	srv, err := patron.New("test", []patron.Component{httpCp}, patron.Tracing(c.jaegerAgent))
+	srv, err := patron.New("test", []patron.Component{httpCp},
+		patron.Tracing(c.jaegerAgent, "const", 1))
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
 	}
