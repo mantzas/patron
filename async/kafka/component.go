@@ -14,16 +14,17 @@ import (
 
 // Component implementation of a kafka consumer.
 type Component struct {
-	name    string
-	proc    async.ProcessorFunc
-	brokers []string
-	topics  []string
-	cfg     *sarama.Config
-	ms      sarama.Consumer
+	name        string
+	proc        async.ProcessorFunc
+	brokers     []string
+	topics      []string
+	cfg         *sarama.Config
+	ms          sarama.Consumer
+	contentType string
 }
 
 // New returns a new component.
-func New(name string, p async.ProcessorFunc, clientID string, brokers []string, topics []string) (*Component, error) {
+func New(name string, p async.ProcessorFunc, clientID string, brokers []string, topics []string, ct string) (*Component, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -48,7 +49,7 @@ func New(name string, p async.ProcessorFunc, clientID string, brokers []string, 
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Component{name: name, proc: p, brokers: brokers, topics: topics, cfg: config, ms: nil}, nil
+	return &Component{name: name, proc: p, brokers: brokers, topics: topics, cfg: config, ms: nil, contentType: ct}, nil
 }
 
 // Run starts the async processing.
@@ -74,11 +75,16 @@ func (c *Component) Run(ctx context.Context) error {
 				go func() {
 					sp := trace.StartConsumerSpan(c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
-					ct, err := determineContentType(msg.Headers)
-					if err != nil {
-						failCh <- errors.Wrap(err, "failed to determine content type")
-						trace.FinishSpan(sp, true)
-						return
+					var ct string
+					if c.contentType != "" {
+						ct = c.contentType
+					} else {
+						ct, err = determineContentType(msg.Headers)
+						if err != nil {
+							failCh <- errors.Wrap(err, "failed to determine content type")
+							trace.FinishSpan(sp, true)
+							return
+						}
 					}
 
 					dec, err := async.DetermineDecoder(ct)
