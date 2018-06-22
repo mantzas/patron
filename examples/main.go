@@ -14,11 +14,6 @@ import (
 	sync_http "github.com/mantzas/patron/sync/http"
 )
 
-type serviceConfig struct {
-	logLvl      log.Level
-	jaegerAgent string
-}
-
 func process(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 	sp, ctx := trace.StartChildSpan(ctx, "google-client", "http-client")
 	sp.LogKV("action", "getting www.google.com")
