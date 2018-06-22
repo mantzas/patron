@@ -10,6 +10,7 @@ import (
 
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 )
@@ -43,12 +44,10 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 		return nil, errors.New("components not provided")
 	}
 
-	log.AppendField("srv", name)
-	hostname, err := os.Hostname()
+	err := setupLogging(name)
 	if err != nil {
 		return nil, err
 	}
-	log.AppendField("host", hostname)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	s := Service{name: name, cps: cps, ctx: ctx, cancel: cancel}
@@ -126,5 +125,25 @@ func (s *Service) Shutdown() error {
 	if agr.Count() > 0 {
 		return agr
 	}
+	return nil
+}
+
+func setupLogging(srvName string) error {
+	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
+	if !ok {
+		lvl = string(log.InfoLevel)
+	}
+
+	err := log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
+	if err != nil {
+		return errors.Wrap(err, "failed to setup logging")
+	}
+
+	log.AppendField("srv", srvName)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return errors.Wrap(err, "failed to get hostname")
+	}
+	log.AppendField("host", hostname)
 	return nil
 }

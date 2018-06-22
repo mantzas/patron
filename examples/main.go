@@ -13,7 +13,6 @@ import (
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync"
 	sync_http "github.com/mantzas/patron/sync/http"
 )
@@ -40,12 +39,6 @@ func main() {
 	c, err := getConfig()
 	if err != nil {
 		fmt.Printf("failed to get config: %v", err)
-		os.Exit(1)
-	}
-
-	err = log.Setup(zerolog.DefaultFactory(c.logLvl))
-	if err != nil {
-		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)
 	}
 
@@ -93,19 +86,12 @@ func getConfig() (*serviceConfig, error) {
 		return nil, errors.Wrap(err, "failed to setup config")
 	}
 
-	// Set up logging
-	lvl, err := config.GetString("LOG_LEVEL")
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get log level config")
-	}
-
 	jaegerAddr, err := config.GetString("JAEGER_LOCAL_ADDR")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get jaeger local address")
 	}
 
 	return &serviceConfig{
-		logLvl:      log.Level(lvl),
 		jaegerAgent: jaegerAddr,
 	}, nil
 }

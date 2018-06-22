@@ -8,7 +8,7 @@ Patron provides abstractions for the following functionality of the framework:
 
 - configuration
 - logging
-- metrics and tracing (TBD)
+- metrics and tracing
 - components and processors
   - asynchronous message processing (RabbitMQ, Kafka)
   - synchronous processing (HTTP)
@@ -34,6 +34,10 @@ After implementing the interface a instance has to be provided to the `Setup` me
 The following implementations are provided as sub-packages:
 
 - env, support for env files and env vars
+
+The service has some default settings tha can be changed via environment variables:
+
+- Log level, which set's up zerolog with `INFO` as log level which can be changed via the `PATRON_LOG_LEVEL` environment variable
 
 ### env
 
