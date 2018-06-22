@@ -42,9 +42,9 @@ func Test_determineEncoding(t *testing.T) {
 		encode  encoding.Encode
 		wantErr bool
 	}{
-		{"content type json", args{hdrContentJSON}, json.Decode, json.Encode, false},
-		{"empty header", args{hdrEmptyHeader}, nil, nil, true},
-		{"unsupported encoding", args{hdrUnsupportedEncoding}, nil, nil, true},
+		{"content type json", args{hdr: hdrContentJSON}, json.Decode, json.Encode, false},
+		{"empty header", args{hdr: hdrEmptyHeader}, nil, nil, true},
+		{"unsupported encoding", args{hdr: hdrUnsupportedEncoding}, nil, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -80,7 +80,7 @@ func Test_handleSuccess(t *testing.T) {
 	}{nil, "Athens"})
 
 	type args struct {
-		r   *http.Request
+		req *http.Request
 		rsp *sync.Response
 		enc encoding.Encode
 	}
@@ -90,17 +90,17 @@ func Test_handleSuccess(t *testing.T) {
 		expectedStatus int
 		wantErr        bool
 	}{
-		{"GET No Content success", args{get, nil, nil}, http.StatusNoContent, false},
-		{"GET OK success", args{get, jsonRsp, json.Encode}, http.StatusOK, false},
-		{"POST Created success", args{post, jsonRsp, json.Encode}, http.StatusCreated, false},
-		{"Encode failure", args{post, jsonEncodeFailRsp, json.Encode}, http.StatusCreated, true},
+		{"GET No Content success", args{req: get, rsp: nil, enc: nil}, http.StatusNoContent, false},
+		{"GET OK success", args{req: get, rsp: jsonRsp, enc: json.Encode}, http.StatusOK, false},
+		{"POST Created success", args{req: post, rsp: jsonRsp, enc: json.Encode}, http.StatusCreated, false},
+		{"Encode failure", args{req: post, rsp: jsonEncodeFailRsp, enc: json.Encode}, http.StatusCreated, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			rsp := httptest.NewRecorder()
 
-			err := handleSuccess(rsp, tt.args.r, tt.args.rsp, tt.args.enc)
+			err := handleSuccess(rsp, tt.args.req, tt.args.rsp, tt.args.enc)
 			if tt.wantErr {
 				assert.Error(err)
 
@@ -122,12 +122,12 @@ func Test_handleError(t *testing.T) {
 		args         args
 		expectedCode int
 	}{
-		{"bad request", args{&sync.ValidationError{}}, http.StatusBadRequest},
-		{"unauthorized request", args{&sync.UnauthorizedError{}}, http.StatusUnauthorized},
-		{"forbidden request", args{&sync.ForbiddenError{}}, http.StatusForbidden},
-		{"not found error", args{&sync.NotFoundError{}}, http.StatusNotFound},
-		{"service unavailable error", args{&sync.ServiceUnavailableError{}}, http.StatusServiceUnavailable},
-		{"default error", args{errors.New("Test")}, http.StatusInternalServerError},
+		{"bad request", args{err: &sync.ValidationError{}}, http.StatusBadRequest},
+		{"unauthorized request", args{err: &sync.UnauthorizedError{}}, http.StatusUnauthorized},
+		{"forbidden request", args{err: &sync.ForbiddenError{}}, http.StatusForbidden},
+		{"not found error", args{err: &sync.NotFoundError{}}, http.StatusNotFound},
+		{"service unavailable error", args{err: &sync.ServiceUnavailableError{}}, http.StatusServiceUnavailable},
+		{"default error", args{err: errors.New("Test")}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -163,17 +163,17 @@ func Test_handler(t *testing.T) {
 	// failure handling
 	type args struct {
 		req *http.Request
-		hnd sync.Processor
+		hnd sync.ProcessorFunc
 	}
 	tests := []struct {
 		name         string
 		args         args
 		expectedCode int
 	}{
-		{"unsupported content type", args{errReq, nil}, http.StatusUnsupportedMediaType},
-		{"success handling", args{req, testHandler{false, "test"}}, http.StatusOK},
-		{"error handling", args{req, testHandler{true, "test"}}, http.StatusInternalServerError},
-		{"success handling failed due to encoding", args{req, testHandler{false, make(chan bool)}}, http.StatusInternalServerError},
+		{"unsupported content type", args{req: errReq, hnd: nil}, http.StatusUnsupportedMediaType},
+		{"success handling", args{req: req, hnd: testHandler{err: false, resp: "test"}.Process}, http.StatusOK},
+		{"error handling", args{req: req, hnd: testHandler{err: true, resp: "test"}.Process}, http.StatusInternalServerError},
+		{"success handling failed due to encoding", args{req: req, hnd: testHandler{err: false, resp: make(chan bool)}.Process}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -189,4 +189,21 @@ func Test_prepareResponse(t *testing.T) {
 	rsp := httptest.NewRecorder()
 	prepareResponse(rsp, json.ContentTypeCharset)
 	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
+}
+
+func Test_extractParams(t *testing.T) {
+	assert := assert.New(t)
+	req, err := http.NewRequest(http.MethodGet, "/users/1/status", nil)
+	assert.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+	var fields map[string]string
+
+	proc := func(_ context.Context, req *sync.Request) (*sync.Response, error) {
+		fields = req.Fields
+		return nil, nil
+	}
+
+	h := createHandler([]Route{NewRoute("/users/:id/status", "GET", proc, false)})
+	h.ServeHTTP(httptest.NewRecorder(), req)
+	assert.Equal("1", fields["id"])
 }

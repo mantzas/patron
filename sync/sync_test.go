@@ -10,30 +10,30 @@ import (
 
 func TestValidationError_Error(t *testing.T) {
 	assert := assert.New(t)
-	v := ValidationError{"TEST"}
+	v := NewValidationError("TEST")
 	assert.Equal("TEST", v.Error())
 }
 func TestUnauthorizedError_Error(t *testing.T) {
 	assert := assert.New(t)
-	v := UnauthorizedError{"TEST"}
+	v := NewUnauthorizedError("TEST")
 	assert.Equal("TEST", v.Error())
 }
 
 func TestForbiddenError_Error(t *testing.T) {
 	assert := assert.New(t)
-	v := ForbiddenError{"TEST"}
+	v := NewForbiddenError("TEST")
 	assert.Equal("TEST", v.Error())
 }
 
 func TestNotFoundError_Error(t *testing.T) {
 	assert := assert.New(t)
-	v := NotFoundError{"TEST"}
+	v := NewNotFoundError("TEST")
 	assert.Equal("TEST", v.Error())
 }
 
 func TestServiceUnavailableError_Error(t *testing.T) {
 	assert := assert.New(t)
-	v := ServiceUnavailableError{"TEST"}
+	v := NewServiceUnavailableError("TEST")
 	assert.Equal("TEST", v.Error())
 }
 

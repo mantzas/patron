@@ -16,7 +16,7 @@ type Request struct {
 
 // NewRequest creates a new request item
 func NewRequest(f map[string]string, r io.Reader, d encoding.Decode) *Request {
-	return &Request{f, r, d}
+	return &Request{Fields: f, Raw: r, decode: d}
 }
 
 // Decode a the raw message into the given value.
@@ -31,13 +31,11 @@ type Response struct {
 
 // NewResponse creates a new response.
 func NewResponse(p interface{}) *Response {
-	return &Response{p}
+	return &Response{Payload: p}
 }
 
-// Processor definition of a generic sync processor.
-type Processor interface {
-	Process(context.Context, *Request) (*Response, error)
-}
+// ProcessorFunc defines a function type for processing sync requests.
+type ProcessorFunc func(context.Context, *Request) (*Response, error)
 
 // ValidationError defines a validation error.
 type ValidationError struct {
@@ -46,6 +44,11 @@ type ValidationError struct {
 
 func (e *ValidationError) Error() string {
 	return e.err
+}
+
+// NewValidationError creates a new validation error.
+func NewValidationError(msg string) *ValidationError {
+	return &ValidationError{err: msg}
 }
 
 // UnauthorizedError defines a authorization error.
@@ -57,6 +60,11 @@ func (e *UnauthorizedError) Error() string {
 	return e.err
 }
 
+// NewUnauthorizedError creates a new unauthorized error.
+func NewUnauthorizedError(msg string) *UnauthorizedError {
+	return &UnauthorizedError{err: msg}
+}
+
 // ForbiddenError defines a access error.
 type ForbiddenError struct {
 	err string
@@ -64,6 +72,11 @@ type ForbiddenError struct {
 
 func (e *ForbiddenError) Error() string {
 	return e.err
+}
+
+// NewForbiddenError creates a new forbidden error.
+func NewForbiddenError(msg string) *ForbiddenError {
+	return &ForbiddenError{err: msg}
 }
 
 // NotFoundError defines a not found error.
@@ -75,6 +88,11 @@ func (e *NotFoundError) Error() string {
 	return e.err
 }
 
+// NewNotFoundError creates a new not found error.
+func NewNotFoundError(msg string) *NotFoundError {
+	return &NotFoundError{err: msg}
+}
+
 // ServiceUnavailableError defines a service unavailable error.
 type ServiceUnavailableError struct {
 	err string
@@ -82,4 +100,9 @@ type ServiceUnavailableError struct {
 
 func (e *ServiceUnavailableError) Error() string {
 	return e.err
+}
+
+// NewServiceUnavailableError creates a new service unavailable error.
+func NewServiceUnavailableError(msg string) *ServiceUnavailableError {
+	return &ServiceUnavailableError{err: msg}
 }

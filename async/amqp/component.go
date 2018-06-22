@@ -19,14 +19,14 @@ type Component struct {
 	name  string
 	url   string
 	queue string
-	p     async.Processor
+	proc  async.ProcessorFunc
 	tag   string
 	ch    *amqp.Channel
 	conn  *amqp.Connection
 }
 
 // New returns a new client
-func New(name, url, queue string, p async.Processor) (*Component, error) {
+func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -44,7 +44,7 @@ func New(name, url, queue string, p async.Processor) (*Component, error) {
 		return nil, errors.New("work processor is required")
 	}
 
-	return &Component{name, url, queue, p, "", nil, nil}, nil
+	return &Component{name: name, url: url, queue: queue, proc: p, tag: "", ch: nil, conn: nil}, nil
 }
 
 // Run starts the async processing.
@@ -85,22 +85,22 @@ func (c *Component) Run(ctx context.Context) error {
 			dec, err := async.DetermineDecoder(d.ContentType)
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to determine encoding %s. Sending NACK", d.ContentType))
-				trace.FinishConsumerSpan(sp, true)
+				trace.FinishSpan(sp, true)
 				return
 			}
-			err = c.p.Process(ctx, async.NewMessage(d.Body, dec))
+			err = c.proc(ctx, async.NewMessage(d.Body, dec))
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
-				trace.FinishConsumerSpan(sp, true)
+				trace.FinishSpan(sp, true)
 				return
 			}
 			err = d.Ack(false)
 			if err != nil {
 				a.Append(errors.Wrapf(err, "failed to ACK message %s", d.MessageId))
-				trace.FinishConsumerSpan(sp, true)
+				trace.FinishSpan(sp, true)
 				return
 			}
-			trace.FinishConsumerSpan(sp, false)
+			trace.FinishSpan(sp, false)
 		}(&d, agr)
 
 		if agr.Count() > 0 {

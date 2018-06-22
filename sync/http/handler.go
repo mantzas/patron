@@ -3,13 +3,14 @@ package http
 import (
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/sync"
 	"github.com/pkg/errors"
 )
 
-func handler(hnd sync.Processor) http.HandlerFunc {
+func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -20,8 +21,13 @@ func handler(hnd sync.Processor) http.HandlerFunc {
 		}
 		prepareResponse(w, ct)
 
-		req := sync.NewRequest(extractFields(r), r.Body, dec)
-		rsp, err := hnd.Process(r.Context(), req)
+		f := extractFields(r)
+		for k, v := range extractParams(r) {
+			f[k] = v
+		}
+
+		req := sync.NewRequest(f, r.Body, dec)
+		rsp, err := hnd(r.Context(), req)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -106,4 +112,16 @@ func handleError(w http.ResponseWriter, err error) {
 
 func prepareResponse(w http.ResponseWriter, ct string) {
 	w.Header().Set(encoding.ContentTypeHeader, ct)
+}
+
+func extractParams(r *http.Request) map[string]string {
+	par := httprouter.ParamsFromContext(r.Context())
+	if len(par) == 0 {
+		return make(map[string]string)
+	}
+	p := make(map[string]string)
+	for _, v := range par {
+		p[v.Key] = v.Value
+	}
+	return p
 }

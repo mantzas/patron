@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"net/http"
 	"testing"
 	"time"
 
@@ -20,18 +19,16 @@ func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
 		name    string
-		hg      handlerGen
 		options []Option
 		wantErr bool
 	}{
-		{"success with no options", testCreateHandler, []Option{}, false},
-		{"success with options", testCreateHandler, []Option{Port(50000)}, false},
-		{"failed with error option", testCreateHandler, []Option{ErrorOption()}, true},
-		{"failed with missing handler gen", nil, []Option{}, true},
+		{"success with no options", []Option{}, false},
+		{"success with options", []Option{Port(50000)}, false},
+		{"failed with error option", []Option{ErrorOption()}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.hg, tt.options...)
+			got, err := New(tt.options...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -46,7 +43,7 @@ func TestNew(t *testing.T) {
 func TestComponent_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	rr := []Route{NewRoute("/", "GET", nil, true)}
-	s, err := New(testCreateHandler, Routes(rr))
+	s, err := New(Routes(rr))
 	assert.NoError(err)
 	go func() {
 		err := s.Run(context.TODO())
@@ -58,10 +55,6 @@ func TestComponent_ListenAndServer_DefaultRoutes_Shutdown(t *testing.T) {
 	assert.NoError(err)
 }
 
-func testCreateHandler(routes []Route) http.Handler {
-	return http.NewServeMux()
-}
-
 func Test_createHTTPServer(t *testing.T) {
 	assert := assert.New(t)
 	s := createHTTPServer(10000, nil)
@@ -70,4 +63,10 @@ func Test_createHTTPServer(t *testing.T) {
 	assert.Equal(5*time.Second, s.ReadTimeout)
 	assert.Equal(60*time.Second, s.WriteTimeout)
 	assert.Equal(120*time.Second, s.IdleTimeout)
+}
+
+func TestCreateHandler(t *testing.T) {
+	assert := assert.New(t)
+	h := createHandler([]Route{NewRoute("/", "GET", nil, false)})
+	assert.NotNil(h)
 }

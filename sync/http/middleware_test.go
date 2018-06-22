@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mantzas/patron/trace"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,26 +28,25 @@ func testPanicHandleInt(w http.ResponseWriter, r *http.Request) {
 func TestMiddleware(t *testing.T) {
 	assert := assert.New(t)
 	r, _ := http.NewRequest("POST", "/test", nil)
-	trace.Initialize()
 
 	type args struct {
 		next http.HandlerFunc
-		w    *httptest.ResponseRecorder
+		resp *httptest.ResponseRecorder
 	}
 	tests := []struct {
 		name         string
 		args         args
 		expectedCode int
 	}{
-		{"default middleware success", args{testHandle, httptest.NewRecorder()}, 202},
-		{"default middleware panic string", args{testPanicHandleString, httptest.NewRecorder()}, 500},
-		{"default middleware panic error", args{testPanicHandleError, httptest.NewRecorder()}, 500},
-		{"default middleware panic other", args{testPanicHandleInt, httptest.NewRecorder()}, 500},
+		{"default middleware success", args{next: testHandle, resp: httptest.NewRecorder()}, 202},
+		{"default middleware panic string", args{next: testPanicHandleString, resp: httptest.NewRecorder()}, 500},
+		{"default middleware panic error", args{next: testPanicHandleError, resp: httptest.NewRecorder()}, 500},
+		{"default middleware panic other", args{next: testPanicHandleInt, resp: httptest.NewRecorder()}, 500},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			DefaultMiddleware("path", tt.args.next)(tt.args.w, r)
-			assert.Equal(tt.expectedCode, tt.args.w.Code, "default middleware expected %d but got %d", tt.expectedCode, tt.args.w.Code)
+			DefaultMiddleware("path", tt.args.next)(tt.args.resp, r)
+			assert.Equal(tt.expectedCode, tt.args.resp.Code, "default middleware expected %d but got %d", tt.expectedCode, tt.args.resp.Code)
 		})
 	}
 }

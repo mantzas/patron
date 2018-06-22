@@ -1,6 +1,7 @@
 package trace
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
-	jaeger "github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/rpcmetrics"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
@@ -28,25 +28,16 @@ const (
 )
 
 var (
-	tr  opentracing.Tracer
 	cls io.Closer
 )
 
-// Initialize the tracer if it not already initialized.
-func Initialize() {
-	if tr != nil {
-		return
-	}
-	tr, cls = jaeger.NewTracer("patron", jaeger.NewConstSampler(true), jaeger.NewNullReporter())
-}
-
 // Setup tracing by providing a local agent address.
-func Setup(name, agentAddress string) error {
+func Setup(name, agentAddress, samplerType string, samplerParam float64) error {
 	cfg := config.Configuration{
 		ServiceName: name,
 		Sampler: &config.SamplerConfig{
-			Type:  "const",
-			Param: 1,
+			Type:  samplerType,
+			Param: samplerParam,
 		},
 		Reporter: &config.ReporterConfig{
 			LogSpans:            false,
@@ -56,20 +47,16 @@ func Setup(name, agentAddress string) error {
 	}
 	time.Sleep(100 * time.Millisecond)
 	metricsFactory := prometheus.New()
-	var err error
-	tr, cls, err = cfg.NewTracer(
+	tr, clsTemp, err := cfg.NewTracer(
 		config.Logger(jaegerLoggerAdapter{}),
 		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
 	)
 	if err != nil {
 		return errors.Wrap(err, "cannot initialize jaeger tracer")
 	}
+	cls = clsTemp
+	opentracing.SetGlobalTracer(tr)
 	return nil
-}
-
-// Tracer returns the setup tracer.
-func Tracer() opentracing.Tracer {
-	return tr
 }
 
 // Close the tracer.
@@ -80,33 +67,43 @@ func Close() error {
 
 // StartConsumerSpan start a new kafka consumer span.
 func StartConsumerSpan(name string, cmp Component, hdr map[string]string) opentracing.Span {
-	ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
-	sp := tr.StartSpan(name, consumerOption{ctx})
+	ctx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
+	sp := opentracing.StartSpan(name, consumerOption{ctx: ctx})
 	ext.Component.Set(sp, string(cmp))
 	return sp
 }
 
-// FinishConsumerSpan finished a kafka consumer span.
-func FinishConsumerSpan(sp opentracing.Span, hasError bool) {
+// FinishSpan finished a kafka consumer span.
+func FinishSpan(sp opentracing.Span, hasError bool) {
 	ext.Error.Set(sp, hasError)
 	sp.Finish()
 }
 
 // StartHTTPSpan starts a new HTTP span.
-func StartHTTPSpan(path string, r *http.Request) opentracing.Span {
-	ctx, _ := tr.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	sp := tr.StartSpan(opName(r.Method, path), ext.RPCServerOption(ctx))
+func StartHTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
+	ctx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+	sp := opentracing.StartSpan(opName(r.Method, path), ext.RPCServerOption(ctx))
 	ext.HTTPMethod.Set(sp, r.Method)
 	ext.HTTPUrl.Set(sp, r.URL.String())
 	ext.Component.Set(sp, "http")
-	_ = r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
-	return sp
+	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
 }
 
 // FinishHTTPSpan finishes a HTTP span.
 func FinishHTTPSpan(sp opentracing.Span, code int) {
 	ext.HTTPStatusCode.Set(sp, uint16(code))
 	sp.Finish()
+}
+
+// StartChildSpan starts a new child span with specified tags.
+func StartChildSpan(ctx context.Context, opName, cmp string, tags ...opentracing.Tag) (opentracing.Span, context.Context) {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
+	ext.Component.Set(sp, cmp)
+	for _, t := range tags {
+		sp.SetTag(t.Key, t.Value)
+	}
+
+	return sp, ctx
 }
 
 func opName(method, path string) string {

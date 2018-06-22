@@ -39,8 +39,8 @@ func TestDetermineDecoder(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{json.ContentType}, false},
-		{"failure", args{"XXX"}, true},
+		{"success", args{contentType: json.ContentType}, false},
+		{"failure", args{contentType: "XXX"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

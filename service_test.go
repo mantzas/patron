@@ -30,10 +30,10 @@ func TestNewServer(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", cps, options}, false},
-		{"failed missing name", args{"", cps, options}, true},
-		{"failed missing components", args{"test", []Component{}, options}, true},
-		{"failed error option", args{"test", cps, []Option{ErrorOption()}}, true},
+		{"success", args{name: "test", cps: cps, options: options}, false},
+		{"failed missing name", args{name: "", cps: cps, options: options}, true},
+		{"failed missing components", args{name: "test", cps: []Component{}, options: options}, true},
+		{"failed error option", args{name: "test", cps: cps, options: []Option{ErrorOption()}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -59,8 +59,8 @@ func TestServer_Run_Shutdown(t *testing.T) {
 		wantShutdownErr bool
 	}{
 		{"success", []Component{&testComponent{}}, false, false},
-		{"failed to run", []Component{&testComponent{true, false}}, true, false},
-		{"failed to shutdown", []Component{&testComponent{false, true}}, false, true},
+		{"failed to run", []Component{&testComponent{errorRunning: true, errorShuttingDown: false}}, true, false},
+		{"failed to shutdown", []Component{&testComponent{errorRunning: false, errorShuttingDown: true}}, false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -84,8 +84,8 @@ func TestServer_Run_Shutdown(t *testing.T) {
 }
 
 type testComponent struct {
-	errorRunning     bool
-	errorShutingDown bool
+	errorRunning      bool
+	errorShuttingDown bool
 }
 
 func (ts testComponent) Run(ctx context.Context) error {
@@ -96,7 +96,7 @@ func (ts testComponent) Run(ctx context.Context) error {
 }
 
 func (ts testComponent) Shutdown(ctx context.Context) error {
-	if ts.errorShutingDown {
+	if ts.errorShuttingDown {
 		return errors.New("failed to shut down")
 	}
 	return nil

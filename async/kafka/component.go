@@ -14,16 +14,17 @@ import (
 
 // Component implementation of a kafka consumer.
 type Component struct {
-	name    string
-	p       async.Processor
-	brokers []string
-	topics  []string
-	cfg     *sarama.Config
-	ms      sarama.Consumer
+	name        string
+	proc        async.ProcessorFunc
+	brokers     []string
+	topics      []string
+	cfg         *sarama.Config
+	ms          sarama.Consumer
+	contentType string
 }
 
 // New returns a new component.
-func New(name string, p async.Processor, clientID string, brokers []string, topics []string) (*Component, error) {
+func New(name string, p async.ProcessorFunc, clientID string, brokers []string, topics []string, ct string) (*Component, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -48,7 +49,7 @@ func New(name string, p async.Processor, clientID string, brokers []string, topi
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Component{name, p, brokers, topics, config, nil}, nil
+	return &Component{name: name, proc: p, brokers: brokers, topics: topics, cfg: config, ms: nil, contentType: ct}, nil
 }
 
 // Run starts the async processing.
@@ -74,27 +75,32 @@ func (c *Component) Run(ctx context.Context) error {
 				go func() {
 					sp := trace.StartConsumerSpan(c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
-					ct, err := determineContentType(msg.Headers)
-					if err != nil {
-						failCh <- errors.Wrap(err, "failed to determine content type")
-						trace.FinishConsumerSpan(sp, true)
-						return
+					var ct string
+					if c.contentType != "" {
+						ct = c.contentType
+					} else {
+						ct, err = determineContentType(msg.Headers)
+						if err != nil {
+							failCh <- errors.Wrap(err, "failed to determine content type")
+							trace.FinishSpan(sp, true)
+							return
+						}
 					}
 
 					dec, err := async.DetermineDecoder(ct)
 					if err != nil {
 						failCh <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
-						trace.FinishConsumerSpan(sp, true)
+						trace.FinishSpan(sp, true)
 						return
 					}
 
-					err = c.p.Process(ctx, async.NewMessage(msg.Value, dec))
+					err = c.proc(ctx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
-						trace.FinishConsumerSpan(sp, true)
+						trace.FinishSpan(sp, true)
 						return
 					}
-					trace.FinishConsumerSpan(sp, false)
+					trace.FinishSpan(sp, false)
 				}()
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during consumption")

@@ -34,7 +34,7 @@ func NewLogger(l *zerolog.Logger, lvl log.Level, f map[string]interface{}) log.L
 		f = make(map[string]interface{})
 	}
 	zl := l.Level(levelMap[lvl]).With().Fields(f).Logger()
-	return &Logger{&zl, f, lvl}
+	return &Logger{logger: &zl, fields: f, lvl: lvl}
 }
 
 // Level returns the minimum level.

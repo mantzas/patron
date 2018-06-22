@@ -6,97 +6,106 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/mantzas/patron/config"
 	"github.com/mantzas/patron/config/env"
+	"github.com/mantzas/patron/trace"
+	"github.com/pkg/errors"
 
 	"github.com/mantzas/patron"
-	"github.com/mantzas/patron/config"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync"
 	sync_http "github.com/mantzas/patron/sync/http"
-	"github.com/mantzas/patron/sync/http/httprouter"
 )
 
-type indexProcessor struct {
+type serviceConfig struct {
+	logLvl      log.Level
+	jaegerAgent string
 }
 
-func (ih indexProcessor) Process(context.Context, *sync.Request) (*sync.Response, error) {
-	return sync.NewResponse("Hello from patron!"), nil
-}
-
-func init() {
-
-	cfg, err := env.New(nil)
+func process(ctx context.Context, req *sync.Request) (*sync.Response, error) {
+	sp, ctx := trace.StartChildSpan(ctx, "google-client", "http-client")
+	sp.LogKV("action", "getting www.google.com")
+	rsp, err := http.DefaultClient.Get("https://www.google.com")
 	if err != nil {
-		fmt.Printf("failed to setup env config %v", err)
-		os.Exit(1)
+		trace.FinishSpan(sp, true)
+		return nil, errors.Wrap(err, "failed to get google.com")
 	}
-
-	// Set up config (should come from flag, env, file etc)
-	err = config.Setup(cfg)
-	if err != nil {
-		fmt.Printf("failed to setup config %v", err)
-		os.Exit(1)
-	}
-
-	err = config.Set("LOG_LEVEL", "info")
-	if err != nil {
-		fmt.Printf("failed to set log level config %v", err)
-		os.Exit(1)
-	}
-
-	err = config.Set("JAEGER_LOCAL_ADDR", "0.0.0.0:6831")
-	if err != nil {
-		fmt.Printf("failed to set jaeger local address %v", err)
-		os.Exit(1)
-	}
+	defer trace.FinishSpan(sp, false)
+	return sync.NewResponse(fmt.Sprintf("got %s from google", rsp.Status)), nil
 }
 
 func main() {
 
-	// Set up logging
-	lvl, err := config.GetString("LOG_LEVEL")
+	c, err := getConfig()
 	if err != nil {
-		fmt.Printf("failed to get log level config %v", err)
+		fmt.Printf("failed to get config: %v", err)
 		os.Exit(1)
 	}
 
-	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
+	err = log.Setup(zerolog.DefaultFactory(c.logLvl))
 	if err != nil {
 		fmt.Printf("failed to setup logging %v", err)
 		os.Exit(1)
 	}
 
-	jaegerAddr, err := config.GetString("JAEGER_LOCAL_ADDR")
-	if err != nil {
-		fmt.Printf("failed to get jaeger local address %v", err)
-		os.Exit(1)
-	}
-
 	// Set up routes
 	routes := make([]sync_http.Route, 0)
-	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}, true))
+	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, process, true))
 
 	options := []sync_http.Option{
 		sync_http.Port(50000),
 		sync_http.Routes(routes),
 	}
 
-	httpCp, err := sync_http.New(httprouter.CreateHandler, options...)
+	httpCp, err := sync_http.New(options...)
 	if err != nil {
-		fmt.Print("failed to create HTTP service", err)
-		os.Exit(1)
+		log.Fatalf("failed to create HTTP service %v", err)
 	}
 
-	srv, err := patron.New("test", []patron.Component{httpCp}, patron.Tracing(jaegerAddr))
+	srv, err := patron.New("test", []patron.Component{httpCp},
+		patron.Tracing(c.jaegerAgent, "const", 1))
 	if err != nil {
-		fmt.Printf("failed to create service %v", err)
-		os.Exit(1)
+		log.Fatalf("failed to create service %v", err)
 	}
 
 	err = srv.Run()
 	if err != nil {
-		fmt.Printf("failed to create service %v", err)
-		os.Exit(1)
+		log.Fatalf("failed to create service %v", err)
 	}
+}
+
+func getConfig() (*serviceConfig, error) {
+
+	f, err := os.Open(".env")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open config file")
+	}
+
+	cfg, err := env.New(f)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to setup env config")
+	}
+
+	// Set up config (should come from flag, env, file etc)
+	err = config.Setup(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to setup config")
+	}
+
+	// Set up logging
+	lvl, err := config.GetString("LOG_LEVEL")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get log level config")
+	}
+
+	jaegerAddr, err := config.GetString("JAEGER_LOCAL_ADDR")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get jaeger local address")
+	}
+
+	return &serviceConfig{
+		logLvl:      log.Level(lvl),
+		jaegerAgent: jaegerAddr,
+	}, nil
 }
