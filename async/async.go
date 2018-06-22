@@ -13,18 +13,18 @@ type ProcessorFunc func(context.Context, *Message) error
 
 // Message definition of a async message.
 type Message struct {
-	data   []byte
+	Data   []byte
 	decode encoding.DecodeRaw
 }
 
 // NewMessage creates a new message.
 func NewMessage(d []byte, dec encoding.DecodeRaw) *Message {
-	return &Message{data: d, decode: dec}
+	return &Message{Data: d, decode: dec}
 }
 
 // Decode a the raw message into the given value.
 func (m *Message) Decode(v interface{}) error {
-	return m.decode(m.data, v)
+	return m.decode(m.Data, v)
 }
 
 // DetermineDecoder determines the decoder based on the content type.
