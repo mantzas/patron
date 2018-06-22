@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
+	"github.com/uber/jaeger-client-go"
 )
 
 const (
@@ -44,7 +46,12 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 		return nil, errors.New("components not provided")
 	}
 
-	err := setupLogging(name)
+	err := setupDefaultLogging(name)
+	if err != nil {
+		return nil, err
+	}
+
+	err = setupDefaultTracing(name)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +135,7 @@ func (s *Service) Shutdown() error {
 	return nil
 }
 
-func setupLogging(srvName string) error {
+func setupDefaultLogging(srvName string) error {
 	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
 	if !ok {
 		lvl = string(log.InfoLevel)
@@ -145,5 +152,29 @@ func setupLogging(srvName string) error {
 		return errors.Wrap(err, "failed to get hostname")
 	}
 	log.AppendField("host", hostname)
+	log.Info("set up default log level to `INFO`")
 	return nil
+}
+
+func setupDefaultTracing(srvName string) error {
+	agent, ok := os.LookupEnv("PATRON_JAEGER_AGENT")
+	if !ok {
+		agent = "0.0.0.0:6831"
+	}
+	tp, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_TYPE")
+	if !ok {
+		tp = jaeger.SamplerTypeProbabilistic
+	}
+	prm, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM")
+	if !ok {
+		prm = "0.1"
+	}
+
+	param, err := strconv.ParseFloat(prm, 64)
+	if err != nil {
+		return errors.Wrap(err, "failed to convet sampler param to float64")
+	}
+
+	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
+	return trace.Setup(srvName, agent, tp, param)
 }

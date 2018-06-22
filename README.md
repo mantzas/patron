@@ -37,7 +37,11 @@ The following implementations are provided as sub-packages:
 
 The service has some default settings tha can be changed via environment variables:
 
-- Log level, which set's up zerolog with `INFO` as log level which can be changed via the `PATRON_LOG_LEVEL` environment variable
+- Log level, which set's up zerolog with `INFO` as log level which can be changed via the `PATRON_LOG_LEVEL`
+- Tracing, which set's up jaeger tracing with
+  - agent address `0.0.0.0:6831`, which can be changed via `PATRON_JAEGER_AGENT`
+  - sampler type `probabilistic`, which can be changed via `PATRON_JAEGER_SAMPLER_TYPE`
+  - sampler param `0.1`, which can be changed via `PATRON_JAEGER_SAMPLER_PARAM`
 
 ### env
 
