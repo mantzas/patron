@@ -42,7 +42,7 @@ func main() {
 		log.Fatalf("failed to create HTTP service %v", err)
 	}
 
-	srv, err := patron.New("test", []patron.Component{httpCp})
+	srv, err := patron.New("test", httpCp)
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
 	}

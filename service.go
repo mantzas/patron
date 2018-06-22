@@ -36,13 +36,13 @@ type Service struct {
 }
 
 // New creates a new service
-func New(name string, cps []Component, oo ...Option) (*Service, error) {
+func New(name string, cps ...Component) (*Service, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
 
-	if len(cps) == 0 {
+	if len(cps) == 0 || cps[0] == nil {
 		return nil, errors.New("components not provided")
 	}
 
@@ -58,14 +58,6 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	s := Service{name: name, cps: cps, ctx: ctx, cancel: cancel}
-
-	for _, o := range oo {
-		err := o(&s)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	s.setupTermSignal()
 	return &s, nil
 }
