@@ -187,7 +187,7 @@ func setupDefaultTracing(srvName string) error {
 
 func (s *Service) createHTTPComponent() (Component, error) {
 
-	port, ok := os.LookupEnv("PATRON_SERVICE_PORT")
+	port, ok := os.LookupEnv("PATRON_HTTP_DEFAULT_PORT")
 	if !ok {
 		port = "50000"
 	}
