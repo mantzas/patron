@@ -32,17 +32,7 @@ func main() {
 	routes := make([]sync_http.Route, 0)
 	routes = append(routes, sync_http.NewRoute("/", http.MethodGet, process, true))
 
-	options := []sync_http.Option{
-		sync_http.Port(50000),
-		sync_http.Routes(routes),
-	}
-
-	httpCp, err := sync_http.New(options...)
-	if err != nil {
-		log.Fatalf("failed to create HTTP service %v", err)
-	}
-
-	srv, err := patron.New("test", httpCp)
+	srv, err := patron.New("test", patron.Routes(routes))
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
 	}

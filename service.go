@@ -2,12 +2,15 @@ package patron
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/mantzas/patron/sync/http"
 
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
@@ -31,19 +34,16 @@ type Component interface {
 type Service struct {
 	name   string
 	cps    []Component
+	routes []http.Route
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
 // New creates a new service
-func New(name string, cps ...Component) (*Service, error) {
+func New(name string, oo ...Option) (*Service, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
-	}
-
-	if len(cps) == 0 || cps[0] == nil {
-		return nil, errors.New("components not provided")
 	}
 
 	err := setupDefaultLogging(name)
@@ -57,7 +57,21 @@ func New(name string, cps ...Component) (*Service, error) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name: name, cps: cps, ctx: ctx, cancel: cancel}
+	s := Service{name: name, cps: []Component{}, ctx: ctx, cancel: cancel}
+
+	for _, o := range oo {
+		err := o(&s)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	httpCp, err := s.createHTTPComponent()
+	if err != nil {
+		return nil, err
+	}
+
+	s.cps = append(s.cps, httpCp)
 	s.setupTermSignal()
 	return &s, nil
 }
@@ -169,4 +183,34 @@ func setupDefaultTracing(srvName string) error {
 
 	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
 	return trace.Setup(srvName, agent, tp, param)
+}
+
+func (s *Service) createHTTPComponent() (Component, error) {
+
+	port, ok := os.LookupEnv("PATRON_SERVICE_PORT")
+	if !ok {
+		port = "50000"
+	}
+
+	log.Infof("creating default HTTP component at port %s", port)
+
+	p, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse port %s", port)
+	}
+
+	options := []http.Option{
+		http.Port(p),
+	}
+
+	if s.routes != nil {
+		options = append(options, http.Routes(s.routes))
+	}
+
+	cp, err := http.New(options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create default HTTP component")
+	}
+
+	return cp, nil
 }

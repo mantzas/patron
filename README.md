@@ -37,6 +37,7 @@ The following implementations are provided as sub-packages:
 
 The service has some default settings tha can be changed via environment variables:
 
+- Service HTTP port, which set's up the default HTTP components port to `50000` which can be changed via the `PATRON_SERVICE_PORT`
 - Log level, which set's up zerolog with `INFO` as log level which can be changed via the `PATRON_LOG_LEVEL`
 - Tracing, which set's up jaeger tracing with
   - agent address `0.0.0.0:6831`, which can be changed via `PATRON_JAEGER_AGENT`

@@ -4,29 +4,30 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mantzas/patron/sync/http"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
-
+	route := http.NewRoute("/", "GET", nil, true)
 	type args struct {
 		name string
-		cp   Component
+		opt  Option
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", &testComponent{}}, false},
-		{"failed missing name", args{"", &testComponent{}}, true},
-		{"failed missing components", args{name: "test"}, true},
+		{"success", args{"test", Routes([]http.Route{route})}, false},
+		{"failed missing name", args{"", Routes([]http.Route{route})}, true},
+		{"failed missing routes", args{"test", Routes([]http.Route{})}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.cp)
+			got, err := New(tt.args.name, tt.args.opt)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -53,8 +54,7 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			s, err := New("test", tt.cp)
+			s, err := New("test", Components([]Component{tt.cp}))
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {
