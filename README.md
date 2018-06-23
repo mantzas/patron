@@ -124,7 +124,12 @@ Two methods are supported:
 - Create, which creates a logger with the specified fields (or nil)
 - CreateSub, which creates a sub-logger that accepts a logger and fields and creates a sub-logger with the fields merged into the new one.
 
-## Metrics and Tracing (TBD)
+## Metrics and Tracing
+
+Tracing and metrics are provided by jaeger's implementation of the OpenTracing project.
+Every component has been integrated with the above library and produces traces and metrics.
+Metrics are provided with the default HTTP component at the `/metrics` route for Prometheus to scrape.
+Tracing will be send to a jaeger agent which can be setup though environment variables mentioned in the config section.
 
 ## Processors
 
@@ -213,27 +218,16 @@ Setting up a new service with a HTTP `Component` is as easy as the following cod
 ```go
   // Set up HTTP routes
   routes := make([]sync_http.Route, 0)
-  routes = append(routes, sync_http.NewRoute("/", http.MethodGet, indexProcessor{}))
-
-  // Create a HTTP component with the above routes
-  httpCp, err := sync_http.New(httprouter.CreateHandler, sync_http.Routes(routes))
+  routes = append(routes, sync_http.NewRoute("/", http.MethodGet, process, true))
+  
+  srv, err := patron.New("test", patron.Routes(routes))
   if err != nil {
-    fmt.Print("failed to create HTTP service", err)
-    os.Exit(1)
+    log.Fatalf("failed to create service %v", err)
   }
 
-  // Create a new service
-  srv, err := patron.New("test", []patron.Component{httpCp})
-  if err != nil {
-    fmt.Printf("failed to create service %v", err)
-    os.Exit(1)
-  }
-
-  // Run the service
   err = srv.Run()
   if err != nil {
-    fmt.Printf("failed to create service %v", err)
-    os.Exit(1)
+    log.Fatalf("failed to create service %v", err)
   }
 ```
 
