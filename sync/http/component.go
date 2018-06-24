@@ -16,7 +16,8 @@ const (
 )
 
 var (
-	defaultHealthCheck = func() HealthStatus { return Healthy }
+	// DefaultHealthCheck returns always healthy.
+	DefaultHealthCheck = func() HealthStatus { return Healthy }
 )
 
 // Component implementation of HTTP.
@@ -30,7 +31,7 @@ type Component struct {
 
 // New returns a new component.
 func New(oo ...Option) (*Component, error) {
-	s := Component{hc: defaultHealthCheck, port: port, routes: []Route{}, m: sync.Mutex{}, srv: nil}
+	s := Component{hc: DefaultHealthCheck, port: port, routes: []Route{}, m: sync.Mutex{}, srv: nil}
 
 	for _, o := range oo {
 		err := o(&s)

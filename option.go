@@ -22,10 +22,22 @@ func Routes(rr []http.Route) Option {
 	}
 }
 
-// Components option for adding additional components to the service.
-func Components(cc []Component) Option {
+// HealthCheck option for adding a custom health check to the default HTTP component.
+func HealthCheck(hcf http.HealthCheckFunc) Option {
 	return func(s *Service) error {
-		if cc == nil || len(cc) == 0 {
+		if hcf == nil {
+			return errors.New("health check func is required")
+		}
+		s.hcf = hcf
+		log.Info("health check func is set")
+		return nil
+	}
+}
+
+// Components option for adding additional components to the service.
+func Components(cc ...Component) Option {
+	return func(s *Service) error {
+		if cc == nil || len(cc) == 0 || cc[0] == nil {
 			return errors.New("components are required")
 		}
 		s.cps = append(s.cps, cc...)
