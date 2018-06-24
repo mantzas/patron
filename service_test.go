@@ -54,7 +54,7 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := New("test", Components([]Component{tt.cp}))
+			s, err := New("test", Components(tt.cp))
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {

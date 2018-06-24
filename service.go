@@ -35,6 +35,7 @@ type Service struct {
 	name   string
 	cps    []Component
 	routes []http.Route
+	hcf    http.HealthCheckFunc
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -57,7 +58,7 @@ func New(name string, oo ...Option) (*Service, error) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name: name, cps: []Component{}, ctx: ctx, cancel: cancel}
+	s := Service{name: name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -201,6 +202,10 @@ func (s *Service) createHTTPComponent() (Component, error) {
 
 	options := []http.Option{
 		http.Port(p),
+	}
+
+	if s.hcf != nil {
+		options = append(options, http.HealthCheck(s.hcf))
 	}
 
 	if s.routes != nil {
