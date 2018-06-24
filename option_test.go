@@ -3,31 +3,55 @@ package patron
 import (
 	"testing"
 
+	"github.com/mantzas/patron/sync/http"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTracing(t *testing.T) {
+func TestRoutes(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
-		addr         string
-		name         string
-		samplerType  string
-		samplerParam float64
+		rr []http.Route
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"failure due to missing sampler type", args{addr: "0.0.0.0:6831", name: "TEST", samplerType: "", samplerParam: 1}, true},
-		{"failure due to empty agent address", args{addr: "", name: "TEST", samplerType: "const", samplerParam: 1}, true},
-		{"failure due to service name missing", args{addr: "0.0.0.0:6831", name: "", samplerType: "const", samplerParam: 1}, true},
-		{"success", args{addr: "0.0.0.0:6831", name: "TEST", samplerType: "const", samplerParam: 1}, false},
+		{"failure due to empty routes", args{rr: []http.Route{}}, true},
+		{"failure due to nil routes", args{rr: nil}, true},
+		{"success", args{rr: []http.Route{http.NewRoute("/", "GET", nil, true)}}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := Service{name: tt.args.name}
-			err := Tracing(tt.args.addr, tt.args.samplerType, tt.args.samplerParam)(&s)
+			s := Service{name: "test"}
+			err := Routes(tt.args.rr)(&s)
+			if tt.wantErr {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestComponents(t *testing.T) {
+	assert := assert.New(t)
+	type args struct {
+		cc []Component
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"failure due to empty components", args{cc: []Component{}}, true},
+		{"failure due to nil components", args{cc: nil}, true},
+		{"success", args{cc: []Component{&testComponent{}}}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Service{name: "test"}
+			err := Components(tt.args.cc)(&s)
 			if tt.wantErr {
 				assert.Error(err)
 			} else {

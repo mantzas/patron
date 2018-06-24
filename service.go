@@ -2,16 +2,22 @@ package patron
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/mantzas/patron/sync/http"
+
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
+	"github.com/uber/jaeger-client-go"
 )
 
 const (
@@ -28,30 +34,30 @@ type Component interface {
 type Service struct {
 	name   string
 	cps    []Component
+	routes []http.Route
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
 // New creates a new service
-func New(name string, cps []Component, oo ...Option) (*Service, error) {
+func New(name string, oo ...Option) (*Service, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
 
-	if len(cps) == 0 {
-		return nil, errors.New("components not provided")
-	}
-
-	log.AppendField("srv", name)
-	hostname, err := os.Hostname()
+	err := setupDefaultLogging(name)
 	if err != nil {
 		return nil, err
 	}
-	log.AppendField("host", hostname)
+
+	err = setupDefaultTracing(name)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name: name, cps: cps, ctx: ctx, cancel: cancel}
+	s := Service{name: name, cps: []Component{}, ctx: ctx, cancel: cancel}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -60,6 +66,12 @@ func New(name string, cps []Component, oo ...Option) (*Service, error) {
 		}
 	}
 
+	httpCp, err := s.createHTTPComponent()
+	if err != nil {
+		return nil, err
+	}
+
+	s.cps = append(s.cps, httpCp)
 	s.setupTermSignal()
 	return &s, nil
 }
@@ -127,4 +139,78 @@ func (s *Service) Shutdown() error {
 		return agr
 	}
 	return nil
+}
+
+func setupDefaultLogging(srvName string) error {
+	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
+	if !ok {
+		lvl = string(log.InfoLevel)
+	}
+
+	err := log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
+	if err != nil {
+		return errors.Wrap(err, "failed to setup logging")
+	}
+
+	log.AppendField("srv", srvName)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return errors.Wrap(err, "failed to get hostname")
+	}
+	log.AppendField("host", hostname)
+	log.Info("set up default log level to `INFO`")
+	return nil
+}
+
+func setupDefaultTracing(srvName string) error {
+	agent, ok := os.LookupEnv("PATRON_JAEGER_AGENT")
+	if !ok {
+		agent = "0.0.0.0:6831"
+	}
+	tp, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_TYPE")
+	if !ok {
+		tp = jaeger.SamplerTypeProbabilistic
+	}
+	prm, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM")
+	if !ok {
+		prm = "0.1"
+	}
+
+	param, err := strconv.ParseFloat(prm, 64)
+	if err != nil {
+		return errors.Wrap(err, "failed to convet sampler param to float64")
+	}
+
+	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
+	return trace.Setup(srvName, agent, tp, param)
+}
+
+func (s *Service) createHTTPComponent() (Component, error) {
+
+	port, ok := os.LookupEnv("PATRON_HTTP_DEFAULT_PORT")
+	if !ok {
+		port = "50000"
+	}
+
+	log.Infof("creating default HTTP component at port %s", port)
+
+	p, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse port %s", port)
+	}
+
+	options := []http.Option{
+		http.Port(p),
+	}
+
+	if s.routes != nil {
+		options = append(options, http.Routes(s.routes))
+	}
+
+	cp, err := http.New(options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create default HTTP component")
+	}
+
+	return cp, nil
 }

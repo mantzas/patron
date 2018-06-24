@@ -4,40 +4,30 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mantzas/patron/sync/http"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
-func ErrorOption() Option {
-	return func(s *Service) error {
-		return errors.New("TEST")
-	}
-}
-
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
-
-	cps := []Component{&testComponent{}}
-	options := []Option{}
-
+	route := http.NewRoute("/", "GET", nil, true)
 	type args struct {
-		name    string
-		cps     []Component
-		options []Option
+		name string
+		opt  Option
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{name: "test", cps: cps, options: options}, false},
-		{"failed missing name", args{name: "", cps: cps, options: options}, true},
-		{"failed missing components", args{name: "test", cps: []Component{}, options: options}, true},
-		{"failed error option", args{name: "test", cps: cps, options: []Option{ErrorOption()}}, true},
+		{"success", args{"test", Routes([]http.Route{route})}, false},
+		{"failed missing name", args{"", Routes([]http.Route{route})}, true},
+		{"failed missing routes", args{"test", Routes([]http.Route{})}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.cps, tt.args.options...)
+			got, err := New(tt.args.name, tt.args.opt)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -54,18 +44,17 @@ func TestServer_Run_Shutdown(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		cps             []Component
+		cp              Component
 		wantRunErr      bool
 		wantShutdownErr bool
 	}{
-		{"success", []Component{&testComponent{}}, false, false},
-		{"failed to run", []Component{&testComponent{errorRunning: true, errorShuttingDown: false}}, true, false},
-		{"failed to shutdown", []Component{&testComponent{errorRunning: false, errorShuttingDown: true}}, false, true},
+		{"success", &testComponent{}, false, false},
+		{"failed to run", &testComponent{errorRunning: true, errorShuttingDown: false}, true, false},
+		{"failed to shutdown", &testComponent{errorRunning: false, errorShuttingDown: true}, false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			s, err := New("test", tt.cps)
+			s, err := New("test", Components([]Component{tt.cp}))
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {
