@@ -4,36 +4,26 @@ Patron is a framework for creating microservices.
 
 Patron is french for `template` or `pattern`, but it means also `boss` which we found out later (no pun intended).
 
+The entry point of the framework is the `Service`. The `Service` uses `Components` to handle the processing of sync and async requests. The `Service` starts by default a `HTTP Component` which hosts the debug, health and metric endpoints. Any other endpoints will be added to the default `HTTP Component` as `Routes`. The service set's up by default logging with `zerolog`, tracing and metrics with `jaeger`.
+
 Patron provides abstractions for the following functionality of the framework:
 
-- configuration
-- logging
-- metrics and tracing
+- service
 - components and processors
   - asynchronous message processing (RabbitMQ, Kafka)
   - synchronous processing (HTTP)
-- service
+- metrics and tracing
+- logging
+- configuration
 
-## Config
+## Service
 
-The config package defines a interface that has to be implemented in order to be used inside the application.
+The `Service` has the role of glueing all of the above together, which are:
 
-```go
-type Config interface {
-  Set(key string, value interface{}) error
-  Get(key string) (interface{}, error)
-  GetBool(key string) (bool, error)
-  GetInt64(key string) (int64, error)
-  GetString(key string) (string, error)
-  GetFloat64(key string) (float64, error)
-}
-```
-
-After implementing the interface a instance has to be provided to the `Setup` method of the package in order to be used directly from the package eg `config.GetBool()`.
-
-The following implementations are provided as sub-packages:
-
-- env, support for env files and env vars
+- setting up logging
+- setting up termination by user
+- starting and stopping components
+- handling component errors
 
 The service has some default settings tha can be changed via environment variables:
 
@@ -44,15 +34,105 @@ The service has some default settings tha can be changed via environment variabl
   - sampler type `probabilistic`, which can be changed via `PATRON_JAEGER_SAMPLER_TYPE`
   - sampler param `0.1`, which can be changed via `PATRON_JAEGER_SAMPLER_PARAM`
 
-### env
+### Component
 
-The env package supports getting env vars from the system. It allows further to provide a file that contain env vars, separated by a equal sign `=`, which are then set up on the environment. In order to setup config just do the following:
+A `Component` is a interface that exposes the following API:
 
 ```go
-c,err := env.New({reader to the config file})
-// error checking
-config.Setup(c)
+type Component interface {
+  Run(ctx context.Context) error
+  Shutdown(ctx context.Context) error
+}
 ```
+
+The above API gives the `Service` the control over a component in order to start and stop it gracefully. The framework divides the components in 2 categories:
+
+- synchronous, which are components that follow the request/response pattern and
+- asynchronous, which consume messages from a source but don't respond anything back
+
+The following component implementations are available:
+
+- HTTP (sync)
+- RabbitMQ (async)
+- Kafka (async)
+
+Adding to the above list is as easy as implementing a `Component` and a `Processor` for that component.
+
+## Example
+
+Setting up a new service with a HTTP `Component` is as easy as the following code:
+
+```go
+  // Set up HTTP routes
+  routes := make([]sync_http.Route, 0)
+  routes = append(routes, sync_http.NewRoute("/", http.MethodGet, process, true))
+  
+  srv, err := patron.New("test", patron.Routes(routes))
+  if err != nil {
+    log.Fatalf("failed to create service %v", err)
+  }
+
+  err = srv.Run()
+  if err != nil {
+    log.Fatalf("failed to create service %v", err)
+  }
+```
+
+The above is pretty much self-explanatory.
+
+## Processors
+
+### Synchronous
+
+The implementation of the processor is responsible to create a `Request` by providing everything that is needed (Headers, Fields, decoder, raw io.Reader) pass it to the implementation by invoking the `Process` method and handle the `Response` or the `error` returned by the processor.
+
+The sync processor package contains only a interface definition of the processor along the models needed:
+
+```go
+type Processor interface {
+  Process(context.Context, *Request) (*Response, error)
+}
+```
+
+The `Request` model contains the following properties (which are provided when calling the "constructor" `NewRequest`)
+
+- Headers, which may contains any headers associated with the request
+- Fields, which may contain any fields associated with the request
+- Raw, the raw request data (if any) in the form of a `io.Reader`
+- decode, which is a function of type `encoding.Decode` that decodes the raw reader
+
+A exported function exists for decoding the raw io.Reader in the form of
+
+```go
+Decode(v interface{}) error
+```
+
+The `Response` model contains the following properties (which are provided when calling the "constructor" `NewResponse`)
+
+- Payload, which may hold a struct of type `interface{}`
+
+### Asynchronous
+
+The implementation of the async processor follows exactly the same principle as the sync processor.
+The main difference is that:
+
+- The `Request` is the `Message` and contains only data as `[]byte`
+- There is no `Response`, so the processor may return a error
+
+```go
+type Processor interface {
+  Process(context.Context, *Message) error
+}
+```
+
+Everything else is exactly the same.
+
+## Metrics and Tracing
+
+Tracing and metrics are provided by jaeger's implementation of the OpenTracing project.
+Every component has been integrated with the above library and produces traces and metrics.
+Metrics are provided with the default HTTP component at the `/metrics` route for Prometheus to scrape.
+Tracing will be send to a jaeger agent which can be setup though environment variables mentioned in the config section.
 
 ## Logging
 
@@ -124,111 +204,33 @@ Two methods are supported:
 - Create, which creates a logger with the specified fields (or nil)
 - CreateSub, which creates a sub-logger that accepts a logger and fields and creates a sub-logger with the fields merged into the new one.
 
-## Metrics and Tracing
+## Config
 
-Tracing and metrics are provided by jaeger's implementation of the OpenTracing project.
-Every component has been integrated with the above library and produces traces and metrics.
-Metrics are provided with the default HTTP component at the `/metrics` route for Prometheus to scrape.
-Tracing will be send to a jaeger agent which can be setup though environment variables mentioned in the config section.
-
-## Processors
-
-### Synchronous
-
-The implementation of the processor is responsible to create a `Request` by providing everything that is needed (Headers, Fields, decoder, raw io.Reader) pass it to the implementation by invoking the `Process` method and handle the `Response` or the `error` returned by the processor.
-
-The sync processor package contains only a interface definition of the processor along the models needed:
+The config package defines a interface that has to be implemented in order to be used inside the application.
 
 ```go
-type Processor interface {
-  Process(context.Context, *Request) (*Response, error)
+type Config interface {
+  Set(key string, value interface{}) error
+  Get(key string) (interface{}, error)
+  GetBool(key string) (bool, error)
+  GetInt64(key string) (int64, error)
+  GetString(key string) (string, error)
+  GetFloat64(key string) (float64, error)
 }
 ```
 
-The `Request` model contains the following properties (which are provided when calling the "constructor" `NewRequest`)
+After implementing the interface a instance has to be provided to the `Setup` method of the package in order to be used directly from the package eg `config.GetBool()`.
 
-- Headers, which may contains any headers associated with the request
-- Fields, which may contain any fields associated with the request
-- Raw, the raw request data (if any) in the form of a `io.Reader`
-- decode, which is a function of type `encoding.Decode` that decodes the raw reader
+The following implementations are provided as sub-packages:
 
-A exported function exists for decoding the raw io.Reader in the form of
+- env, support for env files and env vars
 
-```go
-Decode(v interface{}) error
-```
+### env
 
-The `Response` model contains the following properties (which are provided when calling the "constructor" `NewResponse`)
-
-- Payload, which may hold a struct of type `interface{}`
-
-### Asynchronous
-
-The implementation of the async processor follows exactly the same principle as the sync processor.
-The main difference is that:
-
-- The `Request` is the `Message` and contains only data as `[]byte`
-- There is no `Response`, so the processor may return a error
+The env package supports getting env vars from the system. It allows further to provide a file that contain env vars, separated by a equal sign `=`, which are then set up on the environment. In order to setup config just do the following:
 
 ```go
-type Processor interface {
-  Process(context.Context, *Message) error
-}
+c,err := env.New({reader to the config file})
+// error checking
+config.Setup(c)
 ```
-
-Everything else is exactly the same.
-
-## Service
-
-The `Service` has the role of glueing all of the above together, which are:
-
-- setting up logging
-- setting up termination by user
-- starting and stopping components
-- handling component errors
-
-### Component
-
-A `Component` is a interface that exposes the following API:
-
-```go
-type Component interface {
-  Run(ctx context.Context) error
-  Shutdown(ctx context.Context) error
-}
-```
-
-The above API gives the `Service` the control over a component in order to start and stop it gracefully. The framework divides the components in 2 categories:
-
-- synchronous, which are components that follow the request/response pattern and
-- asynchronous, which consume messages from a source but don't respond anything back
-
-The following component implementations are available:
-
-- HTTP (sync)
-- RabbitMQ (async)
-- Kafka (async)
-
-Adding to the above list is as easy as implementing a `Component` and a `Processor` for that component.
-
-## Example
-
-Setting up a new service with a HTTP `Component` is as easy as the following code:
-
-```go
-  // Set up HTTP routes
-  routes := make([]sync_http.Route, 0)
-  routes = append(routes, sync_http.NewRoute("/", http.MethodGet, process, true))
-  
-  srv, err := patron.New("test", patron.Routes(routes))
-  if err != nil {
-    log.Fatalf("failed to create service %v", err)
-  }
-
-  err = srv.Run()
-  if err != nil {
-    log.Fatalf("failed to create service %v", err)
-  }
-```
-
-The above is pretty much self-explanatory.
