@@ -80,6 +80,12 @@
   version = "v1.0.1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/opentracing-contrib/go-stdlib"
+  packages = ["nethttp"]
+  revision = "36723135187404d2f4002f4f189938565e64cc5c"
+
+[[projects]]
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
@@ -218,6 +224,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ac1400164b629c835daeb1510a5df2f64e15bd8d72835df4fefb0e93a1069cfd"
+  inputs-digest = "10ad2782defba7c6f732ed5be2584f9b1314cd32500ba344c024495445ecbb0c"
   solver-name = "gps-cdcl"
   solver-version = 1

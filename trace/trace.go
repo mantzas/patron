@@ -82,7 +82,7 @@ func FinishSpan(sp opentracing.Span, hasError bool) {
 // StartHTTPSpan starts a new HTTP span.
 func StartHTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
 	ctx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	sp := opentracing.StartSpan(opName(r.Method, path), ext.RPCServerOption(ctx))
+	sp := opentracing.StartSpan(HTTPOpName(r.Method, path), ext.RPCServerOption(ctx))
 	ext.HTTPMethod.Set(sp, r.Method)
 	ext.HTTPUrl.Set(sp, r.URL.String())
 	ext.Component.Set(sp, "http")
@@ -106,7 +106,8 @@ func StartChildSpan(ctx context.Context, opName, cmp string, tags ...opentracing
 	return sp, ctx
 }
 
-func opName(method, path string) string {
+// HTTPOpName return a string representation of the request.
+func HTTPOpName(method, path string) string {
 	return "HTTP " + method + " " + path
 }
 
