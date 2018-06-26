@@ -80,7 +80,7 @@ func (c *Component) Run(ctx context.Context) error {
 		log.Infof("processing message %s", d.MessageId)
 
 		go func(d *amqp.Delivery, a *agr_errors.Aggregate) {
-			sp := trace.StartConsumerSpan(c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
+			sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
 
 			dec, err := async.DetermineDecoder(d.ContentType)
 			if err != nil {
@@ -88,7 +88,7 @@ func (c *Component) Run(ctx context.Context) error {
 				trace.FinishSpan(sp, true)
 				return
 			}
-			err = c.proc(ctx, async.NewMessage(d.Body, dec))
+			err = c.proc(chCtx, async.NewMessage(d.Body, dec))
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
 				trace.FinishSpan(sp, true)

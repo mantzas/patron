@@ -66,11 +66,11 @@ func Close() error {
 }
 
 // StartConsumerSpan start a new kafka consumer span.
-func StartConsumerSpan(name string, cmp Component, hdr map[string]string) opentracing.Span {
-	ctx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
-	sp := opentracing.StartSpan(name, consumerOption{ctx: ctx})
+func StartConsumerSpan(ctx context.Context, name string, cmp Component, hdr map[string]string) (opentracing.Span, context.Context) {
+	spCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
+	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, string(cmp))
-	return sp
+	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
 // FinishSpan finished a kafka consumer span.
