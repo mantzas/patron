@@ -25,8 +25,9 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	hdr := map[string]string{"key": "val"}
-	sp := StartConsumerSpan("test", AMQPConsumerComponent, hdr)
+	sp, ctx := StartConsumerSpan(context.Background(), "test", AMQPConsumerComponent, hdr)
 	assert.NotNil(sp)
+	assert.NotNil(ctx)
 	assert.IsType(&mocktracer.MockSpan{}, sp)
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)

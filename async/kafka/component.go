@@ -73,7 +73,7 @@ func (c *Component) Run(ctx context.Context) error {
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
 				go func() {
-					sp := trace.StartConsumerSpan(c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
+					sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
 					var ct string
 					if c.contentType != "" {
@@ -94,7 +94,7 @@ func (c *Component) Run(ctx context.Context) error {
 						return
 					}
 
-					err = c.proc(ctx, async.NewMessage(msg.Value, dec))
+					err = c.proc(chCtx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
 						trace.FinishSpan(sp, true)
