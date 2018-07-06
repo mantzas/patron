@@ -24,6 +24,8 @@ func TestNewJSONMessage(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal("application/json", m.contentType)
 	assert.Equal([]byte(`"xxx"`), m.body)
+	_, err = NewJSONMessage(make(chan bool, 0))
+	assert.Error(err)
 }
 
 func TestNewPublisher(t *testing.T) {
@@ -147,7 +149,7 @@ func TestTracedPublisher_Publish(t *testing.T) {
 		publishError bool
 		wantErr      bool
 	}{
-		//{name: "failure publishing", publishError: true, wantErr: true},
+		{name: "failure publishing", publishError: true, wantErr: true},
 		{name: "success"},
 	}
 	for _, tt := range tests {
