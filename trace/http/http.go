@@ -22,10 +22,11 @@ type TracedClient struct {
 
 // NewClient creates a new HTTP client.
 func NewClient(timeout time.Duration) *TracedClient {
-	return &TracedClient{&http.Client{
-		Timeout:   timeout,
-		Transport: &nethttp.Transport{},
-	}}
+	return &TracedClient{
+		cl: &http.Client{
+			Timeout:   timeout,
+			Transport: &nethttp.Transport{},
+		}}
 }
 
 // Do executes a HTTP request.
@@ -35,7 +36,7 @@ func (tc *TracedClient) Do(ctx context.Context, req *http.Request) (*http.Respon
 		opentracing.GlobalTracer(),
 		req,
 		nethttp.OperationName(trace.HTTPOpName(req.Method, req.URL.String())),
-		nethttp.ComponentName("http-client"))
+		nethttp.ComponentName(trace.HTTPClientComponent))
 	defer ht.Finish()
 	return tc.cl.Do(req)
 }

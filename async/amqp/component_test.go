@@ -12,6 +12,7 @@ import (
 
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
+	proc := async.MockProcessor{}
 	type args struct {
 		name  string
 		url   string
@@ -23,10 +24,10 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{name: "test", url: "url", queue: "queue", proc: async.MockProcessor{}.Process}, false},
-		{"failed with invalid name", args{name: "", url: "url", queue: "queue", proc: async.MockProcessor{}.Process}, true},
-		{"failed with invalid url", args{name: "test", url: "", queue: "queue", proc: async.MockProcessor{}.Process}, true},
-		{"failed with invalid queue name", args{name: "test", url: "url", queue: "", proc: async.MockProcessor{}.Process}, true},
+		{"success", args{name: "test", url: "url", queue: "queue", proc: proc.Process}, false},
+		{"failed with invalid name", args{name: "", url: "url", queue: "queue", proc: proc.Process}, true},
+		{"failed with invalid url", args{name: "test", url: "", queue: "queue", proc: proc.Process}, true},
+		{"failed with invalid queue name", args{name: "test", url: "url", queue: "", proc: proc.Process}, true},
 		{"failed with invalid processor", args{name: "test", url: "url", queue: "queue", proc: nil}, true},
 	}
 	for _, tt := range tests {

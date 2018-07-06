@@ -13,7 +13,7 @@ type Option func(*Service) error
 // Routes option for adding routes to the default HTTP component.
 func Routes(rr []http.Route) Option {
 	return func(s *Service) error {
-		if rr == nil || len(rr) == 0 {
+		if len(rr) == 0 {
 			return errors.New("routes are required")
 		}
 		s.routes = rr
@@ -37,7 +37,7 @@ func HealthCheck(hcf http.HealthCheckFunc) Option {
 // Components option for adding additional components to the service.
 func Components(cc ...Component) Option {
 	return func(s *Service) error {
-		if cc == nil || len(cc) == 0 || cc[0] == nil {
+		if len(cc) == 0 || cc[0] == nil {
 			return errors.New("components are required")
 		}
 		s.cps = append(s.cps, cc...)

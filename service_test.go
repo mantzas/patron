@@ -21,9 +21,9 @@ func TestNewServer(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{"test", Routes([]http.Route{route})}, false},
-		{"failed missing name", args{"", Routes([]http.Route{route})}, true},
-		{"failed missing routes", args{"test", Routes([]http.Route{})}, true},
+		{"success", args{name: "test", opt: Routes([]http.Route{route})}, false},
+		{"failed missing name", args{name: "", opt: Routes([]http.Route{route})}, true},
+		{"failed missing routes", args{name: "test", opt: Routes([]http.Route{})}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

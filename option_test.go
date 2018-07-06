@@ -71,8 +71,8 @@ func TestComponents(t *testing.T) {
 		wantErr bool
 	}{
 		{"failure due to empty components", args{}, true},
-		{"failure due to nil components", args{nil}, true},
-		{"success", args{&testComponent{}}, false},
+		{"failure due to nil components", args{c: nil}, true},
+		{"success", args{c: &testComponent{}}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

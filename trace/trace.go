@@ -15,16 +15,17 @@ import (
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 )
 
-// Component enum definition.
-type Component string
-
 const (
 	// KafkaConsumerComponent definition.
-	KafkaConsumerComponent Component = "kafka-consumer"
+	KafkaConsumerComponent = "kafka-consumer"
 	// AMQPConsumerComponent definition.
-	AMQPConsumerComponent Component = "amqp-consumer"
+	AMQPConsumerComponent = "amqp-consumer"
+	// AMQPPublisherComponent definition.
+	AMQPPublisherComponent = "amqp-publisher"
 	// HTTPComponent definition.
-	HTTPComponent Component = "http"
+	HTTPComponent = "http"
+	// HTTPClientComponent definition.
+	HTTPClientComponent = "http-client"
 )
 
 var (
@@ -66,10 +67,10 @@ func Close() error {
 }
 
 // StartConsumerSpan start a new kafka consumer span.
-func StartConsumerSpan(ctx context.Context, name string, cmp Component, hdr map[string]string) (opentracing.Span, context.Context) {
+func StartConsumerSpan(ctx context.Context, name, cmp string, hdr map[string]string) (opentracing.Span, context.Context) {
 	spCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
-	ext.Component.Set(sp, string(cmp))
+	ext.Component.Set(sp, cmp)
 	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
@@ -102,7 +103,6 @@ func StartChildSpan(ctx context.Context, opName, cmp string, tags ...opentracing
 	for _, t := range tags {
 		sp.SetTag(t.Key, t.Value)
 	}
-
 	return sp, ctx
 }
 
