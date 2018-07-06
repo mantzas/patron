@@ -24,7 +24,7 @@ type Component struct {
 }
 
 // New returns a new component.
-func New(name string, p async.ProcessorFunc, clientID string, brokers []string, topics []string, ct string) (*Component, error) {
+func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topics []string) (*Component, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
 	}

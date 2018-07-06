@@ -32,6 +32,22 @@ services:
       - "9090"
     ports:
       - "9090:9090"
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: "rabbitmq"
+    networks:
+      examplenw:
+        aliases:
+          - rabbitmq
+    expose:
+      - "15672"
+      - "5672"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
 
 networks:
   examplenw: {}

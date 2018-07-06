@@ -81,6 +81,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/opentracing-contrib/go-amqp"
+  packages = ["amqptracer"]
+  revision = "e26701f956203a730ad2203c87eaf3f82860d4e2"
+
+[[projects]]
+  branch = "master"
   name = "github.com/opentracing-contrib/go-stdlib"
   packages = ["nethttp"]
   revision = "36723135187404d2f4002f4f189938565e64cc5c"
@@ -224,6 +230,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "10ad2782defba7c6f732ed5be2584f9b1314cd32500ba344c024495445ecbb0c"
+  inputs-digest = "6b62180381c1d7ed9f1c66b581e04fee986d20f0457e18eb6f4dc7ce00856fa5"
   solver-name = "gps-cdcl"
   solver-version = 1

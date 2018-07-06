@@ -11,6 +11,7 @@ import (
 
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
+	proc := async.MockProcessor{}
 	type args struct {
 		name     string
 		proc     async.ProcessorFunc
@@ -23,16 +24,16 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{name: "test", proc: async.MockProcessor{}.Process, clientID: "clID", brokers: []string{"192.168.1.1"}, topics: []string{"topic1"}}, false},
-		{"fails with missing name", args{name: "", proc: async.MockProcessor{}.Process, clientID: "clID", brokers: []string{"192.168.1.1"}, topics: []string{"topic1"}}, true},
+		{"success", args{name: "test", proc: proc.Process, clientID: "clID", brokers: []string{"192.168.1.1"}, topics: []string{"topic1"}}, false},
+		{"fails with missing name", args{name: "", proc: proc.Process, clientID: "clID", brokers: []string{"192.168.1.1"}, topics: []string{"topic1"}}, true},
 		{"fails with missing processor", args{name: "test", proc: nil, clientID: "clID", brokers: []string{"192.168.1.1"}, topics: []string{"topic1"}}, true},
-		{"fails with missing client id", args{name: "test", proc: async.MockProcessor{}.Process, clientID: "", brokers: []string{"192.168.1.1"}, topics: []string{"topic1"}}, true},
-		{"fails with missing brokers", args{name: "test", proc: async.MockProcessor{}.Process, clientID: "clID", brokers: []string{}, topics: []string{"topic1"}}, true},
-		{"fails with missing topics", args{name: "test", proc: async.MockProcessor{}.Process, clientID: "clID", brokers: []string{"192.168.1.1"}, topics: []string{}}, true},
+		{"fails with missing client id", args{name: "test", proc: proc.Process, clientID: "", brokers: []string{"192.168.1.1"}, topics: []string{"topic1"}}, true},
+		{"fails with missing brokers", args{name: "test", proc: proc.Process, clientID: "clID", brokers: []string{}, topics: []string{"topic1"}}, true},
+		{"fails with missing topics", args{name: "test", proc: proc.Process, clientID: "clID", brokers: []string{"192.168.1.1"}, topics: []string{}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.proc, tt.args.clientID, tt.args.brokers, tt.args.topics, "")
+			got, err := New(tt.args.name, tt.args.proc, tt.args.clientID, "", tt.args.brokers, tt.args.topics)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
