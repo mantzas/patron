@@ -53,7 +53,7 @@ func TestNewPublisher(t *testing.T) {
 			cnn := &amqp.Connection{}
 			chn := &amqp.Channel{}
 
-			monkey.Patch(amqp.Dial, func(url string) (*amqp.Connection, error) {
+			monkey.Patch(amqp.Dial, func(string) (*amqp.Connection, error) {
 				if tt.dialError {
 					return nil, errors.New("DIAL ERROR")
 				}
