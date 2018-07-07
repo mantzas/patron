@@ -18,6 +18,8 @@ import (
 const (
 	// KafkaConsumerComponent definition.
 	KafkaConsumerComponent = "kafka-consumer"
+	// KafkaAsyncProducerComponent definition.
+	KafkaAsyncProducerComponent = "kafka-async-producer"
 	// AMQPConsumerComponent definition.
 	AMQPConsumerComponent = "amqp-consumer"
 	// AMQPPublisherComponent definition.

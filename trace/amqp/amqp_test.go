@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/bouk/monkey"
+	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
+	jaeger "github.com/uber/jaeger-client-go"
 )
 
 func TestNewMessage(t *testing.T) {
@@ -144,6 +146,8 @@ func TestTracedPublisher_Close(t *testing.T) {
 
 func TestTracedPublisher_Publish(t *testing.T) {
 	assert := assert.New(t)
+	trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	_, ctx := trace.StartChildSpan(context.Background(), "ttt", "cmp")
 	tests := []struct {
 		name         string
 		publishError bool
@@ -166,7 +170,7 @@ func TestTracedPublisher_Publish(t *testing.T) {
 			msg, err := NewJSONMessage("test")
 			assert.NoError(err)
 			tc := TracedPublisher{ch: chn}
-			err = tc.Publish(context.TODO(), msg)
+			err = tc.Publish(ctx, msg)
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
