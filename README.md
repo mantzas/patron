@@ -2,37 +2,40 @@
 
 Patron is a framework for creating microservices.
 
-Patron is french for `template` or `pattern`, but it means also `boss` which we found out later (no pun intended).
+`Patron` is french for `template` or `pattern`, but it means also `boss` which we found out later (no pun intended).
 
-The entry point of the framework is the `Service`. The `Service` uses `Components` to handle the processing of sync and async requests. The `Service` starts by default a `HTTP Component` which hosts the debug, health and metric endpoints. Any other endpoints will be added to the default `HTTP Component` as `Routes`. The service set's up by default logging with `zerolog`, tracing and metrics with `jaeger`.
+The entry point of the framework is the `Service`. The `Service` uses `Components` to handle the processing of sync and async requests. The `Service` starts by default a `HTTP Component` which hosts the debug, health and metric endpoints. Any other endpoints will be added to the default `HTTP Component` as `Routes`. The service set's up by default logging with `zerolog`, tracing and metrics with `jaeger` and `prometheus`.
 
-Patron provides abstractions for the following functionality of the framework:
+`Patron` provides abstractions for the following functionality of the framework:
 
-- service
-- components and processors
+- service, which orchestrates everything
+- components and processors, which provide a abstraction of adding processing functionality to the service
   - asynchronous message processing (RabbitMQ, Kafka)
   - synchronous processing (HTTP)
 - metrics and tracing
 - logging
-- configuration
+- configuration management
+
+`Patron` provides same defaults for making the usage as simple as possible.
 
 ## Service
 
 The `Service` has the role of glueing all of the above together, which are:
 
 - setting up logging
-- setting up termination by user
+- setting up termination by os signal
 - starting and stopping components
 - handling component errors
+- setting up metrics and tracing
 
-The service has some default settings tha can be changed via environment variables:
+The service has some default settings which can be changed via environment variables:
 
-- Service HTTP port, which set's up the default HTTP components port to `50000` which can be changed via the `PATRON_HTTP_DEFAULT_PORT`
-- Log level, which set's up zerolog with `INFO` as log level which can be changed via the `PATRON_LOG_LEVEL`
-- Tracing, which set's up jaeger tracing with
-  - agent address `0.0.0.0:6831`, which can be changed via `PATRON_JAEGER_AGENT`
-  - sampler type `probabilistic`, which can be changed via `PATRON_JAEGER_SAMPLER_TYPE`
-  - sampler param `0.1`, which can be changed via `PATRON_JAEGER_SAMPLER_PARAM`
+- Service HTTP port, for setting the default HTTP components port to `50000` with `PATRON_HTTP_DEFAULT_PORT`
+- Log level, for setting zerolog with `INFO` log level with `PATRON_LOG_LEVEL`
+- Tracing, for setting up jaeger tracing with
+  - agent address `0.0.0.0:6831` with `PATRON_JAEGER_AGENT`
+  - sampler type `probabilistic`with `PATRON_JAEGER_SAMPLER_TYPE`
+  - sampler param `0.1` with `PATRON_JAEGER_SAMPLER_PARAM`
 
 ### Component
 
@@ -45,7 +48,7 @@ type Component interface {
 }
 ```
 
-The above API gives the `Service` the control over a component in order to start and stop it gracefully. The framework divides the components in 2 categories:
+The above API gives the `Service` the ability to start and gracefully shutdown a `component`. The framework divides the components in 2 categories:
 
 - synchronous, which are components that follow the request/response pattern and
 - asynchronous, which consume messages from a source but don't respond anything back
@@ -53,8 +56,8 @@ The above API gives the `Service` the control over a component in order to start
 The following component implementations are available:
 
 - HTTP (sync)
-- RabbitMQ (async)
-- Kafka (async)
+- RabbitMQ consumer (async)
+- Kafka consumer (async)
 
 Adding to the above list is as easy as implementing a `Component` and a `Processor` for that component.
 
@@ -65,7 +68,7 @@ Setting up a new service with a HTTP `Component` is as easy as the following cod
 ```go
   // Set up HTTP routes
   routes := make([]sync_http.Route, 0)
-  routes = append(routes, sync_http.NewRoute("/", http.MethodGet, process, true))
+  routes = append(routes, sync_http.NewRoute("/", http.MethodGet, processor, true))
   
   srv, err := patron.New("test", patron.Routes(routes))
   if err != nil {
@@ -78,7 +81,7 @@ Setting up a new service with a HTTP `Component` is as easy as the following cod
   }
 ```
 
-The above is pretty much self-explanatory.
+The above is pretty much self-explanatory. The processor follows the sync pattern.
 
 ## Processors
 
@@ -86,17 +89,14 @@ The above is pretty much self-explanatory.
 
 The implementation of the processor is responsible to create a `Request` by providing everything that is needed (Headers, Fields, decoder, raw io.Reader) pass it to the implementation by invoking the `Process` method and handle the `Response` or the `error` returned by the processor.
 
-The sync processor package contains only a interface definition of the processor along the models needed:
+The sync package contains only a function definition along with the models needed:
 
 ```go
-type Processor interface {
-  Process(context.Context, *Request) (*Response, error)
-}
+type ProcessorFunc func(context.Context, *Request) (*Response, error)
 ```
 
 The `Request` model contains the following properties (which are provided when calling the "constructor" `NewRequest`)
 
-- Headers, which may contains any headers associated with the request
 - Fields, which may contain any fields associated with the request
 - Raw, the raw request data (if any) in the form of a `io.Reader`
 - decode, which is a function of type `encoding.Decode` that decodes the raw reader
@@ -120,9 +120,7 @@ The main difference is that:
 - There is no `Response`, so the processor may return a error
 
 ```go
-type Processor interface {
-  Process(context.Context, *Message) error
-}
+type ProcessorFunc func(context.Context, *Message) error
 ```
 
 Everything else is exactly the same.
@@ -132,12 +130,13 @@ Everything else is exactly the same.
 Tracing and metrics are provided by jaeger's implementation of the OpenTracing project.
 Every component has been integrated with the above library and produces traces and metrics.
 Metrics are provided with the default HTTP component at the `/metrics` route for Prometheus to scrape.
-Tracing will be send to a jaeger agent which can be setup though environment variables mentioned in the config section.
+Tracing will be send to a jaeger agent which can be setup though environment variables mentioned in the config section. Sane defaults are applied for making the use easy.
 We have included some clients inside the trace package which are instrumented and allow propagation of tracing to
 downstream systems. The tracing information is added to each implementations header. These clients are:
 
 - HTTP
 - AMQP
+- Kafka
 
 ## Logging
 
@@ -166,7 +165,7 @@ The package supports fields, which are logged along with the message, to augment
 
 The following implementations are provided as sub-package:
 
-- zerolog, which supports the excellent [zerolog](https://github.com/rs/zerolog) library
+- zerolog, which supports the excellent [zerolog](https://github.com/rs/zerolog) library and is set up by default
 
 ### Logger
 
@@ -229,6 +228,8 @@ After implementing the interface a instance has to be provided to the `Setup` me
 The following implementations are provided as sub-packages:
 
 - env, support for env files and env vars
+
+By default the service will use the `env` implementation and look for a `.env` file when starting up in order to set some env vars from a file. This is especially helpful for development.
 
 ### env
 
