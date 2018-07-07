@@ -86,6 +86,7 @@
   revision = "36723135187404d2f4002f4f189938565e64cc5c"
 
 [[projects]]
+  branch = "master"
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
@@ -93,8 +94,8 @@
     "log",
     "mocktracer"
   ]
-  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
-  version = "v1.0.2"
+  revision = "bd9c3193394760d98b2fa6ebb2291f0cd1d06a7d"
+  
 
 [[projects]]
   name = "github.com/pierrec/lz4"
@@ -214,12 +215,6 @@
   ]
   revision = "ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5"
   version = "v1.5.0"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "1e491301e022f8f977054da4c2d852decd59571f"
 
 [solve-meta]
   analyzer-name = "dep"

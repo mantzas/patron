@@ -2,14 +2,14 @@ package patron
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/mantzas/patron/config"
+	"github.com/mantzas/patron/config/env"
 	"github.com/mantzas/patron/sync/http"
 
 	agr_errors "github.com/mantzas/patron/errors"
@@ -47,7 +47,12 @@ func New(name string, oo ...Option) (*Service, error) {
 		return nil, errors.New("name is required")
 	}
 
-	err := setupDefaultLogging(name)
+	err := setupDefaultConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	err = setupDefaultLogging(name)
 	if err != nil {
 		return nil, err
 	}
@@ -142,13 +147,27 @@ func (s *Service) Shutdown() error {
 	return nil
 }
 
+func setupDefaultConfig() error {
+	f, err := os.Open(".env")
+	if err != nil {
+		f = nil
+	}
+
+	cfg, err := env.New(f)
+	if err != nil {
+		return err
+	}
+
+	return config.Setup(cfg)
+}
+
 func setupDefaultLogging(srvName string) error {
-	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
-	if !ok {
+	lvl, err := config.GetString("PATRON_LOG_LEVEL")
+	if err != nil {
 		lvl = string(log.InfoLevel)
 	}
 
-	err := log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
+	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
 	if err != nil {
 		return errors.Wrap(err, "failed to setup logging")
 	}
@@ -164,44 +183,33 @@ func setupDefaultLogging(srvName string) error {
 }
 
 func setupDefaultTracing(srvName string) error {
-	agent, ok := os.LookupEnv("PATRON_JAEGER_AGENT")
-	if !ok {
+	agent, err := config.GetString("PATRON_JAEGER_AGENT")
+	if err != nil {
 		agent = "0.0.0.0:6831"
 	}
-	tp, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_TYPE")
-	if !ok {
+	tp, err := config.GetString("PATRON_JAEGER_SAMPLER_TYPE")
+	if err != nil {
 		tp = jaeger.SamplerTypeProbabilistic
 	}
-	prm, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM")
-	if !ok {
-		prm = "0.1"
-	}
-
-	param, err := strconv.ParseFloat(prm, 64)
+	prm, err := config.GetFloat64("PATRON_JAEGER_SAMPLER_PARAM")
 	if err != nil {
-		return errors.Wrap(err, "failed to convet sampler param to float64")
+		prm = 0.1
 	}
-
 	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
-	return trace.Setup(srvName, agent, tp, param)
+	return trace.Setup(srvName, agent, tp, prm)
 }
 
 func (s *Service) createHTTPComponent() (Component, error) {
 
-	port, ok := os.LookupEnv("PATRON_HTTP_DEFAULT_PORT")
-	if !ok {
-		port = "50000"
+	port, err := config.GetInt64("PATRON_HTTP_DEFAULT_PORT")
+	if err != nil {
+		port = 50000
 	}
 
 	log.Infof("creating default HTTP component at port %s", port)
 
-	p, err := strconv.Atoi(port)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse port %s", port)
-	}
-
 	options := []http.Option{
-		http.Port(p),
+		http.Port(int(port)),
 	}
 
 	if s.hcf != nil {
