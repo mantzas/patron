@@ -10,7 +10,6 @@ import (
 	"github.com/mantzas/patron/encoding/json"
 	patronerrors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing-contrib/go-amqp/amqptracer"
 )
 
 // Message for publishing.
@@ -105,9 +104,8 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 		Body:        msg.body,
 	}
 
-	if err := amqptracer.Inject(sp, p.Headers); err != nil {
-		return errors.Wrap(err, "failed to inject tracing to amqp headers")
-	}
+	c := amqpHeadersCarrier(p.Headers)
+	sp.Tracer().Inject(sp.Context(), opentracing.TextMap, c)
 
 	err := tc.ch.Publish(
 		tc.exc, // exchange
@@ -135,4 +133,11 @@ func (tc *TracedPublisher) Close(ctx context.Context) error {
 		return aggError
 	}
 	return nil
+}
+
+type amqpHeadersCarrier map[string]interface{}
+
+// Set implements Set() of opentracing.TextMapWriter.
+func (c amqpHeadersCarrier) Set(key, val string) {
+	c[key] = val
 }
