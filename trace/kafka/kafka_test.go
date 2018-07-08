@@ -24,7 +24,7 @@ func TestNewJSONMessage(t *testing.T) {
 		data    interface{}
 		wantErr bool
 	}{
-		{name: "failure due to invalid data", data: make(chan bool, 0), wantErr: true},
+		{name: "failure due to invalid data", data: make(chan bool), wantErr: true},
 		{name: "success", data: "TEST"},
 	}
 	for _, tt := range tests {
@@ -64,39 +64,13 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	ap, err := NewAsyncProducer([]string{seed.Addr()})
 	assert.NoError(err)
 	assert.NotNil(ap)
-	trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	err = trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	assert.NoError(err)
 	_, ctx := trace.StartChildSpan(context.Background(), "ttt", "cmp")
-	ap.Send(ctx, msg)
+	err = ap.Send(ctx, msg)
+	assert.NoError(err)
 	assert.Error(<-ap.Error())
 	ap.Close()
-}
-
-type mockAsyncProducer struct {
-	in  chan *sarama.ProducerMessage
-	err chan *sarama.ProducerError
-}
-
-func newMockAsyncProducer() *mockAsyncProducer {
-	return &mockAsyncProducer{in: make(chan *sarama.ProducerMessage, 1), err: make(chan *sarama.ProducerError, 1)}
-}
-
-func (ma *mockAsyncProducer) AsyncClose() {
-}
-
-func (ma *mockAsyncProducer) Close() error {
-	return nil
-}
-
-func (ma *mockAsyncProducer) Input() chan<- *sarama.ProducerMessage {
-	return ma.in
-}
-
-func (ma *mockAsyncProducer) Successes() <-chan *sarama.ProducerMessage {
-	return ma.in
-}
-
-func (ma *mockAsyncProducer) Errors() <-chan *sarama.ProducerError {
-	return ma.err
 }
 
 func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {

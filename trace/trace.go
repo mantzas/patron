@@ -69,7 +69,12 @@ func Close() error {
 }
 
 // StartConsumerSpan starts a new consumer span.
-func StartConsumerSpan(ctx context.Context, name, cmp string, hdr map[string]string) (opentracing.Span, context.Context) {
+func StartConsumerSpan(
+	ctx context.Context,
+	name, cmp string,
+	hdr map[string]string,
+) (opentracing.Span, context.Context) {
+
 	spCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
@@ -105,7 +110,11 @@ func FinishHTTPSpan(sp opentracing.Span, code int) {
 }
 
 // StartChildSpan starts a new child span with specified tags.
-func StartChildSpan(ctx context.Context, opName, cmp string, tags ...opentracing.Tag) (opentracing.Span, context.Context) {
+func StartChildSpan(
+	ctx context.Context,
+	opName, cmp string,
+	tags ...opentracing.Tag,
+) (opentracing.Span, context.Context) {
 	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
 	ext.Component.Set(sp, cmp)
 	for _, t := range tags {

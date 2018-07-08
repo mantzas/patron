@@ -58,11 +58,17 @@ func NewAsyncProducer(brokers []string) (*AsyncProducer, error) {
 }
 
 // Send a message to a topic.
-func (ap *AsyncProducer) Send(ctx context.Context, msg *Message) {
+func (ap *AsyncProducer) Send(ctx context.Context, msg *Message) error {
 	sp, _ := trace.StartChildSpan(ctx, "kafka PROD topic "+msg.topic, trace.KafkaAsyncProducerComponent,
 		ap.tag, opentracing.Tag{Key: "topic", Value: msg.topic})
-	defer trace.FinishSpanWithSuccess(sp)
-	ap.prod.Input() <- createProducerMessage(msg, sp)
+	pm, err := createProducerMessage(msg, sp)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	ap.prod.Input() <- pm
+	trace.FinishSpanWithSuccess(sp)
+	return nil
 }
 
 // Error returns a chanel to monitor for errors.
@@ -81,15 +87,18 @@ func (ap *AsyncProducer) propagateError() {
 	}
 }
 
-func createProducerMessage(msg *Message, sp opentracing.Span) *sarama.ProducerMessage {
-	c := kafkaHeadersCarrier{[]sarama.RecordHeader{}}
-	sp.Tracer().Inject(sp.Context(), opentracing.TextMap, &c)
+func createProducerMessage(msg *Message, sp opentracing.Span) (*sarama.ProducerMessage, error) {
+	c := kafkaHeadersCarrier{hdr: []sarama.RecordHeader{}}
+	err := sp.Tracer().Inject(sp.Context(), opentracing.TextMap, &c)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to inject tracing headers")
+	}
 	return &sarama.ProducerMessage{
 		Topic:   msg.topic,
 		Key:     nil,
 		Value:   sarama.ByteEncoder(msg.body),
 		Headers: c.hdr,
-	}
+	}, nil
 }
 
 type kafkaHeadersCarrier struct {

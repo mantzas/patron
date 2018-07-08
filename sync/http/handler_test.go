@@ -170,10 +170,26 @@ func Test_handler(t *testing.T) {
 		args         args
 		expectedCode int
 	}{
-		{"unsupported content type", args{req: errReq, hnd: nil}, http.StatusUnsupportedMediaType},
-		{"success handling", args{req: req, hnd: testHandler{err: false, resp: "test"}.Process}, http.StatusOK},
-		{"error handling", args{req: req, hnd: testHandler{err: true, resp: "test"}.Process}, http.StatusInternalServerError},
-		{"success handling failed due to encoding", args{req: req, hnd: testHandler{err: false, resp: make(chan bool)}.Process}, http.StatusInternalServerError},
+		{
+			name:         "unsupported content type",
+			args:         args{req: errReq, hnd: nil},
+			expectedCode: http.StatusUnsupportedMediaType,
+		},
+		{
+			name:         "success handling",
+			args:         args{req: req, hnd: testHandler{err: false, resp: "test"}.Process},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "error handling",
+			args:         args{req: req, hnd: testHandler{err: true, resp: "test"}.Process},
+			expectedCode: http.StatusInternalServerError,
+		},
+		{
+			name:         "success handling failed due to encoding",
+			args:         args{req: req, hnd: testHandler{err: false, resp: make(chan bool)}.Process},
+			expectedCode: http.StatusInternalServerError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

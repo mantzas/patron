@@ -105,9 +105,12 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 	}
 
 	c := amqpHeadersCarrier(p.Headers)
-	sp.Tracer().Inject(sp.Context(), opentracing.TextMap, c)
+	err := sp.Tracer().Inject(sp.Context(), opentracing.TextMap, c)
+	if err != nil {
+		return errors.Wrap(err, "failed to inject tracing headers")
+	}
 
-	err := tc.ch.Publish(
+	err = tc.ch.Publish(
 		tc.exc, // exchange
 		"",     // routing key
 		false,  // mandatory
