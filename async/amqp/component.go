@@ -14,7 +14,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Component implementation of a AMQP client
+// Component implementation of a AMQP subscriber.
 type Component struct {
 	name  string
 	url   string
@@ -25,7 +25,7 @@ type Component struct {
 	conn  *amqp.Connection
 }
 
-// New returns a new client
+// New returns a new AMQP subscriber.
 func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
 
 	if name == "" {
@@ -47,7 +47,7 @@ func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
 	return &Component{name: name, url: url, queue: queue, proc: p, tag: "", ch: nil, conn: nil}, nil
 }
 
-// Run starts the async processing.
+// Run starts AMQP subscription and async processing of messages.
 func (c *Component) Run(ctx context.Context) error {
 
 	conn, err := amqp.Dial(c.url)
@@ -85,22 +85,22 @@ func (c *Component) Run(ctx context.Context) error {
 			dec, err := async.DetermineDecoder(d.ContentType)
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to determine encoding %s. Sending NACK", d.ContentType))
-				trace.FinishSpan(sp, true)
+				trace.FinishSpanWithError(sp)
 				return
 			}
 			err = c.proc(chCtx, async.NewMessage(d.Body, dec))
 			if err != nil {
 				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
-				trace.FinishSpan(sp, true)
+				trace.FinishSpanWithError(sp)
 				return
 			}
 			err = d.Ack(false)
 			if err != nil {
 				a.Append(errors.Wrapf(err, "failed to ACK message %s", d.MessageId))
-				trace.FinishSpan(sp, true)
+				trace.FinishSpanWithError(sp)
 				return
 			}
-			trace.FinishSpan(sp, false)
+			trace.FinishSpanWithSuccess(sp)
 		}(&d, agr)
 
 		if agr.Count() > 0 {
@@ -111,7 +111,7 @@ func (c *Component) Run(ctx context.Context) error {
 	return nil
 }
 
-// Shutdown the component.
+// Shutdown the component by closing gracefully AMQP channel and connection.
 func (c *Component) Shutdown(ctx context.Context) error {
 
 	agr := agr_errors.New()

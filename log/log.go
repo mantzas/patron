@@ -8,7 +8,7 @@ var factory Factory
 var logger Logger
 var fields = make(map[string]interface{})
 
-// Setup set's up a new factory to the global state
+// Setup logging by providing a logger factory.
 func Setup(f Factory) error {
 	if f == nil {
 		return errors.New("factory is nil")
@@ -18,7 +18,7 @@ func Setup(f Factory) error {
 	return nil
 }
 
-// AppendField appends a field
+// AppendField appends a field to the global logger.
 func AppendField(key string, value interface{}) {
 	if factory == nil {
 		return
@@ -27,7 +27,7 @@ func AppendField(key string, value interface{}) {
 	logger = factory.Create(fields)
 }
 
-// Sub returns a new sub logger
+// Sub returns a new sub logger with all fields inherited.
 func Sub(fields map[string]interface{}) Logger {
 	if factory == nil || logger == nil {
 		return nil
@@ -35,7 +35,7 @@ func Sub(fields map[string]interface{}) Logger {
 	return factory.CreateSub(logger, fields)
 }
 
-// Panic logging
+// Panic logging.
 func Panic(args ...interface{}) {
 	if logger == nil {
 		return
@@ -43,7 +43,7 @@ func Panic(args ...interface{}) {
 	logger.Panic(args...)
 }
 
-// Panicf logging
+// Panicf logging.
 func Panicf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
@@ -51,7 +51,7 @@ func Panicf(msg string, args ...interface{}) {
 	logger.Panicf(msg, args...)
 }
 
-// Fatal logging
+// Fatal logging.
 func Fatal(args ...interface{}) {
 	if logger == nil {
 		return
@@ -59,7 +59,7 @@ func Fatal(args ...interface{}) {
 	logger.Fatal(args...)
 }
 
-// Fatalf logging
+// Fatalf logging.
 func Fatalf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
@@ -67,7 +67,7 @@ func Fatalf(msg string, args ...interface{}) {
 	logger.Fatalf(msg, args...)
 }
 
-// Error logging
+// Error logging.
 func Error(args ...interface{}) {
 	if logger == nil {
 		return
@@ -75,7 +75,7 @@ func Error(args ...interface{}) {
 	logger.Error(args...)
 }
 
-// Errorf logging
+// Errorf logging.
 func Errorf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
@@ -83,7 +83,7 @@ func Errorf(msg string, args ...interface{}) {
 	logger.Errorf(msg, args...)
 }
 
-// Warn logging
+// Warn logging.
 func Warn(args ...interface{}) {
 	if logger == nil {
 		return
@@ -91,7 +91,7 @@ func Warn(args ...interface{}) {
 	logger.Warn(args...)
 }
 
-// Warnf logging
+// Warnf logging.
 func Warnf(msg string, args ...interface{}) {
 	if logger == nil {
 		return
@@ -99,7 +99,7 @@ func Warnf(msg string, args ...interface{}) {
 	logger.Warnf(msg, args...)
 }
 
-// Info logging
+// Info logging.
 func Info(args ...interface{}) {
 	if logger == nil {
 		return
@@ -107,7 +107,7 @@ func Info(args ...interface{}) {
 	logger.Info(args...)
 }
 
-// Infof logging
+// Infof logging.
 func Infof(msg string, args ...interface{}) {
 	if logger == nil {
 		return
@@ -115,7 +115,7 @@ func Infof(msg string, args ...interface{}) {
 	logger.Infof(msg, args...)
 }
 
-// Debug logging
+// Debug logging.
 func Debug(args ...interface{}) {
 	if logger == nil {
 		return
@@ -123,7 +123,7 @@ func Debug(args ...interface{}) {
 	logger.Debug(args...)
 }
 
-// Debugf logging
+// Debugf logging.
 func Debugf(msg string, args ...interface{}) {
 	if logger == nil {
 		return

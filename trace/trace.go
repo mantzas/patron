@@ -34,7 +34,7 @@ var (
 	cls io.Closer
 )
 
-// Setup tracing by providing a local agent address.
+// Setup tracing by providing all necessary parameters.
 func Setup(name, agentAddress, samplerType string, samplerParam float64) error {
 	cfg := config.Configuration{
 		ServiceName: name,
@@ -68,17 +68,28 @@ func Close() error {
 	return cls.Close()
 }
 
-// StartConsumerSpan start a new kafka consumer span.
-func StartConsumerSpan(ctx context.Context, name, cmp string, hdr map[string]string) (opentracing.Span, context.Context) {
+// StartConsumerSpan starts a new consumer span.
+func StartConsumerSpan(
+	ctx context.Context,
+	name, cmp string,
+	hdr map[string]string,
+) (opentracing.Span, context.Context) {
+
 	spCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
 	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
-// FinishSpan finished a kafka consumer span.
-func FinishSpan(sp opentracing.Span, hasError bool) {
-	ext.Error.Set(sp, hasError)
+// FinishSpanWithSuccess finishes a span with a success indicator.
+func FinishSpanWithSuccess(sp opentracing.Span) {
+	ext.Error.Set(sp, false)
+	sp.Finish()
+}
+
+// FinishSpanWithError finishes a span with a error indicator.
+func FinishSpanWithError(sp opentracing.Span) {
+	ext.Error.Set(sp, true)
 	sp.Finish()
 }
 
@@ -92,14 +103,18 @@ func StartHTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Reques
 	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
 }
 
-// FinishHTTPSpan finishes a HTTP span.
+// FinishHTTPSpan finishes a HTTP span by providing a HTTP status code.
 func FinishHTTPSpan(sp opentracing.Span, code int) {
 	ext.HTTPStatusCode.Set(sp, uint16(code))
 	sp.Finish()
 }
 
 // StartChildSpan starts a new child span with specified tags.
-func StartChildSpan(ctx context.Context, opName, cmp string, tags ...opentracing.Tag) (opentracing.Span, context.Context) {
+func StartChildSpan(
+	ctx context.Context,
+	opName, cmp string,
+	tags ...opentracing.Tag,
+) (opentracing.Span, context.Context) {
 	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
 	ext.Component.Set(sp, cmp)
 	for _, t := range tags {
@@ -108,7 +123,7 @@ func StartChildSpan(ctx context.Context, opName, cmp string, tags ...opentracing
 	return sp, ctx
 }
 
-// HTTPOpName return a string representation of the request.
+// HTTPOpName return a string representation of the HTTP request operation.
 func HTTPOpName(method, path string) string {
 	return "HTTP " + method + " " + path
 }

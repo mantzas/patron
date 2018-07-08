@@ -50,7 +50,7 @@ func extractFields(r *http.Request) map[string]string {
 	return f
 }
 
-func determineEncoding(hdr http.Header) (string, encoding.Decode, encoding.Encode, error) {
+func determineEncoding(hdr http.Header) (string, encoding.DecodeFunc, encoding.EncodeFunc, error) {
 
 	c, err := determineContentType(hdr)
 	if err != nil {
@@ -73,7 +73,7 @@ func determineContentType(hdr http.Header) (string, error) {
 	return h[0], nil
 }
 
-func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.Encode) error {
+func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.EncodeFunc) error {
 
 	if rsp == nil {
 		w.WriteHeader(http.StatusNoContent)

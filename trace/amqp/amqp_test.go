@@ -26,7 +26,7 @@ func TestNewJSONMessage(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal("application/json", m.contentType)
 	assert.Equal([]byte(`"xxx"`), m.body)
-	_, err = NewJSONMessage(make(chan bool, 0))
+	_, err = NewJSONMessage(make(chan bool))
 	assert.Error(err)
 }
 
@@ -36,6 +36,7 @@ func TestNewPublisher(t *testing.T) {
 		url string
 		exc string
 	}
+	validArgs := args{url: "url", exc: "exchange"}
 	tests := []struct {
 		name          string
 		args          args
@@ -44,12 +45,12 @@ func TestNewPublisher(t *testing.T) {
 		exchangeError bool
 		wantErr       bool
 	}{
-		{name: "failure due to invalid url", args: args{url: "", exc: ""}, wantErr: true},
-		{name: "failure due to invalid exchange", args: args{url: "url", exc: ""}, wantErr: true},
-		{name: "failure due to dial", args: args{url: "url", exc: "exchange"}, dialError: true, wantErr: true},
-		{name: "failure due to open channel", args: args{url: "url", exc: "exchange"}, channelError: true, wantErr: true},
-		{name: "failure due to declare exchange", args: args{url: "url", exc: "exchange"}, exchangeError: true, wantErr: true},
-		{name: "success", args: args{url: "url", exc: "exchange"}},
+		{name: "failure due to invalid url", args: args{}, wantErr: true},
+		{name: "failure due to invalid exchange", args: args{url: "url"}, wantErr: true},
+		{name: "failure due to dial", args: validArgs, dialError: true, wantErr: true},
+		{name: "failure due to open channel", args: validArgs, channelError: true, wantErr: true},
+		{name: "failure due to declare exchange", args: validArgs, exchangeError: true, wantErr: true},
+		{name: "success", args: validArgs},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -57,26 +58,9 @@ func TestNewPublisher(t *testing.T) {
 			cnn := &amqp.Connection{}
 			chn := &amqp.Channel{}
 
-			monkey.Patch(amqp.Dial, func(string) (*amqp.Connection, error) {
-				if tt.dialError {
-					return nil, errors.New("DIAL ERROR")
-				}
-				return cnn, nil
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Channel", func(*amqp.Connection) (*amqp.Channel, error) {
-				if tt.channelError {
-					return nil, errors.New("CHANNEL ERROR")
-				}
-				return chn, nil
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "ExchangeDeclare", func(c *amqp.Channel, name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table) error {
-				if tt.exchangeError {
-					return errors.New("DECLARE EXCHANGE")
-				}
-				return nil
-			})
+			patchDial(cnn, tt.dialError)
+			patchChannel(cnn, tt.channelError, chn)
+			patchExchangeDeclare(chn, tt.exchangeError)
 
 			got, err := NewPublisher(tt.args.url, tt.args.exc)
 			if tt.wantErr {
@@ -106,31 +90,11 @@ func TestTracedPublisher_Close(t *testing.T) {
 			cnn := &amqp.Connection{}
 			chn := &amqp.Channel{}
 
-			monkey.Patch(amqp.Dial, func(url string) (*amqp.Connection, error) {
-				return cnn, nil
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Channel", func(*amqp.Connection) (*amqp.Channel, error) {
-				return chn, nil
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "ExchangeDeclare", func(c *amqp.Channel, name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table) error {
-				return nil
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Close", func(c *amqp.Channel) error {
-				if tt.closeError {
-					return errors.New("CHANNEL ERROR")
-				}
-				return nil
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Close", func(c *amqp.Connection) error {
-				if tt.closeError {
-					return errors.New("CONNECTION ERROR")
-				}
-				return nil
-			})
+			patchDial(cnn, false)
+			patchChannel(cnn, false, chn)
+			patchExchangeDeclare(chn, false)
+			patchConnectionClose(cnn, tt.closeError)
+			patchChannelClose(chn, tt.closeError)
 
 			p, err := NewPublisher("XXX", "YYY")
 			assert.NoError(err)
@@ -146,7 +110,8 @@ func TestTracedPublisher_Close(t *testing.T) {
 
 func TestTracedPublisher_Publish(t *testing.T) {
 	assert := assert.New(t)
-	trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	err := trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	assert.NoError(err)
 	_, ctx := trace.StartChildSpan(context.Background(), "ttt", "cmp")
 	tests := []struct {
 		name         string
@@ -160,12 +125,8 @@ func TestTracedPublisher_Publish(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer monkey.UnpatchAll()
 			chn := &amqp.Channel{}
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Publish", func(*amqp.Channel, string, string, bool, bool, amqp.Publishing) error {
-				if tt.publishError {
-					return errors.New("PUBLISH ERROR")
-				}
-				return nil
-			})
+
+			patchPublish(chn, tt.publishError)
 
 			msg, err := NewJSONMessage("test")
 			assert.NoError(err)
@@ -178,4 +139,73 @@ func TestTracedPublisher_Publish(t *testing.T) {
 			}
 		})
 	}
+}
+
+func patchDial(cnn *amqp.Connection, dialError bool) {
+	monkey.Patch(amqp.Dial, func(string) (*amqp.Connection, error) {
+		if dialError {
+			return nil, errors.New("DIAL ERROR")
+		}
+		return cnn, nil
+	})
+}
+
+func patchChannel(cnn *amqp.Connection, channelError bool, chn *amqp.Channel) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Channel", func(*amqp.Connection) (*amqp.Channel, error) {
+		if channelError {
+			return nil, errors.New("CHANNEL ERROR")
+		}
+		return chn, nil
+	})
+}
+
+func patchExchangeDeclare(chn *amqp.Channel, exchangeError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chn), "ExchangeDeclare", func(
+		*amqp.Channel,
+		string,
+		string,
+		bool,
+		bool,
+		bool,
+		bool,
+		amqp.Table,
+	) error {
+		if exchangeError {
+			return errors.New("DECLARE EXCHANGE")
+		}
+		return nil
+	})
+}
+
+func patchConnectionClose(cnn *amqp.Connection, closeError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Close", func(*amqp.Connection) error {
+		if closeError {
+			return errors.New("CONNECTION ERROR")
+		}
+		return nil
+	})
+}
+func patchChannelClose(chn *amqp.Channel, closeError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Close", func(*amqp.Channel) error {
+		if closeError {
+			return errors.New("CHANNEL ERROR")
+		}
+		return nil
+	})
+}
+
+func patchPublish(chn *amqp.Channel, publishError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Publish", func(
+		*amqp.Channel,
+		string,
+		string,
+		bool,
+		bool,
+		amqp.Publishing,
+	) error {
+		if publishError {
+			return errors.New("PUBLISH ERROR")
+		}
+		return nil
+	})
 }

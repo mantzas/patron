@@ -23,7 +23,7 @@ type Component struct {
 	contentType string
 }
 
-// New returns a new component.
+// New returns a new kafka consumer component.
 func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topics []string) (*Component, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -52,7 +52,7 @@ func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topic
 	return &Component{name: name, proc: p, brokers: brokers, topics: topics, cfg: config, ms: nil, contentType: ct}, nil
 }
 
-// Run starts the async processing.
+// Run starts the kafka consumer processing messages.
 func (c *Component) Run(ctx context.Context) error {
 
 	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
@@ -82,7 +82,7 @@ func (c *Component) Run(ctx context.Context) error {
 						ct, err = determineContentType(msg.Headers)
 						if err != nil {
 							failCh <- errors.Wrap(err, "failed to determine content type")
-							trace.FinishSpan(sp, true)
+							trace.FinishSpanWithError(sp)
 							return
 						}
 					}
@@ -90,17 +90,17 @@ func (c *Component) Run(ctx context.Context) error {
 					dec, err := async.DetermineDecoder(ct)
 					if err != nil {
 						failCh <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
-						trace.FinishSpan(sp, true)
+						trace.FinishSpanWithError(sp)
 						return
 					}
 
 					err = c.proc(chCtx, async.NewMessage(msg.Value, dec))
 					if err != nil {
 						failCh <- errors.Wrap(err, "failed to process message")
-						trace.FinishSpan(sp, true)
+						trace.FinishSpanWithError(sp)
 						return
 					}
-					trace.FinishSpan(sp, false)
+					trace.FinishSpanWithSuccess(sp)
 				}()
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during consumption")
@@ -111,7 +111,7 @@ func (c *Component) Run(ctx context.Context) error {
 	return <-failCh
 }
 
-// Shutdown the component.
+// Shutdown gracefully the component by closing the kafka consumer.
 func (c *Component) Shutdown(ctx context.Context) error {
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }

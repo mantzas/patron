@@ -32,7 +32,7 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)
 	assert.Equal("test", jsp.OperationName)
-	FinishSpan(sp, true)
+	FinishSpanWithError(sp)
 	assert.NotNil(sp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(map[string]interface{}{
@@ -46,21 +46,31 @@ func TestStartFinishChildSpan(t *testing.T) {
 	assert := assert.New(t)
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
-	sp, ctx := StartChildSpan(context.Background(), "opName", "cmp", opentracing.Tag{Key: "key", Value: "value"})
+	sp, ctx := StartConsumerSpan(context.Background(), "test", AMQPConsumerComponent, nil)
 	assert.NotNil(sp)
 	assert.NotNil(ctx)
-	sp.LogKV("log event")
-	assert.IsType(&mocktracer.MockSpan{}, sp)
-	jsp := sp.(*mocktracer.MockSpan)
+	childSp, childCtx := StartChildSpan(ctx, "opName", "cmp", opentracing.Tag{Key: "key", Value: "value"})
+	assert.NotNil(childSp)
+	assert.NotNil(childCtx)
+	childSp.LogKV("log event")
+	assert.IsType(&mocktracer.MockSpan{}, childSp)
+	jsp := childSp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)
 	assert.Equal("opName", jsp.OperationName)
-	FinishSpan(sp, true)
-	assert.NotNil(sp)
+	FinishSpanWithError(childSp)
+	assert.NotNil(childSp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(map[string]interface{}{
 		"component": "cmp",
 		"error":     true,
 		"key":       "value",
+	}, rawSpan.Tags())
+	FinishSpanWithSuccess(sp)
+	rawSpan = mtr.FinishedSpans()[1]
+	assert.Equal(map[string]interface{}{
+		"component": "amqp-consumer",
+		"error":     false,
+		"span.kind": ext.SpanKindConsumerEnum,
 	}, rawSpan.Tags())
 }
 

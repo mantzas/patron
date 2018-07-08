@@ -4,11 +4,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Option defines a option for the HTTP service.
-type Option func(*Component) error
+// OptionFunc defines a option func for the HTTP component.
+type OptionFunc func(*Component) error
 
-// Port option for setting the ports of the http service.
-func Port(port int) Option {
+// Port option for setting the ports of the HTTP component.
+func Port(port int) OptionFunc {
 	return func(s *Component) error {
 		if port <= 0 || port > 65535 {
 			return errors.New("invalid port")
@@ -18,8 +18,8 @@ func Port(port int) Option {
 	}
 }
 
-// Routes option for setting the routes of the http service.
-func Routes(rr []Route) Option {
+// Routes option for setting the routes of the HTTP component.
+func Routes(rr []Route) OptionFunc {
 	return func(s *Component) error {
 		if len(rr) == 0 {
 			return errors.New("routes are empty")
@@ -29,8 +29,8 @@ func Routes(rr []Route) Option {
 	}
 }
 
-// HealthCheck option for setting the health check function.
-func HealthCheck(hcf HealthCheckFunc) Option {
+// HealthCheck option for setting the health check function of the HTTP component.
+func HealthCheck(hcf HealthCheckFunc) OptionFunc {
 	return func(s *Component) error {
 		if hcf == nil {
 			return errors.New("health check function is not defined")

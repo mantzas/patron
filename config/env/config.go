@@ -12,11 +12,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Config definition for environment var.
+// Config implementation for handling environment vars.
 type Config struct {
 }
 
-// New create a new config
+// New creates a new config.
+// By providing a reader, which might contain environment variables coming for a file, you can set env vars.
+// This is useful for development.
 func New(r io.Reader) (*Config, error) {
 	err := initialize(r)
 	if err != nil {
@@ -25,7 +27,7 @@ func New(r io.Reader) (*Config, error) {
 	return &Config{}, nil
 }
 
-// Set a environment var
+// Set a environment var.
 func (c Config) Set(key string, value interface{}) error {
 	v, ok := value.(string)
 	if !ok {

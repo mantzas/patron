@@ -7,29 +7,29 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Factory of the zero logger
+// Factory implementation of zerolog.
 type Factory struct {
 	logger *zerolog.Logger
 	lvl    log.Level
 }
 
-// NewFactory returns a new zero logger factory
+// NewFactory creates a new zerolog factory.
 func NewFactory(l *zerolog.Logger, lvl log.Level) log.Factory {
 	return &Factory{logger: l, lvl: lvl}
 }
 
-// DefaultFactory returns a zero logger factory with default settings
+// DefaultFactory creates a zerolog factory with default settings.
 func DefaultFactory(lvl log.Level) log.Factory {
 	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	return NewFactory(&zl, lvl)
 }
 
-// Create a zero logger
+// Create a new logger.
 func (zf *Factory) Create(f map[string]interface{}) log.Logger {
 	return NewLogger(zf.logger, zf.lvl, f)
 }
 
-// CreateSub a zero sub logger with defined fields
+// CreateSub creates a logger with inherited fields.
 func (zf *Factory) CreateSub(logger log.Logger, fields map[string]interface{}) log.Logger {
 
 	if len(fields) == 0 {

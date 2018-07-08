@@ -30,7 +30,7 @@ type Component struct {
 }
 
 // New returns a new component.
-func New(oo ...Option) (*Component, error) {
+func New(oo ...OptionFunc) (*Component, error) {
 	s := Component{hc: DefaultHealthCheck, port: port, routes: []Route{}, m: sync.Mutex{}, srv: nil}
 
 	for _, o := range oo {

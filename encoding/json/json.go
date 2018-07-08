@@ -12,7 +12,7 @@ const (
 	ContentTypeCharset string = "application/json; charset=utf-8"
 )
 
-// Decode a JSON input in the form of a read closer.
+// Decode a JSON input in the form of a read.
 func Decode(data io.Reader, v interface{}) error {
 	return json.NewDecoder(data).Decode(v)
 }
