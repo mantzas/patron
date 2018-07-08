@@ -72,21 +72,7 @@ func TestNewPublisher(t *testing.T) {
 				return chn, nil
 			})
 
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "ExchangeDeclare", func(
-				*amqp.Channel,
-				string,
-				string,
-				bool,
-				bool,
-				bool,
-				bool,
-				amqp.Table,
-			) error {
-				if tt.exchangeError {
-					return errors.New("DECLARE EXCHANGE")
-				}
-				return nil
-			})
+			patchExchangeDeclare(chn, tt.exchangeError)
 
 			got, err := NewPublisher(tt.args.url, tt.args.exc)
 			if tt.wantErr {
@@ -125,18 +111,7 @@ func TestTracedPublisher_Close(t *testing.T) {
 				return chn, nilErr
 			})
 
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "ExchangeDeclare", func(
-				*amqp.Channel,
-				string,
-				string,
-				bool,
-				bool,
-				bool,
-				bool,
-				amqp.Table,
-			) error {
-				return nilErr
-			})
+			patchExchangeDeclare(chn, false)
 
 			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Close", func(*amqp.Channel) error {
 				if tt.closeError {
@@ -181,19 +156,8 @@ func TestTracedPublisher_Publish(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer monkey.UnpatchAll()
 			chn := &amqp.Channel{}
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Publish", func(
-				*amqp.Channel,
-				string,
-				string,
-				bool,
-				bool,
-				amqp.Publishing,
-			) error {
-				if tt.publishError {
-					return errors.New("PUBLISH ERROR")
-				}
-				return nil
-			})
+
+			patchPublish(chn, tt.publishError)
 
 			msg, err := NewJSONMessage("test")
 			assert.NoError(err)
@@ -206,4 +170,38 @@ func TestTracedPublisher_Publish(t *testing.T) {
 			}
 		})
 	}
+}
+
+func patchExchangeDeclare(chn *amqp.Channel, exchangeError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chn), "ExchangeDeclare", func(
+		*amqp.Channel,
+		string,
+		string,
+		bool,
+		bool,
+		bool,
+		bool,
+		amqp.Table,
+	) error {
+		if exchangeError {
+			return errors.New("DECLARE EXCHANGE")
+		}
+		return nil
+	})
+}
+
+func patchPublish(chn *amqp.Channel, publishError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Publish", func(
+		*amqp.Channel,
+		string,
+		string,
+		bool,
+		bool,
+		amqp.Publishing,
+	) error {
+		if publishError {
+			return errors.New("PUBLISH ERROR")
+		}
+		return nil
+	})
 }
