@@ -58,20 +58,8 @@ func TestNewPublisher(t *testing.T) {
 			cnn := &amqp.Connection{}
 			chn := &amqp.Channel{}
 
-			monkey.Patch(amqp.Dial, func(string) (*amqp.Connection, error) {
-				if tt.dialError {
-					return nil, errors.New("DIAL ERROR")
-				}
-				return cnn, nil
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Channel", func(*amqp.Connection) (*amqp.Channel, error) {
-				if tt.channelError {
-					return nil, errors.New("CHANNEL ERROR")
-				}
-				return chn, nil
-			})
-
+			patchDial(cnn, tt.dialError)
+			patchChannel(cnn, tt.channelError, chn)
 			patchExchangeDeclare(chn, tt.exchangeError)
 
 			got, err := NewPublisher(tt.args.url, tt.args.exc)
@@ -101,31 +89,12 @@ func TestTracedPublisher_Close(t *testing.T) {
 			defer monkey.UnpatchAll()
 			cnn := &amqp.Connection{}
 			chn := &amqp.Channel{}
-			var nilErr error
 
-			monkey.Patch(amqp.Dial, func(string) (*amqp.Connection, error) {
-				return cnn, nilErr
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Channel", func(*amqp.Connection) (*amqp.Channel, error) {
-				return chn, nilErr
-			})
-
+			patchDial(cnn, false)
+			patchChannel(cnn, false, chn)
 			patchExchangeDeclare(chn, false)
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Close", func(*amqp.Channel) error {
-				if tt.closeError {
-					return errors.New("CHANNEL ERROR")
-				}
-				return nilErr
-			})
-
-			monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Close", func(*amqp.Connection) error {
-				if tt.closeError {
-					return errors.New("CONNECTION ERROR")
-				}
-				return nilErr
-			})
+			patchConnectionClose(cnn, tt.closeError)
+			patchChannelClose(chn, tt.closeError)
 
 			p, err := NewPublisher("XXX", "YYY")
 			assert.NoError(err)
@@ -172,6 +141,24 @@ func TestTracedPublisher_Publish(t *testing.T) {
 	}
 }
 
+func patchDial(cnn *amqp.Connection, dialError bool) {
+	monkey.Patch(amqp.Dial, func(string) (*amqp.Connection, error) {
+		if dialError {
+			return nil, errors.New("DIAL ERROR")
+		}
+		return cnn, nil
+	})
+}
+
+func patchChannel(cnn *amqp.Connection, channelError bool, chn *amqp.Channel) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Channel", func(*amqp.Connection) (*amqp.Channel, error) {
+		if channelError {
+			return nil, errors.New("CHANNEL ERROR")
+		}
+		return chn, nil
+	})
+}
+
 func patchExchangeDeclare(chn *amqp.Channel, exchangeError bool) {
 	monkey.PatchInstanceMethod(reflect.TypeOf(chn), "ExchangeDeclare", func(
 		*amqp.Channel,
@@ -185,6 +172,23 @@ func patchExchangeDeclare(chn *amqp.Channel, exchangeError bool) {
 	) error {
 		if exchangeError {
 			return errors.New("DECLARE EXCHANGE")
+		}
+		return nil
+	})
+}
+
+func patchConnectionClose(cnn *amqp.Connection, closeError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(cnn), "Close", func(*amqp.Connection) error {
+		if closeError {
+			return errors.New("CONNECTION ERROR")
+		}
+		return nil
+	})
+}
+func patchChannelClose(chn *amqp.Channel, closeError bool) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chn), "Close", func(*amqp.Channel) error {
+		if closeError {
+			return errors.New("CHANNEL ERROR")
 		}
 		return nil
 	})
