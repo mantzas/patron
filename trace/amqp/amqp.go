@@ -4,6 +4,7 @@ import (
 	"context"
 
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 
@@ -96,7 +97,7 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 
 // Publish a message to a exchange.
 func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
-	sp, _ := trace.StartChildSpan(ctx, tc.opName, trace.AMQPPublisherComponent, tc.tag)
+	sp, _ := trace.StartChildSpan(ctx, tc.opName, trace.AMQPPublisherComponent, ext.SpanKindProducer, tc.tag)
 
 	p := amqp.Publishing{
 		Headers:     amqp.Table{},

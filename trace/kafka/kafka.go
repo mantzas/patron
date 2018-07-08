@@ -7,6 +7,7 @@ import (
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
 )
 
@@ -60,7 +61,7 @@ func NewAsyncProducer(brokers []string) (*AsyncProducer, error) {
 // Send a message to a topic.
 func (ap *AsyncProducer) Send(ctx context.Context, msg *Message) error {
 	sp, _ := trace.StartChildSpan(ctx, "kafka PROD topic "+msg.topic, trace.KafkaAsyncProducerComponent,
-		ap.tag, opentracing.Tag{Key: "topic", Value: msg.topic})
+		ext.SpanKindProducer, ap.tag, opentracing.Tag{Key: "topic", Value: msg.topic})
 	pm, err := createProducerMessage(msg, sp)
 	if err != nil {
 		trace.FinishSpanWithError(sp)
