@@ -24,13 +24,14 @@ const (
 	shutdownTimeout = 5 * time.Second
 )
 
-// Component interface for implementing components.
+// Component interface for implementing service components.
 type Component interface {
 	Run(ctx context.Context) error
 	Shutdown(ctx context.Context) error
 }
 
-// Service definition.
+// Service is responsible for managing and setting up everything.
+// The service will start by default a HTTP component in order to host management endpoint.
 type Service struct {
 	name   string
 	cps    []Component
@@ -40,8 +41,8 @@ type Service struct {
 	cancel context.CancelFunc
 }
 
-// New creates a new service
-func New(name string, oo ...Option) (*Service, error) {
+// New creates a new named service and allows for customization through functional options.
+func New(name string, oo ...OptionFunc) (*Service, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -93,6 +94,8 @@ func (s *Service) setupTermSignal() {
 }
 
 // Run starts up all service components and monitors for errors.
+// If a component returns a error the service is responsible for shutting down
+// all components and terminate itself.
 func (s *Service) Run() error {
 
 	errCh := make(chan error)
@@ -117,7 +120,7 @@ func (s *Service) Run() error {
 	}
 }
 
-// Shutdown performs a shutdown on all components with the setup timeout.
+// Shutdown all components gracefully with a predefined timeout.
 func (s *Service) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
@@ -208,7 +211,7 @@ func (s *Service) createHTTPComponent() (Component, error) {
 
 	log.Infof("creating default HTTP component at port %s", port)
 
-	options := []http.Option{
+	options := []http.OptionFunc{
 		http.Port(int(port)),
 	}
 

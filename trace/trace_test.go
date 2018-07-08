@@ -32,7 +32,7 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)
 	assert.Equal("test", jsp.OperationName)
-	FinishSpan(sp, true)
+	FinishSpanWithError(sp)
 	assert.NotNil(sp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(map[string]interface{}{
@@ -54,7 +54,7 @@ func TestStartFinishChildSpan(t *testing.T) {
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)
 	assert.Equal("opName", jsp.OperationName)
-	FinishSpan(sp, true)
+	FinishSpanWithError(sp)
 	assert.NotNil(sp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(map[string]interface{}{

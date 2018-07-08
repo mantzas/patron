@@ -29,7 +29,7 @@ func NewClient(timeout time.Duration) *TracedClient {
 		}}
 }
 
-// Do executes a HTTP request.
+// Do executes a HTTP request with integrated tracing and tracing propagation downstream.
 func (tc *TracedClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
 	req, ht := nethttp.TraceRequest(

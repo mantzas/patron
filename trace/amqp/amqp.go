@@ -12,18 +12,18 @@ import (
 	"github.com/mantzas/patron/trace"
 )
 
-// Message for publishing.
+// Message abstraction for publishing.
 type Message struct {
 	contentType string
 	body        []byte
 }
 
-// NewMessage creates a new message for publishing.
+// NewMessage creates a new message.
 func NewMessage(ct string, body []byte) *Message {
 	return &Message{contentType: ct, body: body}
 }
 
-// NewJSONMessage creates a new message for publishing.
+// NewJSONMessage creates a new message with a JSON encoded body.
 func NewJSONMessage(d interface{}) (*Message, error) {
 	body, err := json.Encode(d)
 	if err != nil {
@@ -38,7 +38,7 @@ type Publisher interface {
 	Close(ctx context.Context) error
 }
 
-// TracedPublisher defines a RabbitMQ publisher with integrated tracing.
+// TracedPublisher defines a RabbitMQ publisher with tracing instrumentation.
 type TracedPublisher struct {
 	cn     *amqp.Connection
 	ch     *amqp.Channel
@@ -47,9 +47,9 @@ type TracedPublisher struct {
 	tag    opentracing.Tag
 }
 
-// NewPublisher creates a new publisher.
-// The default exchange type used is fanout.
-// Notifications are not handled at this point TBD.
+// NewPublisher creates a new publisher with the following defaults
+// - exchange type: fanout
+// - notifications are not handled at this point TBD.
 func NewPublisher(url, exc string) (*TracedPublisher, error) {
 
 	if url == "" {
@@ -94,7 +94,7 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 	return &p, nil
 }
 
-// Publish a payload to a exchange.
+// Publish a message to a exchange.
 func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 	sp, _ := trace.StartChildSpan(ctx, tc.opName, trace.AMQPPublisherComponent, tc.tag)
 
@@ -115,10 +115,10 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 		p,
 	)
 	if err != nil {
-		trace.FinishSpan(sp, true)
+		trace.FinishSpanWithError(sp)
 		return errors.Wrap(err, "failed to publish message")
 	}
-	trace.FinishSpan(sp, false)
+	trace.FinishSpanWithSuccess(sp)
 	return nil
 }
 

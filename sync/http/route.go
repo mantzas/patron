@@ -6,7 +6,7 @@ import (
 	"github.com/mantzas/patron/sync"
 )
 
-// Route definition
+// Route definition of a HTTP route.
 type Route struct {
 	Pattern string
 	Method  string
@@ -14,12 +14,12 @@ type Route struct {
 	Trace   bool
 }
 
-// NewRoute returns a new route from a generic handler
+// NewRoute creates a new route from a generic handler.
 func NewRoute(p string, m string, pr sync.ProcessorFunc, trace bool) Route {
 	return Route{Pattern: p, Method: m, Handler: handler(pr), Trace: trace}
 }
 
-// NewRouteRaw returns a new route from a HTTP handler
+// NewRouteRaw creates a new route from a HTTP handler.
 func NewRouteRaw(p string, m string, h http.HandlerFunc) Route {
 	return Route{Pattern: p, Method: m, Handler: h, Trace: false}
 }

@@ -38,8 +38,8 @@ func Test_determineEncoding(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		decode  encoding.Decode
-		encode  encoding.Encode
+		decode  encoding.DecodeFunc
+		encode  encoding.EncodeFunc
 		wantErr bool
 	}{
 		{"content type json", args{hdr: hdrContentJSON}, json.Decode, json.Encode, false},
@@ -82,7 +82,7 @@ func Test_handleSuccess(t *testing.T) {
 	type args struct {
 		req *http.Request
 		rsp *sync.Response
-		enc encoding.Encode
+		enc encoding.EncodeFunc
 	}
 	tests := []struct {
 		name           string

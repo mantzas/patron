@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-// HealthStatus type represanting the health of a component.
+// HealthStatus type representing the health of the service via HTTP component.
 type HealthStatus int
 
 const (
-	// Initializing represents a state before the component is Healthy.
+	// Initializing represents a state when warming up and before the component is Healthy.
 	Initializing HealthStatus = 0
 	// Healthy represents a state defining a healthy state.
 	Healthy HealthStatus = 1
@@ -16,10 +16,9 @@ const (
 	Unhealthy HealthStatus = 2
 )
 
-// HealthCheckFunc defines a function for implementing a health check.
+// HealthCheckFunc defines a function type for implementing a health check.
 type HealthCheckFunc func() HealthStatus
 
-// HealthCheckRoute returns a route for implementing a health check.
 func healthCheckRoute(hcf HealthCheckFunc) Route {
 
 	f := func(w http.ResponseWriter, r *http.Request) {

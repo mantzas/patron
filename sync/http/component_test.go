@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func ErrorOption() Option {
+func ErrorOption() OptionFunc {
 	return func(s *Component) error {
 		return errors.New("TEST")
 	}
@@ -19,12 +19,12 @@ func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
 		name    string
-		options []Option
+		options []OptionFunc
 		wantErr bool
 	}{
-		{"success with no options", []Option{}, false},
-		{"success with options", []Option{Port(50000)}, false},
-		{"failed with error option", []Option{ErrorOption()}, true},
+		{"success with no options", []OptionFunc{}, false},
+		{"success with options", []OptionFunc{Port(50000)}, false},
+		{"failed with error option", []OptionFunc{ErrorOption()}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -14,7 +14,7 @@ func TestNewServer(t *testing.T) {
 	route := http.NewRoute("/", "GET", nil, true)
 	type args struct {
 		name string
-		opt  Option
+		opt  OptionFunc
 	}
 	tests := []struct {
 		name    string

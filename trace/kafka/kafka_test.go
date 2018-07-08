@@ -66,7 +66,7 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	assert.NotNil(ap)
 	trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
 	_, ctx := trace.StartChildSpan(context.Background(), "ttt", "cmp")
-	ap.SendMessage(ctx, msg)
+	ap.Send(ctx, msg)
 	assert.Error(<-ap.Error())
 	ap.Close()
 }

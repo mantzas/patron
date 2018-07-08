@@ -21,14 +21,14 @@ func init() {
 	}
 }
 
-// Logger implements logging with zerolog
+// Logger abstraction based on zerolog.
 type Logger struct {
 	logger *zerolog.Logger
 	fields map[string]interface{}
 	lvl    log.Level
 }
 
-// NewLogger returns a new logger
+// NewLogger creates a new logger.
 func NewLogger(l *zerolog.Logger, lvl log.Level, f map[string]interface{}) log.Logger {
 	if len(f) == 0 {
 		f = make(map[string]interface{})
@@ -42,67 +42,67 @@ func (zl Logger) Level() log.Level {
 	return zl.lvl
 }
 
-// Fields returns the fields associated with this logger
+// Fields returns the fields associated with this logger.
 func (zl Logger) Fields() map[string]interface{} {
 	return zl.fields
 }
 
-// Panic logging
+// Panic logging.
 func (zl Logger) Panic(args ...interface{}) {
 	zl.logger.Panic().Msg(fmt.Sprint(args...))
 }
 
-// Panicf logging
+// Panicf logging.
 func (zl Logger) Panicf(msg string, args ...interface{}) {
 	zl.logger.Panic().Msgf(msg, args...)
 }
 
-// Fatal logging
+// Fatal logging.
 func (zl Logger) Fatal(args ...interface{}) {
 	zl.logger.Fatal().Msg(fmt.Sprint(args...))
 }
 
-// Fatalf logging
+// Fatalf logging.
 func (zl Logger) Fatalf(msg string, args ...interface{}) {
 	zl.logger.Fatal().Msgf(msg, args...)
 }
 
-// Error logging
+// Error logging.
 func (zl Logger) Error(args ...interface{}) {
 	zl.logger.Error().Msg(fmt.Sprint(args...))
 }
 
-// Errorf logging
+// Errorf logging.
 func (zl Logger) Errorf(msg string, args ...interface{}) {
 	zl.logger.Error().Msgf(msg, args...)
 }
 
-// Warn logging
+// Warn logging.
 func (zl Logger) Warn(args ...interface{}) {
 	zl.logger.Warn().Msg(fmt.Sprint(args...))
 }
 
-// Warnf logging
+// Warnf logging.
 func (zl Logger) Warnf(msg string, args ...interface{}) {
 	zl.logger.Warn().Msgf(msg, args...)
 }
 
-// Info logging
+// Info logging.
 func (zl Logger) Info(args ...interface{}) {
 	zl.logger.Info().Msg(fmt.Sprint(args...))
 }
 
-// Infof logging
+// Infof logging.
 func (zl Logger) Infof(msg string, args ...interface{}) {
 	zl.logger.Info().Msgf(msg, args...)
 }
 
-// Debug logging
+// Debug logging.
 func (zl Logger) Debug(args ...interface{}) {
 	zl.logger.Debug().Msg(fmt.Sprint(args...))
 }
 
-// Debugf logging
+// Debugf logging.
 func (zl Logger) Debugf(msg string, args ...interface{}) {
 	zl.logger.Debug().Msgf(msg, args...)
 }
