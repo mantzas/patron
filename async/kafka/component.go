@@ -49,7 +49,15 @@ func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topic
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Component{name: name, proc: p, brokers: brokers, topics: topics, cfg: config, ms: nil, contentType: ct}, nil
+	return &Component{
+		name:        name,
+		proc:        p,
+		brokers:     brokers,
+		topics:      topics,
+		cfg:         config,
+		ms:          nil,
+		contentType: ct,
+	}, nil
 }
 
 // Run starts the kafka consumer processing messages.
@@ -70,10 +78,14 @@ func (c *Component) Run(ctx context.Context) error {
 	go func() {
 		for {
 			select {
+			case <-ctx.Done():
+				failCh <- errors.New("canceling requested")
+				return
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
 				go func() {
-					sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
+					sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent,
+						mapHeader(msg.Headers))
 
 					var ct string
 					if c.contentType != "" {
@@ -104,6 +116,7 @@ func (c *Component) Run(ctx context.Context) error {
 				}()
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during consumption")
+				return
 			}
 		}
 	}()

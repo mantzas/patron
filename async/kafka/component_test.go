@@ -1,7 +1,9 @@
 package kafka
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -103,4 +105,46 @@ func Test_determineContentType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRun_Shutdown(t *testing.T) {
+	assert := assert.New(t)
+	br := createSeedBroker(t, false)
+	cmp, err := New("test", mockProcessor, "1", "", []string{br.Addr()}, []string{"TOPIC"})
+	assert.NoError(err)
+	assert.NotNil(cmp)
+	chErr := make(chan error, 0)
+	go func() {
+		chErr <- cmp.Run(context.Background())
+	}()
+	time.Sleep(100 * time.Millisecond)
+	assert.NoError(cmp.Shutdown(context.Background()))
+	//<-chErr
+}
+
+func mockProcessor(context.Context, *async.Message) error {
+	return nil
+}
+
+func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
+	seed := sarama.NewMockBroker(t, 1)
+	lead := sarama.NewMockBroker(t, 2)
+
+	metadataResponse := new(sarama.MetadataResponse)
+	metadataResponse.AddBroker(lead.Addr(), lead.BrokerID())
+	metadataResponse.AddTopicPartition("TOPIC", 0, lead.BrokerID(), nil, nil, sarama.ErrNoError)
+	seed.Returns(metadataResponse)
+
+	prodSuccess := new(sarama.ProduceResponse)
+	if retError {
+		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrDuplicateSequenceNumber)
+	} else {
+		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrNoError)
+	}
+	lead.Returns(prodSuccess)
+
+	config := sarama.NewConfig()
+	config.Producer.Flush.Messages = 10
+	config.Producer.Return.Successes = true
+	return seed
 }

@@ -31,11 +31,19 @@ const (
 )
 
 var (
-	cls io.Closer
+	cls     io.Closer
+	version string
 )
 
+func init() {
+	version = "dev"
+}
+
 // Setup tracing by providing all necessary parameters.
-func Setup(name, agentAddress, samplerType string, samplerParam float64) error {
+func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) error {
+	if ver != "" {
+		version = ver
+	}
 	cfg := config.Configuration{
 		ServiceName: name,
 		Sampler: &config.SamplerConfig{
@@ -59,6 +67,7 @@ func Setup(name, agentAddress, samplerType string, samplerParam float64) error {
 	}
 	cls = clsTemp
 	opentracing.SetGlobalTracer(tr)
+	version = ver
 	return nil
 }
 
@@ -78,6 +87,7 @@ func StartConsumerSpan(
 	spCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
+	sp.SetTag("version", version)
 	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
@@ -100,6 +110,7 @@ func StartHTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Reques
 	ext.HTTPMethod.Set(sp, r.Method)
 	ext.HTTPUrl.Set(sp, r.URL.String())
 	ext.Component.Set(sp, "http")
+	sp.SetTag("version", version)
 	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
 }
 
@@ -120,6 +131,7 @@ func StartChildSpan(
 	for _, t := range tags {
 		sp.SetTag(t.Key, t.Value)
 	}
+	sp.SetTag("version", version)
 	return sp, ctx
 }
 
