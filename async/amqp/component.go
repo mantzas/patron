@@ -3,6 +3,7 @@ package amqp
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/mantzas/patron/async"
 	agr_errors "github.com/mantzas/patron/errors"
@@ -21,8 +22,9 @@ type Component struct {
 	queue string
 	proc  async.ProcessorFunc
 	tag   string
-	ch    *amqp.Channel
-	conn  *amqp.Connection
+	sync.Mutex
+	ch   *amqp.Channel
+	conn *amqp.Connection
 }
 
 // New returns a new AMQP subscriber.
@@ -49,11 +51,13 @@ func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
 
 // Run starts AMQP subscription and async processing of messages.
 func (c *Component) Run(ctx context.Context) error {
-
+	c.Lock()
+	defer c.Unlock()
 	conn, err := amqp.Dial(c.url)
 	if err != nil {
 		return errors.Wrapf(err, "failed to dial @ %s", c.url)
 	}
+
 	c.conn = conn
 
 	ch, err := c.conn.Channel()
@@ -113,7 +117,8 @@ func (c *Component) Run(ctx context.Context) error {
 
 // Shutdown the component by closing gracefully AMQP channel and connection.
 func (c *Component) Shutdown(ctx context.Context) error {
-
+	c.Lock()
+	defer c.Unlock()
 	agr := agr_errors.New()
 
 	if c.ch != nil {

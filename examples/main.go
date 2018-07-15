@@ -62,7 +62,7 @@ func main() {
 	routes := make([]synchttp.Route, 0)
 	routes = append(routes, synchttp.NewRoute("/", http.MethodGet, proc.process, true))
 
-	srv, err := patron.New("patron", patron.Routes(routes))
+	srv, err := patron.New("patron", "1.0.0", patron.Routes(routes))
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
 	}

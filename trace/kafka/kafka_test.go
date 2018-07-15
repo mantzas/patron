@@ -50,7 +50,7 @@ func TestNewSyncProducer_Failure(t *testing.T) {
 
 func TestNewSyncProducer_Success(t *testing.T) {
 	assert := assert.New(t)
-	seed := createSeedBroker(t, false)
+	seed := createKafkaBroker(t, false)
 	got, err := NewAsyncProducer([]string{seed.Addr()})
 	assert.NoError(err)
 	assert.NotNil(got)
@@ -60,11 +60,11 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	assert := assert.New(t)
 	msg, err := NewJSONMessage("TOPIC", "TEST")
 	assert.NoError(err)
-	seed := createSeedBroker(t, true)
+	seed := createKafkaBroker(t, true)
 	ap, err := NewAsyncProducer([]string{seed.Addr()})
 	assert.NoError(err)
 	assert.NotNil(ap)
-	err = trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	err = trace.Setup("test", "1.0.0", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
 	assert.NoError(err)
 	_, ctx := trace.StartChildSpan(context.Background(), "ttt", "cmp")
 	err = ap.Send(ctx, msg)
@@ -73,14 +73,11 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	ap.Close()
 }
 
-func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
-	seed := sarama.NewMockBroker(t, 1)
+func createKafkaBroker(t *testing.T, retError bool) *sarama.MockBroker {
 	lead := sarama.NewMockBroker(t, 2)
-
 	metadataResponse := new(sarama.MetadataResponse)
 	metadataResponse.AddBroker(lead.Addr(), lead.BrokerID())
 	metadataResponse.AddTopicPartition("TOPIC", 0, lead.BrokerID(), nil, nil, sarama.ErrNoError)
-	seed.Returns(metadataResponse)
 
 	prodSuccess := new(sarama.ProduceResponse)
 	if retError {
@@ -93,5 +90,7 @@ func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
 	config := sarama.NewConfig()
 	config.Producer.Flush.Messages = 10
 	config.Producer.Return.Successes = true
+	seed := sarama.NewMockBroker(t, 1)
+	seed.Returns(metadataResponse)
 	return seed
 }

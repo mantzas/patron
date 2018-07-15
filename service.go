@@ -42,10 +42,14 @@ type Service struct {
 }
 
 // New creates a new named service and allows for customization through functional options.
-func New(name string, oo ...OptionFunc) (*Service, error) {
+func New(name, version string, oo ...OptionFunc) (*Service, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
+	}
+
+	if version == "" {
+		version = "dev"
 	}
 
 	err := setupDefaultConfig()
@@ -53,12 +57,12 @@ func New(name string, oo ...OptionFunc) (*Service, error) {
 		return nil, err
 	}
 
-	err = setupDefaultLogging(name)
+	err = setupDefaultLogging(name, version)
 	if err != nil {
 		return nil, err
 	}
 
-	err = setupDefaultTracing(name)
+	err = setupDefaultTracing(name, version)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +168,7 @@ func setupDefaultConfig() error {
 	return config.Setup(cfg)
 }
 
-func setupDefaultLogging(srvName string) error {
+func setupDefaultLogging(name, version string) error {
 	lvl, err := config.GetString("PATRON_LOG_LEVEL")
 	if err != nil {
 		lvl = string(log.InfoLevel)
@@ -175,7 +179,8 @@ func setupDefaultLogging(srvName string) error {
 		return errors.Wrap(err, "failed to setup logging")
 	}
 
-	log.AppendField("srv", srvName)
+	log.AppendField("srv", name)
+	log.AppendField("version", version)
 	hostname, err := os.Hostname()
 	if err != nil {
 		return errors.Wrap(err, "failed to get hostname")
@@ -185,7 +190,7 @@ func setupDefaultLogging(srvName string) error {
 	return nil
 }
 
-func setupDefaultTracing(srvName string) error {
+func setupDefaultTracing(name, version string) error {
 	agent, err := config.GetString("PATRON_JAEGER_AGENT")
 	if err != nil {
 		agent = "0.0.0.0:6831"
@@ -199,7 +204,7 @@ func setupDefaultTracing(srvName string) error {
 		prm = 0.1
 	}
 	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
-	return trace.Setup(srvName, agent, tp, prm)
+	return trace.Setup(name, version, agent, tp, prm)
 }
 
 func (s *Service) createHTTPComponent() (Component, error) {

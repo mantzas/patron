@@ -110,7 +110,7 @@ func TestTracedPublisher_Close(t *testing.T) {
 
 func TestTracedPublisher_Publish(t *testing.T) {
 	assert := assert.New(t)
-	err := trace.Setup("test", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	err := trace.Setup("test", "1.0.0", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
 	assert.NoError(err)
 	_, ctx := trace.StartChildSpan(context.Background(), "ttt", "cmp")
 	tests := []struct {

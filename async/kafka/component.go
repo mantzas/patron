@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"strings"
+	"sync"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -19,8 +20,9 @@ type Component struct {
 	brokers     []string
 	topics      []string
 	cfg         *sarama.Config
-	ms          sarama.Consumer
 	contentType string
+	sync.Mutex
+	ms sarama.Consumer
 }
 
 // New returns a new kafka consumer component.
@@ -49,7 +51,15 @@ func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topic
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
 
-	return &Component{name: name, proc: p, brokers: brokers, topics: topics, cfg: config, ms: nil, contentType: ct}, nil
+	return &Component{
+		name:        name,
+		proc:        p,
+		brokers:     brokers,
+		topics:      topics,
+		cfg:         config,
+		ms:          nil,
+		contentType: ct,
+	}, nil
 }
 
 // Run starts the kafka consumer processing messages.
@@ -59,7 +69,9 @@ func (c *Component) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create consumer")
 	}
+	c.Lock()
 	c.ms = ms
+	c.Unlock()
 
 	chMsg, chErr, err := c.consumers()
 	if err != nil {
@@ -70,10 +82,14 @@ func (c *Component) Run(ctx context.Context) error {
 	go func() {
 		for {
 			select {
+			case <-ctx.Done():
+				failCh <- errors.New("canceling requested")
+				return
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
 				go func() {
-					sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
+					sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent,
+						mapHeader(msg.Headers))
 
 					var ct string
 					if c.contentType != "" {
@@ -104,6 +120,7 @@ func (c *Component) Run(ctx context.Context) error {
 				}()
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during consumption")
+				return
 			}
 		}
 	}()
@@ -113,6 +130,8 @@ func (c *Component) Run(ctx context.Context) error {
 
 // Shutdown gracefully the component by closing the kafka consumer.
 func (c *Component) Shutdown(ctx context.Context) error {
+	c.Lock()
+	c.Unlock()
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 

@@ -14,10 +14,11 @@ import (
 
 func TestSetup_Tracer_Close(t *testing.T) {
 	assert := assert.New(t)
-	err := Setup("TEST", "0.0.0.0:6831", "const", 1)
+	err := Setup("TEST", "1.0.0", "0.0.0.0:6831", "const", 1)
 	assert.NoError(err)
 	err = Close()
 	assert.NoError(err)
+	version = "dev"
 }
 
 func TestStartFinishConsumerSpan(t *testing.T) {
@@ -39,6 +40,7 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 		"span.kind": ext.SpanKindConsumerEnum,
 		"component": "amqp-consumer",
 		"error":     true,
+		"version":   "dev",
 	}, rawSpan.Tags())
 }
 
@@ -64,12 +66,14 @@ func TestStartFinishChildSpan(t *testing.T) {
 		"component": "cmp",
 		"error":     true,
 		"key":       "value",
+		"version":   "dev",
 	}, rawSpan.Tags())
 	FinishSpanWithSuccess(sp)
 	rawSpan = mtr.FinishedSpans()[1]
 	assert.Equal(map[string]interface{}{
 		"component": "amqp-consumer",
 		"error":     false,
+		"version":   "dev",
 		"span.kind": ext.SpanKindConsumerEnum,
 	}, rawSpan.Tags())
 }
@@ -96,5 +100,6 @@ func TestHTTPStartFinishSpan(t *testing.T) {
 		"http.method":      "GET",
 		"http.status_code": uint16(200),
 		"http.url":         "/",
+		"version":          "dev",
 	}, rawSpan.Tags())
 }
