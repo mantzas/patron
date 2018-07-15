@@ -74,12 +74,12 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 }
 
 func createKafkaBroker(t *testing.T, retError bool) *sarama.MockBroker {
-	seed := sarama.NewMockBroker(t, 1)
 	lead := sarama.NewMockBroker(t, 2)
-
 	metadataResponse := new(sarama.MetadataResponse)
 	metadataResponse.AddBroker(lead.Addr(), lead.BrokerID())
 	metadataResponse.AddTopicPartition("TOPIC", 0, lead.BrokerID(), nil, nil, sarama.ErrNoError)
+
+	seed := sarama.NewMockBroker(t, 1)
 	seed.Returns(metadataResponse)
 
 	prodSuccess := new(sarama.ProduceResponse)
