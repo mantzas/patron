@@ -79,9 +79,6 @@ func createKafkaBroker(t *testing.T, retError bool) *sarama.MockBroker {
 	metadataResponse.AddBroker(lead.Addr(), lead.BrokerID())
 	metadataResponse.AddTopicPartition("TOPIC", 0, lead.BrokerID(), nil, nil, sarama.ErrNoError)
 
-	seed := sarama.NewMockBroker(t, 1)
-	seed.Returns(metadataResponse)
-
 	prodSuccess := new(sarama.ProduceResponse)
 	if retError {
 		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrDuplicateSequenceNumber)
@@ -93,5 +90,7 @@ func createKafkaBroker(t *testing.T, retError bool) *sarama.MockBroker {
 	config := sarama.NewConfig()
 	config.Producer.Flush.Messages = 10
 	config.Producer.Return.Successes = true
+	seed := sarama.NewMockBroker(t, 1)
+	seed.Returns(metadataResponse)
 	return seed
 }
