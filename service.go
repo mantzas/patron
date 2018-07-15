@@ -49,7 +49,7 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	}
 
 	if version == "" {
-		version = "development"
+		version = "dev"
 	}
 
 	err := setupDefaultConfig()

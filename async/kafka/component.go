@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"strings"
+	"sync"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -19,8 +20,9 @@ type Component struct {
 	brokers     []string
 	topics      []string
 	cfg         *sarama.Config
-	ms          sarama.Consumer
 	contentType string
+	sync.Mutex
+	ms sarama.Consumer
 }
 
 // New returns a new kafka consumer component.
@@ -67,7 +69,9 @@ func (c *Component) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create consumer")
 	}
+	c.Lock()
 	c.ms = ms
+	c.Unlock()
 
 	chMsg, chErr, err := c.consumers()
 	if err != nil {
@@ -126,6 +130,8 @@ func (c *Component) Run(ctx context.Context) error {
 
 // Shutdown gracefully the component by closing the kafka consumer.
 func (c *Component) Shutdown(ctx context.Context) error {
+	c.Lock()
+	c.Unlock()
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
