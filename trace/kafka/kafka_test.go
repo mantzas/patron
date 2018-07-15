@@ -50,7 +50,7 @@ func TestNewSyncProducer_Failure(t *testing.T) {
 
 func TestNewSyncProducer_Success(t *testing.T) {
 	assert := assert.New(t)
-	seed := createSeedBroker(t, false)
+	seed := createKafkaBroker(t, false)
 	got, err := NewAsyncProducer([]string{seed.Addr()})
 	assert.NoError(err)
 	assert.NotNil(got)
