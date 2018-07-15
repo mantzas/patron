@@ -60,7 +60,7 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	assert := assert.New(t)
 	msg, err := NewJSONMessage("TOPIC", "TEST")
 	assert.NoError(err)
-	seed := createSeedBroker(t, true)
+	seed := createKafkaBroker(t, true)
 	ap, err := NewAsyncProducer([]string{seed.Addr()})
 	assert.NoError(err)
 	assert.NotNil(ap)
@@ -73,7 +73,7 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	ap.Close()
 }
 
-func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
+func createKafkaBroker(t *testing.T, retError bool) *sarama.MockBroker {
 	seed := sarama.NewMockBroker(t, 1)
 	lead := sarama.NewMockBroker(t, 2)
 

@@ -113,7 +113,7 @@ func TestRun_Shutdown(t *testing.T) {
 	cmp, err := New("test", mockProcessor, "1", "", []string{br.Addr()}, []string{"TOPIC"})
 	assert.NoError(err)
 	assert.NotNil(cmp)
-	chErr := make(chan error, 0)
+	chErr := make(chan error)
 	go func() {
 		chErr <- cmp.Run(context.Background())
 	}()
