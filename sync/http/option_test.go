@@ -81,3 +81,32 @@ func TestSetHealthCheck(t *testing.T) {
 		})
 	}
 }
+
+func TestSetSecure(t *testing.T) {
+	assert := assert.New(t)
+	tests := []struct {
+		name     string
+		certFile string
+		keyFile  string
+		wantErr  bool
+	}{
+		{"success", "certFile", "keyFile", false},
+		{"failed missing cert file", "", "keyFile", true},
+		{"failed missing key file", "certFile", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Component{}
+			err := Secure(tt.certFile, tt.keyFile)(&s)
+			if tt.wantErr {
+				assert.Error(err)
+				assert.Empty(s.certFile)
+				assert.Empty(s.keyFile)
+			} else {
+				assert.NoError(err)
+				assert.NotEmpty(s.certFile)
+				assert.NotEmpty(s.keyFile)
+			}
+		})
+	}
+}
