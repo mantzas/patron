@@ -15,13 +15,13 @@ func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	proc := async.MockProcessor{}
 	brokers := []string{"192.168.1.1"}
-	topics := []string{"topic1"}
 	type args struct {
 		name     string
 		proc     async.ProcessorFunc
 		clientID string
 		brokers  []string
-		topics   []string
+		topic    string
+		buffer   int
 	}
 	tests := []struct {
 		name    string
@@ -30,38 +30,43 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:    "success",
-			args:    args{name: "test", proc: proc.Process, clientID: "clID", brokers: brokers, topics: topics},
+			args:    args{name: "test", proc: proc.Process, clientID: "clID", brokers: brokers, topic: "topic1", buffer: 0},
 			wantErr: false,
 		},
 		{
 			name:    "fails with missing name",
-			args:    args{name: "", proc: proc.Process, clientID: "clID", brokers: brokers, topics: topics},
+			args:    args{name: "", proc: proc.Process, clientID: "clID", brokers: brokers, topic: "topic1", buffer: 0},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing processor",
-			args:    args{name: "test", proc: nil, clientID: "clID", brokers: brokers, topics: topics},
+			args:    args{name: "test", proc: nil, clientID: "clID", brokers: brokers, topic: "topic1", buffer: 0},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing client id",
-			args:    args{name: "test", proc: proc.Process, clientID: "", brokers: brokers, topics: topics},
+			args:    args{name: "test", proc: proc.Process, clientID: "", brokers: brokers, topic: "topic1", buffer: 0},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing brokers",
-			args:    args{name: "test", proc: proc.Process, clientID: "clID", brokers: []string{}, topics: topics},
+			args:    args{name: "test", proc: proc.Process, clientID: "clID", brokers: []string{}, topic: "topic1", buffer: 0},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing topics",
-			args:    args{name: "test", proc: proc.Process, clientID: "clID", brokers: brokers, topics: []string{}},
+			args:    args{name: "test", proc: proc.Process, clientID: "clID", brokers: brokers, topic: "", buffer: 0},
+			wantErr: true,
+		},
+		{
+			name:    "fails with invalid buffer",
+			args:    args{name: "test", proc: proc.Process, clientID: "clID", brokers: brokers, topic: "topic1", buffer: -1},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.proc, tt.args.clientID, "", tt.args.brokers, tt.args.topics)
+			got, err := New(tt.args.name, tt.args.proc, tt.args.clientID, "", tt.args.brokers, tt.args.topic, tt.args.buffer)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -110,7 +115,7 @@ func Test_determineContentType(t *testing.T) {
 func TestRun_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	br := createSeedBroker(t, false)
-	cmp, err := New("test", mockProcessor, "1", "", []string{br.Addr()}, []string{"TOPIC"})
+	cmp, err := New("test", mockProcessor, "1", "", []string{br.Addr()}, "TOPIC", 0)
 	assert.NoError(err)
 	assert.NotNil(cmp)
 	chErr := make(chan error)
