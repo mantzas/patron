@@ -22,11 +22,13 @@ var (
 
 // Component implementation of HTTP.
 type Component struct {
-	hc     HealthCheckFunc
-	port   int
-	m      sync.Mutex
-	routes []Route
-	srv    *http.Server
+	hc       HealthCheckFunc
+	port     int
+	m        sync.Mutex
+	routes   []Route
+	srv      *http.Server
+	certFile string
+	keyFile  string
 }
 
 // New returns a new component.
@@ -60,7 +62,13 @@ func (s *Component) Run(ctx context.Context) error {
 	}
 	s.srv = createHTTPServer(s.port, createHandler(s.routes))
 	s.m.Unlock()
-	log.Infof("component listening on port %d", s.port)
+
+	if s.certFile != "" && s.keyFile != "" {
+		log.Infof("HTTPS component listening on port %d", s.port)
+		s.srv.ListenAndServeTLS(s.certFile, s.keyFile)
+	}
+
+	log.Infof("HTTP component listening on port %d", s.port)
 	return s.srv.ListenAndServe()
 }
 

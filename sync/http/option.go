@@ -39,3 +39,18 @@ func HealthCheck(hcf HealthCheckFunc) OptionFunc {
 		return nil
 	}
 }
+
+// Secure option for securing the default HTTP component.
+func Secure(certFile, keyFile string) OptionFunc {
+	return func(s *Component) error {
+		if certFile == "" {
+			return errors.New("cert file is required")
+		}
+		if keyFile == "" {
+			return errors.New("key file is required")
+		}
+		s.certFile = certFile
+		s.keyFile = keyFile
+		return nil
+	}
+}
