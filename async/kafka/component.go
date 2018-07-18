@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"strings"
 	"sync"
 
 	"github.com/Shopify/sarama"
@@ -18,7 +17,8 @@ type Component struct {
 	name        string
 	proc        async.ProcessorFunc
 	brokers     []string
-	topics      []string
+	topic       string
+	buffer      int
 	cfg         *sarama.Config
 	contentType string
 	sync.Mutex
@@ -26,7 +26,8 @@ type Component struct {
 }
 
 // New returns a new kafka consumer component.
-func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topics []string) (*Component, error) {
+func New(name string, p async.ProcessorFunc, clientID, ct string, brokers []string, topic string,
+	buffer int) (*Component, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -43,8 +44,12 @@ func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topic
 		return nil, errors.New("provide at least one broker")
 	}
 
-	if len(topics) == 0 {
-		return nil, errors.New("provide at least one topic")
+	if topic == "" {
+		return nil, errors.New("topic is required")
+	}
+
+	if buffer < 0 {
+		return nil, errors.New("buffer must greater or equal than 0")
 	}
 
 	config := sarama.NewConfig()
@@ -55,10 +60,11 @@ func New(name string, p async.ProcessorFunc, clientID, ct string, brokers, topic
 		name:        name,
 		proc:        p,
 		brokers:     brokers,
-		topics:      topics,
+		topic:       topic,
 		cfg:         config,
 		ms:          nil,
 		contentType: ct,
+		buffer:      buffer,
 	}, nil
 }
 
@@ -73,7 +79,7 @@ func (c *Component) Run(ctx context.Context) error {
 	c.ms = ms
 	c.Unlock()
 
-	chMsg, chErr, err := c.consumers()
+	chMsg, chErr, err := c.consumers(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to get consumers")
 	}
@@ -83,7 +89,7 @@ func (c *Component) Run(ctx context.Context) error {
 		for {
 			select {
 			case <-ctx.Done():
-				failCh <- errors.New("canceling requested")
+				failCh <- errors.Wrap(c.ms.Close(), "failed to close consumer")
 				return
 			case msg := <-chMsg:
 				log.Debugf("data received from topic %s", msg.Topic)
@@ -131,32 +137,31 @@ func (c *Component) Run(ctx context.Context) error {
 // Shutdown gracefully the component by closing the kafka consumer.
 func (c *Component) Shutdown(ctx context.Context) error {
 	c.Lock()
-	c.Unlock()
+	defer c.Unlock()
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
-func (c *Component) consumers() (chan *sarama.ConsumerMessage, chan *sarama.ConsumerError, error) {
-	chMsg := make(chan *sarama.ConsumerMessage)
-	chErr := make(chan *sarama.ConsumerError)
+func (c *Component) consumers(ctx context.Context) (chan *sarama.ConsumerMessage, chan *sarama.ConsumerError, error) {
+	chMsg := make(chan *sarama.ConsumerMessage, c.buffer)
+	chErr := make(chan *sarama.ConsumerError, c.buffer)
 
-	for _, topic := range c.topics {
-		if strings.Contains(topic, "__consumer_offsets") {
-			continue
-		}
+	partitions, err := c.ms.Partitions(c.topic)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to get partitions")
+	}
 
-		partitions, err := c.ms.Partitions(topic)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to get partitions")
-		}
+	for _, partition := range partitions {
 
-		consumer, err := c.ms.ConsumePartition(topic, partitions[0], sarama.OffsetOldest)
+		pc, err := c.ms.ConsumePartition(c.topic, partition, sarama.OffsetOldest)
 		if nil != err {
 			return nil, nil, errors.Wrap(err, "failed to get partition consumer")
 		}
 
-		go func(topic string, consumer sarama.PartitionConsumer) {
+		go func(consumer sarama.PartitionConsumer) {
 			for {
 				select {
+				case <-ctx.Done():
+					break
 				case consumerError := <-consumer.Errors():
 					chErr <- consumerError
 
@@ -164,7 +169,7 @@ func (c *Component) consumers() (chan *sarama.ConsumerMessage, chan *sarama.Cons
 					chMsg <- msg
 				}
 			}
-		}(topic, consumer)
+		}(pc)
 	}
 
 	return chMsg, chErr, nil
