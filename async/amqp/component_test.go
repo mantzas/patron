@@ -32,7 +32,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.url, tt.args.queue, tt.args.proc)
+			got, err := New(tt.args.name, tt.args.url, tt.args.queue, true, tt.args.proc)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -50,7 +50,8 @@ func Test_handlerMessageError(t *testing.T) {
 	d := &amqp.Delivery{
 		MessageId: "1",
 	}
-	handlerMessageError(d, agr, errors.New("test"), "message")
+	c := Component{}
+	c.handlerMessageError(d, agr, errors.New("test"), "message")
 	assert.Equal(2, agr.Count())
-	assert.Equal("message: test\nfailed to NACK message 1: delivery not initialized\n", agr.Error())
+	assert.Equal("message. requeue: false: test\nfailed to NACK message 1: delivery not initialized\n", agr.Error())
 }

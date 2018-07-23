@@ -17,18 +17,19 @@ import (
 
 // Component implementation of a AMQP subscriber.
 type Component struct {
-	name  string
-	url   string
-	queue string
-	proc  async.ProcessorFunc
-	tag   string
+	name    string
+	url     string
+	queue   string
+	requeue bool
+	proc    async.ProcessorFunc
+	tag     string
 	sync.Mutex
 	ch   *amqp.Channel
 	conn *amqp.Connection
 }
 
 // New returns a new AMQP subscriber.
-func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
+func New(name, url, queue string, requeue bool, p async.ProcessorFunc) (*Component, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -46,7 +47,7 @@ func New(name, url, queue string, p async.ProcessorFunc) (*Component, error) {
 		return nil, errors.New("work processor is required")
 	}
 
-	return &Component{name: name, url: url, queue: queue, proc: p, tag: "", ch: nil, conn: nil}, nil
+	return &Component{name: name, url: url, queue: queue, requeue: requeue, proc: p, tag: "", ch: nil, conn: nil}, nil
 }
 
 // Run starts AMQP subscription and async processing of messages.
@@ -88,16 +89,17 @@ func (c *Component) Run(ctx context.Context) error {
 
 			dec, err := async.DetermineDecoder(d.ContentType)
 			if err != nil {
-				handlerMessageError(d, a, err, fmt.Sprintf("failed to determine encoding %s. Sending NACK", d.ContentType))
+				c.handlerMessageError(d, a, err, fmt.Sprintf("failed to determine encoding %s. Sending NACK", d.ContentType))
 				trace.FinishSpanWithError(sp)
 				return
 			}
 			err = c.proc(chCtx, async.NewMessage(d.Body, dec))
 			if err != nil {
-				handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
+				c.handlerMessageError(d, a, err, fmt.Sprintf("failed to process message %s. Sending NACK", d.MessageId))
 				trace.FinishSpanWithError(sp)
 				return
 			}
+
 			err = d.Ack(false)
 			if err != nil {
 				a.Append(errors.Wrapf(err, "failed to ACK message %s", d.MessageId))
@@ -137,9 +139,9 @@ func (c *Component) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func handlerMessageError(d *amqp.Delivery, a *agr_errors.Aggregate, err error, msg string) {
-	a.Append(errors.Wrap(err, msg))
-	err = d.Nack(false, true)
+func (c *Component) handlerMessageError(d *amqp.Delivery, a *agr_errors.Aggregate, err error, msg string) {
+	a.Append(errors.Wrapf(err, "%s. requeue: %t", msg, c.requeue))
+	err = d.Nack(false, c.requeue)
 	if err != nil {
 		a.Append(errors.Wrapf(err, "failed to NACK message %s", d.MessageId))
 	}
