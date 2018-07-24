@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 
+	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
 
@@ -66,7 +67,8 @@ func (c *Component) Run(ctx context.Context) error {
 		for {
 			select {
 			case <-chCtx.Done():
-				failCh <- errors.Wrap(c.cns.Close(), "failed to close consumer")
+				log.Info("canceling consuming messages requested")
+				failCh <- nil
 				return
 			case msg := <-chMsg:
 				go func() {
