@@ -1,20 +1,19 @@
 package async
 
 import (
-	"context"
-
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/pkg/errors"
 )
 
 // ProcessorFunc definition of a async processor.
-type ProcessorFunc func(context.Context, *Message) error
+type ProcessorFunc func(MessageI) error
 
 // Message definition of a async message.
 type Message struct {
-	Data   []byte
-	decode encoding.DecodeRawFunc
+	Data    []byte
+	Headers map[string]string
+	decode  encoding.DecodeRawFunc
 }
 
 // NewMessage creates a new message.
