@@ -14,13 +14,13 @@ type MessageI interface {
 	Nack() error
 }
 
-// Consumer interface.
+// Consumer interface which every specific consumer has to implement.
 type Consumer interface {
 	Consume(context.Context) (<-chan MessageI, <-chan error, error)
 	Close() error
 }
 
-// Component implementation of a kafka consumer.
+// Component implementation of a async component.
 type Component struct {
 	name string
 	proc ProcessorFunc
@@ -28,7 +28,7 @@ type Component struct {
 	cnl  context.CancelFunc
 }
 
-// New returns a new kafka consumer component.
+// New returns a new async component.
 func New(name string, p ProcessorFunc, cns Consumer) (*Component, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -50,7 +50,7 @@ func New(name string, p ProcessorFunc, cns Consumer) (*Component, error) {
 	}, nil
 }
 
-// Run starts the kafka consumer processing messages.
+// Run starts the consumer processing loop messages.
 func (c *Component) Run(ctx context.Context) error {
 
 	chCtx, cnl := context.WithCancel(ctx)
@@ -88,7 +88,7 @@ func (c *Component) Run(ctx context.Context) error {
 	return <-failCh
 }
 
-// Shutdown gracefully the component by closing the kafka consumer.
+// Shutdown gracefully the component by closing the consumer.
 func (c *Component) Shutdown(ctx context.Context) error {
 	if c.cnl != nil {
 		c.cnl()
