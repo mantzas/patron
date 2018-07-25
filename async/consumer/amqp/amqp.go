@@ -43,6 +43,7 @@ func (m *message) Nack() error {
 	return err
 }
 
+// Consumer defines a AMQP subscriber.
 type Consumer struct {
 	name    string
 	url     string
@@ -54,6 +55,7 @@ type Consumer struct {
 	conn    *amqp.Connection
 }
 
+// New creates a new AMQP consumer.
 func New(name, url, queue string, requeue bool, buffer int) (*Consumer, error) {
 
 	if name == "" {
@@ -75,6 +77,7 @@ func New(name, url, queue string, requeue bool, buffer int) (*Consumer, error) {
 	return &Consumer{name: name, url: url, queue: queue, requeue: requeue, tag: "", ch: nil, conn: nil}, nil
 }
 
+// Consume starts of consuming a AMQP queue.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
 	conn, err := amqp.Dial(c.url)
 	if err != nil {

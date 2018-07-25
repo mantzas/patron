@@ -71,7 +71,7 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	s := Service{name: name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
 
 	for _, o := range oo {
-		err := o(&s)
+		err = o(&s)
 		if err != nil {
 			return nil, err
 		}

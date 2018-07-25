@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
@@ -62,11 +63,15 @@ func (c *Component) Run(ctx context.Context) error {
 				go func() {
 					err = c.proc(msg)
 					if err != nil {
-						msg.Nack()
-						failCh <- errors.Wrap(err, "failed to process message")
+						agr := agr_errors.New()
+						agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
+						agr.Append(errors.Wrap(msg.Nack(), "failed to NACK message"))
+						failCh <- agr
 						return
 					}
-					msg.Ack()
+					if err := msg.Ack(); err != nil {
+						failCh <- err
+					}
 				}()
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during message consumption")

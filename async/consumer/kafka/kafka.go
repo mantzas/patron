@@ -37,6 +37,7 @@ func (m *message) Nack() error {
 	return nil
 }
 
+// Consumer definition of a Kafka consumer.
 type Consumer struct {
 	name        string
 	brokers     []string
@@ -48,7 +49,8 @@ type Consumer struct {
 	ms          sarama.Consumer
 }
 
-func New(name string, clientID, ct string, brokers []string, topic string, buffer int) (*Consumer, error) {
+// New creates a ew Kafka consumer.
+func New(name, clientID, ct, topic string, brokers []string, buffer int) (*Consumer, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -78,23 +80,17 @@ func New(name string, clientID, ct string, brokers []string, topic string, buffe
 		brokers:     brokers,
 		topic:       topic,
 		cfg:         config,
-		ms:          nil,
 		contentType: ct,
 		buffer:      buffer,
 	}, nil
 }
 
+// Consume starts consuming messages from a Kafka topic.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
 
-	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to create consumer")
-	}
-	c.ms = ms
-
-	partitions, err := c.ms.Partitions(c.topic)
+	pcs, err := c.consumers()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to get partitions")
 	}
@@ -102,13 +98,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	chMsg := make(chan async.Message, c.buffer)
 	chErr := make(chan error, c.buffer)
 
-	for _, partition := range partitions {
-
-		pc, err := c.ms.ConsumePartition(c.topic, partition, sarama.OffsetOldest)
-		if nil != err {
-			return nil, nil, errors.Wrap(err, "failed to get partition consumer")
-		}
-
+	for _, pc := range pcs {
 		go func(consumer sarama.PartitionConsumer) {
 			for {
 				select {
@@ -159,6 +149,33 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 // Close handles closing channel and connection of AMQP.
 func (c *Consumer) Close() error {
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
+}
+
+func (c *Consumer) consumers() ([]sarama.PartitionConsumer, error) {
+
+	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create consumer")
+	}
+	c.ms = ms
+
+	partitions, err := c.ms.Partitions(c.topic)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get partitions")
+	}
+
+	pcs := make([]sarama.PartitionConsumer, len(partitions))
+
+	for i, partition := range partitions {
+
+		pc, err := c.ms.ConsumePartition(c.topic, partition, sarama.OffsetOldest)
+		if nil != err {
+			return nil, errors.Wrap(err, "failed to get partition consumer")
+		}
+		pcs[i] = pc
+	}
+
+	return pcs, nil
 }
 
 func determineContentType(hdr []*sarama.RecordHeader) (string, error) {

@@ -56,7 +56,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.clientID, "", tt.args.brokers, tt.args.topic, tt.args.buffer)
+			got, err := New(tt.args.name, tt.args.clientID, "", tt.args.topic, tt.args.brokers, tt.args.buffer)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)

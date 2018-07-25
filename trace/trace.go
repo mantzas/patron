@@ -82,13 +82,12 @@ func StartConsumerSpan(
 	ctx context.Context,
 	name, cmp string,
 	hdr map[string]string,
-) (opentracing.Span, context.Context) {
-
+) (opentracing.Span, context.Context, error) {
 	spCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
 	sp.SetTag("version", version)
-	return sp, opentracing.ContextWithSpan(ctx, sp)
+	return sp, opentracing.ContextWithSpan(ctx, sp), nil
 }
 
 // FinishSpanWithSuccess finishes a span with a success indicator.

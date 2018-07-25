@@ -62,7 +62,7 @@ func TestRun_Process_Error(t *testing.T) {
 	cmp, err := New("test", proc.Process, &cnr)
 	assert.NoError(err)
 	ctx := context.Background()
-	cnr.chMsg <- &mockMessage{ctx}
+	cnr.chMsg <- &mockMessage{ctx: ctx}
 	err = cmp.Run(ctx)
 	assert.Error(err)
 }
@@ -91,12 +91,12 @@ func TestRun_Process_Shutdown(t *testing.T) {
 	proc := mockProcessor{retError: false}
 	cmp, err := New("test", proc.Process, &cnr)
 	assert.NoError(err)
-	cnr.chMsg <- &mockMessage{context.Background()}
+	cnr.chMsg <- &mockMessage{ctx: context.Background()}
 	ch := make(chan bool)
 	ctx := context.Background()
 	go func() {
-		err := cmp.Run(ctx)
-		assert.NoError(err)
+		err1 := cmp.Run(ctx)
+		assert.NoError(err1)
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
