@@ -2,31 +2,19 @@ package async
 
 import (
 	"context"
+	"sync"
 
 	"github.com/mantzas/patron/log"
 	"github.com/pkg/errors"
 )
 
-// MessageI interface for defining messages that are handled by the async component.
-type MessageI interface {
-	Context() context.Context
-	Decode(v interface{}) error
-	Ack() error
-	Nack() error
-}
-
-// Consumer interface which every specific consumer has to implement.
-type Consumer interface {
-	Consume(context.Context) (<-chan MessageI, <-chan error, error)
-	Close() error
-}
-
 // Component implementation of a async component.
 type Component struct {
 	name string
 	proc ProcessorFunc
-	cns  Consumer
-	cnl  context.CancelFunc
+	sync.Mutex
+	cns Consumer
+	cnl context.CancelFunc
 }
 
 // New returns a new async component.
@@ -47,17 +35,17 @@ func New(name string, p ProcessorFunc, cns Consumer) (*Component, error) {
 		name: name,
 		proc: p,
 		cns:  cns,
-		cnl:  nil,
 	}, nil
 }
 
 // Run starts the consumer processing loop messages.
 func (c *Component) Run(ctx context.Context) error {
-
-	chCtx, cnl := context.WithCancel(ctx)
+	c.Lock()
+	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
+	c.Unlock()
 
-	chMsg, chErr, err := c.cns.Consume(chCtx)
+	chMsg, chErr, err := c.cns.Consume(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to get consumer channels")
 	}
@@ -66,7 +54,7 @@ func (c *Component) Run(ctx context.Context) error {
 	go func() {
 		for {
 			select {
-			case <-chCtx.Done():
+			case <-ctx.Done():
 				log.Info("canceling consuming messages requested")
 				failCh <- nil
 				return
@@ -92,8 +80,8 @@ func (c *Component) Run(ctx context.Context) error {
 
 // Shutdown gracefully the component by closing the consumer.
 func (c *Component) Shutdown(ctx context.Context) error {
-	if c.cnl != nil {
-		c.cnl()
-	}
+	c.Lock()
+	defer c.Unlock()
+	c.cnl()
 	return c.cns.Close()
 }

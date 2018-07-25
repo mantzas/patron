@@ -55,7 +55,7 @@ func TestRun_ReturnsError(t *testing.T) {
 func TestRun_Process_Error(t *testing.T) {
 	assert := assert.New(t)
 	cnr := mockConsumer{
-		chMsg: make(chan MessageI, 10),
+		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
@@ -70,7 +70,7 @@ func TestRun_Process_Error(t *testing.T) {
 func TestRun_ConsumeError(t *testing.T) {
 	assert := assert.New(t)
 	cnr := mockConsumer{
-		chMsg: make(chan MessageI, 10),
+		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
@@ -85,12 +85,13 @@ func TestRun_ConsumeError(t *testing.T) {
 func TestRun_Process_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	cnr := mockConsumer{
-		chMsg: make(chan MessageI, 10),
+		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: false}
 	cmp, err := New("test", proc.Process, &cnr)
 	assert.NoError(err)
+	cnr.chMsg <- &mockMessage{context.Background()}
 	ch := make(chan bool)
 	ctx := context.Background()
 	go func() {
@@ -98,7 +99,6 @@ func TestRun_Process_Shutdown(t *testing.T) {
 		assert.NoError(err)
 		ch <- true
 	}()
-	cnr.chMsg <- &mockMessage{context.Background()}
 	time.Sleep(10 * time.Millisecond)
 	err = cmp.Shutdown(ctx)
 	assert.NoError(err)
@@ -129,7 +129,7 @@ type mockProcessor struct {
 	retError bool
 }
 
-func (mp *mockProcessor) Process(msg MessageI) error {
+func (mp *mockProcessor) Process(msg Message) error {
 	if mp.retError {
 		return errors.New("PROC ERROR")
 	}
@@ -138,11 +138,11 @@ func (mp *mockProcessor) Process(msg MessageI) error {
 
 type mockConsumer struct {
 	consumeError bool
-	chMsg        chan MessageI
+	chMsg        chan Message
 	chErr        chan error
 }
 
-func (mc *mockConsumer) Consume(context.Context) (<-chan MessageI, <-chan error, error) {
+func (mc *mockConsumer) Consume(context.Context) (<-chan Message, <-chan error, error) {
 	if mc.consumeError {
 		return nil, nil, errors.New("CONSUMER ERROR")
 	}

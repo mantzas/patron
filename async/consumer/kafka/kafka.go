@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"sync"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -45,8 +44,8 @@ type Consumer struct {
 	buffer      int
 	cfg         *sarama.Config
 	contentType string
-	sync.Mutex
-	ms sarama.Consumer
+	cnl         context.CancelFunc
+	ms          sarama.Consumer
 }
 
 func New(name string, clientID, ct string, brokers []string, topic string, buffer int) (*Consumer, error) {
@@ -85,9 +84,9 @@ func New(name string, clientID, ct string, brokers []string, topic string, buffe
 	}, nil
 }
 
-func (c *Consumer) Consume(ctx context.Context) (<-chan async.MessageI, <-chan error, error) {
-	c.Lock()
-	defer c.Unlock()
+func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
+	ctx, cnl := context.WithCancel(ctx)
+	c.cnl = cnl
 
 	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
 	if err != nil {
@@ -100,7 +99,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.MessageI, <-chan e
 		return nil, nil, errors.Wrap(err, "failed to get partitions")
 	}
 
-	chMsg := make(chan async.MessageI, c.buffer)
+	chMsg := make(chan async.Message, c.buffer)
 	chErr := make(chan error, c.buffer)
 
 	for _, partition := range partitions {
@@ -159,9 +158,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.MessageI, <-chan e
 
 // Close handles closing channel and connection of AMQP.
 func (c *Consumer) Close() error {
-	c.Lock()
-	defer c.Unlock()
-	return nil
+	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
 func determineContentType(hdr []*sarama.RecordHeader) (string, error) {

@@ -3,7 +3,6 @@ package amqp
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
@@ -51,9 +50,8 @@ type Consumer struct {
 	requeue bool
 	tag     string
 	buffer  int
-	sync.Mutex
-	ch   *amqp.Channel
-	conn *amqp.Connection
+	ch      *amqp.Channel
+	conn    *amqp.Connection
 }
 
 func New(name, url, queue string, requeue bool, buffer int) (*Consumer, error) {
@@ -77,9 +75,7 @@ func New(name, url, queue string, requeue bool, buffer int) (*Consumer, error) {
 	return &Consumer{name: name, url: url, queue: queue, requeue: requeue, tag: "", ch: nil, conn: nil}, nil
 }
 
-func (c *Consumer) Consume(ctx context.Context) (<-chan async.MessageI, <-chan error, error) {
-	c.Lock()
-	defer c.Unlock()
+func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
 	conn, err := amqp.Dial(c.url)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to dial @ %s", c.url)
@@ -100,7 +96,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.MessageI, <-chan e
 		return nil, nil, errors.Wrap(err, "failed initialize consumer")
 	}
 
-	chMsg := make(chan async.MessageI, c.buffer)
+	chMsg := make(chan async.Message, c.buffer)
 	chErr := make(chan error, c.buffer)
 
 	go func() {
@@ -141,8 +137,6 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.MessageI, <-chan e
 
 // Close handles closing channel and connection of AMQP.
 func (c *Consumer) Close() error {
-	c.Lock()
-	defer c.Unlock()
 	agr := agr_errors.New()
 
 	if c.ch != nil {
