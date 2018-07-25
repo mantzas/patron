@@ -83,7 +83,6 @@ func StartConsumerSpan(
 	name, cmp string,
 	hdr map[string]string,
 ) (opentracing.Span, context.Context) {
-
 	spCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)

@@ -65,7 +65,7 @@ func (s *Component) Run(ctx context.Context) error {
 
 	if s.certFile != "" && s.keyFile != "" {
 		log.Infof("HTTPS component listening on port %d", s.port)
-		s.srv.ListenAndServeTLS(s.certFile, s.keyFile)
+		return s.srv.ListenAndServeTLS(s.certFile, s.keyFile)
 	}
 
 	log.Infof("HTTP component listening on port %d", s.port)

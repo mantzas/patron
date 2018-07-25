@@ -9,22 +9,20 @@ import (
 )
 
 // ProcessorFunc definition of a async processor.
-type ProcessorFunc func(context.Context, *Message) error
+type ProcessorFunc func(Message) error
 
-// Message definition of a async message.
-type Message struct {
-	Data   []byte
-	decode encoding.DecodeRawFunc
+// Message interface for defining messages that are handled by the async component.
+type Message interface {
+	Context() context.Context
+	Decode(v interface{}) error
+	Ack() error
+	Nack() error
 }
 
-// NewMessage creates a new message.
-func NewMessage(d []byte, dec encoding.DecodeRawFunc) *Message {
-	return &Message{Data: d, decode: dec}
-}
-
-// Decode the raw data.
-func (m *Message) Decode(v interface{}) error {
-	return m.decode(m.Data, v)
+// Consumer interface which every specific consumer has to implement.
+type Consumer interface {
+	Consume(context.Context) (<-chan Message, <-chan error, error)
+	Close() error
 }
 
 // DetermineDecoder determines the decoder based on the content type.
