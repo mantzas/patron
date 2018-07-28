@@ -2,10 +2,8 @@ package zerolog
 
 import (
 	"bytes"
-	"os"
 	"testing"
 
-	"github.com/bouk/monkey"
 	"github.com/mantzas/patron/log"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -58,36 +56,6 @@ func TestLogger_Panicf(t *testing.T) {
 	l := NewLogger(&zl, log.DebugLevel, f)
 	assert.Panics(func() { l.Panicf("testing %d", 1) })
 	assert.Equal("{\"level\":\"panic\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
-}
-
-func TestLogger_Fatal(t *testing.T) {
-	fakeExit := func(int) {
-		panic("os.Exit called")
-	}
-	patch := monkey.Patch(os.Exit, fakeExit)
-	defer patch.Unpatch()
-
-	assert := assert.New(t)
-	var b bytes.Buffer
-	zl := zerolog.New(&b)
-	l := NewLogger(&zl, log.DebugLevel, f)
-	assert.PanicsWithValue("os.Exit called", func() { l.Fatal("testing") })
-	assert.Equal("{\"level\":\"fatal\",\"key\":\"value\",\"message\":\"testing\"}\n", b.String())
-}
-
-func TestLogger_Fatalf(t *testing.T) {
-	fakeExit := func(int) {
-		panic("os.Exit called")
-	}
-	patch := monkey.Patch(os.Exit, fakeExit)
-	defer patch.Unpatch()
-
-	assert := assert.New(t)
-	var b bytes.Buffer
-	zl := zerolog.New(&b)
-	l := NewLogger(&zl, log.DebugLevel, f)
-	assert.PanicsWithValue("os.Exit called", func() { l.Fatalf("testing %d", 1) })
-	assert.Equal("{\"level\":\"fatal\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
 }
 
 func TestLogger_Error(t *testing.T) {
