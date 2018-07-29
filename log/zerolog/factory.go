@@ -42,6 +42,5 @@ func (zf *Factory) CreateSub(logger log.Logger, fields map[string]interface{}) l
 		all[k] = v
 	}
 
-	l := zf.logger.With().Fields(fields).Logger()
-	return NewLogger(&l, zf.lvl, all)
+	return NewLogger(zf.logger, zf.lvl, all)
 }
