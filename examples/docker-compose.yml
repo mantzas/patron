@@ -48,6 +48,22 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=admin
+  kafka:
+    image:  spotify/kafka
+    hostname: "kafka"
+    networks:
+      examplenw:
+        aliases:
+          - kafka
+    expose:
+      - "2181"
+      - "9092"
+    ports:
+      - "2181:2181"
+      - "9092:9092"
+    environment:
+      - ADVERTISED_HOST=0.0.0.0
+      - ADVERTISED_PORT=9092
 
 networks:
   examplenw: {}
