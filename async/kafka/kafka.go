@@ -37,12 +37,23 @@ func (m *message) Nack() error {
 	return nil
 }
 
+// Offset defines the offset of messages inside a topic.
+type Offset int64
+
+const (
+	// OffsetNewest starts consuming from the newest available message in the topic.
+	OffsetNewest Offset = -1
+	// OffsetOldest starts consuming from the oldest available message in the topic.
+	OffsetOldest Offset = -2
+)
+
 // Consumer definition of a Kafka consumer.
 type Consumer struct {
 	name        string
 	brokers     []string
 	topic       string
 	buffer      int
+	start       Offset
 	cfg         *sarama.Config
 	contentType string
 	cnl         context.CancelFunc
@@ -50,7 +61,8 @@ type Consumer struct {
 }
 
 // New creates a ew Kafka consumer.
-func New(name, clientID, ct, topic string, brokers []string, buffer int) (*Consumer, error) {
+func New(name, clientID, ct, topic string, brokers []string, buffer int, start Offset) (*Consumer, error) {
+
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -82,6 +94,7 @@ func New(name, clientID, ct, topic string, brokers []string, buffer int) (*Consu
 		cfg:         config,
 		contentType: ct,
 		buffer:      buffer,
+		start:       start,
 	}, nil
 }
 
@@ -168,7 +181,7 @@ func (c *Consumer) consumers() ([]sarama.PartitionConsumer, error) {
 
 	for i, partition := range partitions {
 
-		pc, err := c.ms.ConsumePartition(c.topic, partition, sarama.OffsetOldest)
+		pc, err := c.ms.ConsumePartition(c.topic, partition, int64(c.start))
 		if nil != err {
 			return nil, errors.Wrap(err, "failed to get partition consumer")
 		}
