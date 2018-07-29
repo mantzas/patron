@@ -203,7 +203,7 @@ func setupDefaultTracing(name, version string) error {
 	if err != nil {
 		prm = 0.1
 	}
-	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
+	log.Infof("setting up default tracing to %s, %s with param %f", agent, tp, prm)
 	return trace.Setup(name, version, agent, tp, prm)
 }
 
@@ -214,7 +214,7 @@ func (s *Service) createHTTPComponent() (Component, error) {
 		port = 50000
 	}
 
-	log.Infof("creating default HTTP component at port %s", port)
+	log.Infof("creating default HTTP component at port %d", port)
 
 	options := []http.OptionFunc{
 		http.Port(int(port)),

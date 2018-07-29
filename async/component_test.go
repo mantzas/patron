@@ -129,7 +129,7 @@ type mockProcessor struct {
 	retError bool
 }
 
-func (mp *mockProcessor) Process(msg Message) error {
+func (mp *mockProcessor) Process(ctx context.Context, msg Message) error {
 	if mp.retError {
 		return errors.New("PROC ERROR")
 	}

@@ -116,7 +116,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 			for {
 				select {
 				case <-ctx.Done():
-					break
+					return
 				case consumerError := <-consumer.Errors():
 					chErr <- consumerError
 

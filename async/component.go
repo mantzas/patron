@@ -60,8 +60,9 @@ func (c *Component) Run(ctx context.Context) error {
 				failCh <- nil
 				return
 			case msg := <-chMsg:
+				log.Debug("New message from consumer arrived")
 				go func() {
-					err = c.proc(msg)
+					err = c.proc(ctx, msg)
 					if err != nil {
 						agr := agr_errors.New()
 						agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
