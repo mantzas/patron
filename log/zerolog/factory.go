@@ -22,7 +22,7 @@ func NewFactory(l *zerolog.Logger, lvl log.Level) log.Factory {
 func DefaultFactory(lvl log.Level) log.Factory {
 	zerolog.LevelFieldName = "lvl"
 	zerolog.MessageFieldName = "msg"
-	zl := zerolog.New(os.Stdout).With().Timestamp().Logger().Hook(&sourceHook{})
+	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	return NewFactory(&zl, lvl)
 }
 

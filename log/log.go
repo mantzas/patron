@@ -2,6 +2,10 @@ package log
 
 import (
 	"errors"
+	"fmt"
+	"path"
+	"path/filepath"
+	"runtime"
 )
 
 var factory Factory
@@ -32,6 +36,22 @@ func Sub(fields map[string]interface{}) Logger {
 	if factory == nil || logger == nil {
 		return nil
 	}
+	return factory.CreateSub(logger, fields)
+}
+
+// SubWithSource returns a new sub logger with all fields inherited and with source file mapping.
+func SubWithSource(fields map[string]interface{}) Logger {
+	if factory == nil || logger == nil {
+		return nil
+	}
+	if fields == nil {
+		fields = make(map[string]interface{})
+	}
+
+	if key, val, ok := sourceFields(); ok {
+		fields[key] = val
+	}
+
 	return factory.CreateSub(logger, fields)
 }
 
@@ -129,4 +149,33 @@ func Debugf(msg string, args ...interface{}) {
 		return
 	}
 	logger.Debugf(msg, args...)
+}
+
+func sourceFields() (key string, src string, ok bool) {
+	_, file, line, ok := runtime.Caller(2)
+	if !ok {
+		return
+	}
+
+	src = getSource(file, line)
+	if src == "" {
+		return
+	}
+	key = "src"
+	ok = true
+	return
+}
+
+func getSource(file string, line int) (src string) {
+	if file == "" {
+		return
+	}
+	d, f := filepath.Split(file)
+	d = path.Base(d)
+	if d == "." || d == "" {
+		src = fmt.Sprintf("%s:%d", f, line)
+	} else {
+		src = fmt.Sprintf("%s/%s:%d", d, f, line)
+	}
+	return
 }

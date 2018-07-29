@@ -39,6 +39,7 @@ type Service struct {
 	hcf    http.HealthCheckFunc
 	ctx    context.Context
 	cancel context.CancelFunc
+	log    log.Logger
 }
 
 // New creates a new named service and allows for customization through functional options.
@@ -57,18 +58,18 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 		return nil, err
 	}
 
-	err = setupDefaultLogging(name, version)
-	if err != nil {
-		return nil, err
-	}
-
-	err = setupDefaultTracing(name, version)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	s := Service{name: name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
+
+	err = s.setupDefaultLogging(name, version)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.setupDefaultTracing(name, version)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, o := range oo {
 		err = o(&s)
@@ -92,7 +93,7 @@ func (s *Service) setupTermSignal() {
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 		<-stop
-		log.Info("term signal received, cancelling")
+		s.log.Info("term signal received, cancelling")
 		s.cancel()
 	}()
 }
@@ -112,14 +113,14 @@ func (s *Service) Run() error {
 
 	select {
 	case err := <-errCh:
-		log.Error("component returned a error")
+		s.log.Error("component returned a error")
 		err1 := s.Shutdown()
 		if err1 != nil {
 			return errors.Wrapf(err, "failed to shutdown %v", err1)
 		}
 		return err
 	case <-s.ctx.Done():
-		log.Info("stop signal received")
+		s.log.Info("stop signal received")
 		return s.Shutdown()
 	}
 }
@@ -131,10 +132,10 @@ func (s *Service) Shutdown() error {
 	defer func() {
 		err := trace.Close()
 		if err != nil {
-			log.Errorf("failed to close trace %v", err)
+			s.log.Errorf("failed to close trace %v", err)
 		}
 	}()
-	log.Info("shutting down components")
+	s.log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}
 	agr := agr_errors.New()
@@ -168,7 +169,7 @@ func setupDefaultConfig() error {
 	return config.Setup(cfg)
 }
 
-func setupDefaultLogging(name, version string) error {
+func (s *Service) setupDefaultLogging(name, version string) error {
 	lvl, err := config.GetString("PATRON_LOG_LEVEL")
 	if err != nil {
 		lvl = string(log.InfoLevel)
@@ -186,11 +187,12 @@ func setupDefaultLogging(name, version string) error {
 		return errors.Wrap(err, "failed to get hostname")
 	}
 	log.AppendField("host", hostname)
-	log.Info("set up default log level to `INFO`")
+	s.log = log.SubWithSource(nil)
+	s.log.Info("set up default log level to `INFO`")
 	return nil
 }
 
-func setupDefaultTracing(name, version string) error {
+func (s *Service) setupDefaultTracing(name, version string) error {
 	agent, err := config.GetString("PATRON_JAEGER_AGENT")
 	if err != nil {
 		agent = "0.0.0.0:6831"
@@ -203,7 +205,7 @@ func setupDefaultTracing(name, version string) error {
 	if err != nil {
 		prm = 0.1
 	}
-	log.Infof("setting up default tracing to %s, %s with param %f", agent, tp, prm)
+	s.log.Infof("setting up default tracing to %s, %s with param %f", agent, tp, prm)
 	return trace.Setup(name, version, agent, tp, prm)
 }
 
@@ -214,7 +216,7 @@ func (s *Service) createHTTPComponent() (Component, error) {
 		port = 50000
 	}
 
-	log.Infof("creating default HTTP component at port %d", port)
+	s.log.Infof("creating default HTTP component at port %d", port)
 
 	options := []http.OptionFunc{
 		http.Port(int(port)),
