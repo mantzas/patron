@@ -41,7 +41,6 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 }
 
 func extractFields(r *http.Request) map[string]string {
-
 	f := make(map[string]string)
 
 	for name, values := range r.URL.Query() {

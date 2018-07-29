@@ -20,6 +20,8 @@ func NewFactory(l *zerolog.Logger, lvl log.Level) log.Factory {
 
 // DefaultFactory creates a zerolog factory with default settings.
 func DefaultFactory(lvl log.Level) log.Factory {
+	zerolog.LevelFieldName = "lvl"
+	zerolog.MessageFieldName = "msg"
 	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	return NewFactory(&zl, lvl)
 }

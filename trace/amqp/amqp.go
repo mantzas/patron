@@ -3,14 +3,13 @@ package amqp
 import (
 	"context"
 
+	"github.com/mantzas/patron/encoding/json"
+	patronerrors "github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
-
-	"github.com/mantzas/patron/encoding/json"
-	patronerrors "github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/trace"
 )
 
 // Message abstraction for publishing.

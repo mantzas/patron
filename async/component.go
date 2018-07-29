@@ -16,6 +16,7 @@ type Component struct {
 	sync.Mutex
 	cns Consumer
 	cnl context.CancelFunc
+	log log.Logger
 }
 
 // New returns a new async component.
@@ -44,6 +45,7 @@ func (c *Component) Run(ctx context.Context) error {
 	c.Lock()
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
+	c.log = log.SubWithSource(nil)
 	c.Unlock()
 
 	chMsg, chErr, err := c.cns.Consume(ctx)
@@ -56,11 +58,11 @@ func (c *Component) Run(ctx context.Context) error {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Info("canceling consuming messages requested")
+				c.log.Info("canceling consuming messages requested")
 				failCh <- nil
 				return
 			case msg := <-chMsg:
-				log.Debug("New message from consumer arrived")
+				c.log.Debug("New message from consumer arrived")
 				go func() {
 					err = c.proc(ctx, msg)
 					if err != nil {

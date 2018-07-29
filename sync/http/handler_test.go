@@ -218,8 +218,8 @@ func Test_extractParams(t *testing.T) {
 		fields = req.Fields
 		return nil, nil
 	}
-
-	h := createHandler([]Route{NewRoute("/users/:id/status", "GET", proc, false)})
+	infof := func(msg string, args ...interface{}) {}
+	h := createHandler([]Route{NewRoute("/users/:id/status", "GET", proc, false)}, infof)
 	h.ServeHTTP(httptest.NewRecorder(), req)
 	assert.Equal("1", fields["id"])
 }

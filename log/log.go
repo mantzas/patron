@@ -39,22 +39,19 @@ func Sub(fields map[string]interface{}) Logger {
 	return factory.CreateSub(logger, fields)
 }
 
-// SubSource returns a new sub logger with all fields inherited and the additional source of the file added.
-func SubSource() Logger {
+// SubWithSource returns a new sub logger with all fields inherited and with source file mapping.
+func SubWithSource(fields map[string]interface{}) Logger {
 	if factory == nil || logger == nil {
 		return nil
 	}
-
-	fields := make(map[string]interface{})
-
-	_, file, line, ok := runtime.Caller(1)
-	if ok {
-		//fields["src"] = filepath.Base(file)
-		src, ok := getSource(file, line)
-		if ok {
-			fields["src"] = src
-		}
+	if fields == nil {
+		fields = make(map[string]interface{})
 	}
+
+	if key, val, ok := sourceFields(); ok {
+		fields[key] = val
+	}
+
 	return factory.CreateSub(logger, fields)
 }
 
@@ -154,7 +151,22 @@ func Debugf(msg string, args ...interface{}) {
 	logger.Debugf(msg, args...)
 }
 
-func getSource(file string, line int) (src string, ok bool) {
+func sourceFields() (key string, src string, ok bool) {
+	_, file, line, ok := runtime.Caller(2)
+	if !ok {
+		return
+	}
+
+	src = getSource(file, line)
+	if src == "" {
+		return
+	}
+	key = "src"
+	ok = true
+	return
+}
+
+func getSource(file string, line int) (src string) {
 	if file == "" {
 		return
 	}
@@ -165,6 +177,5 @@ func getSource(file string, line int) (src string, ok bool) {
 	} else {
 		src = fmt.Sprintf("%s/%s:%d", d, f, line)
 	}
-	ok = true
 	return
 }

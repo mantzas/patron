@@ -31,8 +31,9 @@ const (
 )
 
 var (
-	cls     io.Closer
-	version string
+	cls      io.Closer
+	innerLog log.Logger
+	version  string
 )
 
 func init() {
@@ -68,12 +69,13 @@ func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) er
 	cls = clsTemp
 	opentracing.SetGlobalTracer(tr)
 	version = ver
+	innerLog = log.SubWithSource(nil)
 	return nil
 }
 
 // Close the tracer.
 func Close() error {
-	log.Info("closing tracer")
+	innerLog.Info("closing tracer")
 	return cls.Close()
 }
 
@@ -84,8 +86,8 @@ func StartConsumerSpan(
 	hdr map[string]string,
 ) (opentracing.Span, context.Context) {
 	spCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
-	if err != nil {
-		log.Errorf("failed to extract consumer span: %v", err)
+	if err != nil && err != opentracing.ErrSpanContextNotFound {
+		innerLog.Errorf("failed to extract consumer span: %v", err)
 	}
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
@@ -108,8 +110,8 @@ func FinishSpanWithError(sp opentracing.Span) {
 // StartHTTPSpan starts a new HTTP span.
 func StartHTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
 	ctx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	if err != nil {
-		log.Errorf("failed to extract HTTP span: %v", err)
+	if err != nil && err != opentracing.ErrSpanContextNotFound {
+		innerLog.Errorf("failed to extract HTTP span: %v", err)
 	}
 	sp := opentracing.StartSpan(HTTPOpName(r.Method, path), ext.RPCServerOption(ctx))
 	ext.HTTPMethod.Set(sp, r.Method)

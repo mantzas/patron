@@ -15,6 +15,7 @@ import (
 type kafkaComponent struct {
 	cmp patron.Component
 	pub amqp.Publisher
+	log log.Logger
 }
 
 func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComponent, error) {
@@ -41,7 +42,7 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 }
 
 func (kc *kafkaComponent) Process(ctx context.Context, msg async.Message) error {
-
+	kc.log = log.SubWithSource(nil)
 	var ads Audits
 
 	err := msg.Decode(&ads)
@@ -62,7 +63,7 @@ func (kc *kafkaComponent) Process(ctx context.Context, msg async.Message) error 
 	}
 
 	for _, a := range ads {
-		log.Infof("%s@ took %s", a.Name, a.Duration)
+		kc.log.Infof("%s@ took %s", a.Name, a.Duration)
 	}
 
 	return nil

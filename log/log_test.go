@@ -47,23 +47,6 @@ func TestSub(t *testing.T) {
 	})
 }
 
-func TestSubSource(t *testing.T) {
-	assert := assert.New(t)
-
-	t.Run("factory nil", func(t *testing.T) {
-		factory = nil
-		fields = make(map[string]interface{})
-		l := SubSource()
-		assert.Nil(l)
-	})
-	t.Run("success", func(t *testing.T) {
-		err := Setup(&testFactory{})
-		assert.NoError(err)
-		l := SubSource()
-		assert.NotNil(l)
-	})
-}
-
 func TestLog_AppendField(t *testing.T) {
 	assert := assert.New(t)
 
@@ -261,35 +244,6 @@ func TestLog_Debugf(t *testing.T) {
 		Debugf("debug %s", "1")
 		assert.Equal(1, l.debugCount)
 	})
-}
-
-func Test_getSource(t *testing.T) {
-	assert := assert.New(t)
-	type args struct {
-		file string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantSrc string
-		wantOk  bool
-	}{
-		{name: "success", args: args{file: "/home/root/code.go"}, wantSrc: "root/code.go:1", wantOk: true},
-		{name: "success without path", args: args{file: "code.go"}, wantSrc: "code.go:1", wantOk: true},
-		{name: "success without path", args: args{file: ""}, wantSrc: "", wantOk: false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotSrc, gotOk := getSource(tt.args.file, 1)
-			if tt.wantOk {
-				assert.True(gotOk)
-				assert.Equal(tt.wantSrc, gotSrc)
-			} else {
-				assert.False(gotOk)
-				assert.Equal("", gotSrc)
-			}
-		})
-	}
 }
 
 type testFactory struct {
