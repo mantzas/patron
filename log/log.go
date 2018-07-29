@@ -2,6 +2,10 @@ package log
 
 import (
 	"errors"
+	"fmt"
+	"path"
+	"path/filepath"
+	"runtime"
 )
 
 var factory Factory
@@ -31,6 +35,25 @@ func AppendField(key string, value interface{}) {
 func Sub(fields map[string]interface{}) Logger {
 	if factory == nil || logger == nil {
 		return nil
+	}
+	return factory.CreateSub(logger, fields)
+}
+
+// SubSource returns a new sub logger with all fields inherited and the additional source of the file added.
+func SubSource() Logger {
+	if factory == nil || logger == nil {
+		return nil
+	}
+
+	fields := make(map[string]interface{})
+
+	_, file, line, ok := runtime.Caller(1)
+	if ok {
+		//fields["src"] = filepath.Base(file)
+		src, ok := getSource(file, line)
+		if ok {
+			fields["src"] = src
+		}
 	}
 	return factory.CreateSub(logger, fields)
 }
@@ -129,4 +152,19 @@ func Debugf(msg string, args ...interface{}) {
 		return
 	}
 	logger.Debugf(msg, args...)
+}
+
+func getSource(file string, line int) (src string, ok bool) {
+	if file == "" {
+		return
+	}
+	d, f := filepath.Split(file)
+	d = path.Base(d)
+	if d == "." || d == "" {
+		src = fmt.Sprintf("%s:%d", f, line)
+	} else {
+		src = fmt.Sprintf("%s/%s:%d", d, f, line)
+	}
+	ok = true
+	return
 }
