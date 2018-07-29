@@ -181,7 +181,7 @@ func (s *Service) setupDefaultLogging(name, version string) error {
 	}
 
 	log.AppendField("srv", name)
-	log.AppendField("version", version)
+	log.AppendField("ver", version)
 	hostname, err := os.Hostname()
 	if err != nil {
 		return errors.Wrap(err, "failed to get hostname")
