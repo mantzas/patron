@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,8 +42,6 @@ func TestNew(t *testing.T) {
 
 func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-	assert.NoError(err)
 	rr := []Route{NewRoute("/", "GET", nil, true)}
 	s, err := New(Routes(rr))
 	assert.NoError(err)
@@ -61,8 +57,6 @@ func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
 
 func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-	assert.NoError(err)
 	rr := []Route{NewRoute("/", "GET", nil, true)}
 	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.pem"))
 	assert.NoError(err)
@@ -88,8 +82,6 @@ func Test_createHTTPServer(t *testing.T) {
 
 func TestCreateHandler(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-	assert.NoError(err)
-	h := createHandler([]Route{NewRoute("/", "GET", nil, false)}, func(string, ...interface{}) {})
+	h := createHandler([]Route{NewRoute("/", "GET", nil, false)})
 	assert.NotNil(h)
 }

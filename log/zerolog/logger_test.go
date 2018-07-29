@@ -46,7 +46,7 @@ func TestLogger_Panic(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	assert.Panics(func() { l.Panic("testing") })
-	assert.Equal("{\"level\":\"panic\",\"key\":\"value\",\"message\":\"testing\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"panic\",\"key\":\"value\",\"msg\":\"testing\"}\n", b.String())
 }
 
 func TestLogger_Panicf(t *testing.T) {
@@ -55,7 +55,7 @@ func TestLogger_Panicf(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	assert.Panics(func() { l.Panicf("testing %d", 1) })
-	assert.Equal("{\"level\":\"panic\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"panic\",\"key\":\"value\",\"msg\":\"testing 1\"}\n", b.String())
 }
 
 func TestLogger_Error(t *testing.T) {
@@ -64,7 +64,7 @@ func TestLogger_Error(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Error("testing")
-	assert.Equal("{\"level\":\"error\",\"key\":\"value\",\"message\":\"testing\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"error\",\"key\":\"value\",\"msg\":\"testing\"}\n", b.String())
 }
 
 func TestLogger_Errorf(t *testing.T) {
@@ -73,7 +73,7 @@ func TestLogger_Errorf(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Errorf("testing %d", 1)
-	assert.Equal("{\"level\":\"error\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"error\",\"key\":\"value\",\"msg\":\"testing 1\"}\n", b.String())
 }
 
 func TestLogger_Warn(t *testing.T) {
@@ -82,7 +82,7 @@ func TestLogger_Warn(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Warn("testing")
-	assert.Equal("{\"level\":\"warn\",\"key\":\"value\",\"message\":\"testing\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"warn\",\"key\":\"value\",\"msg\":\"testing\"}\n", b.String())
 }
 
 func TestLogger_Warnf(t *testing.T) {
@@ -91,7 +91,7 @@ func TestLogger_Warnf(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Warnf("testing %d", 1)
-	assert.Equal("{\"level\":\"warn\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"warn\",\"key\":\"value\",\"msg\":\"testing 1\"}\n", b.String())
 }
 
 func TestLogger_Info(t *testing.T) {
@@ -100,7 +100,7 @@ func TestLogger_Info(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Info("testing")
-	assert.Equal("{\"level\":\"info\",\"key\":\"value\",\"message\":\"testing\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"info\",\"key\":\"value\",\"msg\":\"testing\"}\n", b.String())
 }
 
 func TestLogger_Infof(t *testing.T) {
@@ -109,7 +109,7 @@ func TestLogger_Infof(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Infof("testing %d", 1)
-	assert.Equal("{\"level\":\"info\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"info\",\"key\":\"value\",\"msg\":\"testing 1\"}\n", b.String())
 }
 
 func TestLogger_Debug(t *testing.T) {
@@ -118,7 +118,7 @@ func TestLogger_Debug(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Debug("testing")
-	assert.Equal("{\"level\":\"debug\",\"key\":\"value\",\"message\":\"testing\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"debug\",\"key\":\"value\",\"msg\":\"testing\"}\n", b.String())
 }
 
 func TestLogger_Debugf(t *testing.T) {
@@ -127,7 +127,7 @@ func TestLogger_Debugf(t *testing.T) {
 	zl := zerolog.New(&b)
 	l := NewLogger(&zl, log.DebugLevel, f)
 	l.Debugf("testing %d", 1)
-	assert.Equal("{\"level\":\"debug\",\"key\":\"value\",\"message\":\"testing 1\"}\n", b.String())
+	assert.Equal("{\"lvl\":\"debug\",\"key\":\"value\",\"msg\":\"testing 1\"}\n", b.String())
 }
 
 var t int

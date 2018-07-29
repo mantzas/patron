@@ -58,7 +58,6 @@ type Consumer struct {
 	contentType string
 	cnl         context.CancelFunc
 	ms          sarama.Consumer
-	log         log.Logger
 }
 
 // New creates a ew Kafka consumer.
@@ -101,7 +100,6 @@ func New(name, clientID, ct, topic string, brokers []string, buffer int, start O
 
 // Consume starts consuming messages from a Kafka topic.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
-	c.log = log.SubSource()
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
 
@@ -123,7 +121,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					chErr <- consumerError
 
 				case msg := <-consumer.Messages():
-					c.log.Debugf("data received from topic %s", msg.Topic)
+					log.Debugf("data received from topic %s", msg.Topic)
 					go func() {
 						sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
