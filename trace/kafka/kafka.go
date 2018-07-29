@@ -34,7 +34,7 @@ func NewJSONMessage(t string, d interface{}) (*Message, error) {
 
 // Producer interface for Kafka.
 type Producer interface {
-	SendMessage(ctx context.Context, msg *Message) error
+	Send(ctx context.Context, msg *Message) error
 	Error() <-chan error
 	Close() error
 }

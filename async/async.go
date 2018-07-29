@@ -9,7 +9,7 @@ import (
 )
 
 // ProcessorFunc definition of a async processor.
-type ProcessorFunc func(Message) error
+type ProcessorFunc func(context.Context, Message) error
 
 // Message interface for defining messages that are handled by the async component.
 type Message interface {

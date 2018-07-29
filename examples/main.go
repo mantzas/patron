@@ -1,68 +1,75 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"net/http"
+	"os"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/sync"
 	synchttp "github.com/mantzas/patron/sync/http"
-	"github.com/mantzas/patron/trace/amqp"
-	tracehttp "github.com/mantzas/patron/trace/http"
 )
 
-type processor struct {
-	pub amqp.Publisher
+// Audit records name and time of a processing step.
+type Audit struct {
+	Name     string
+	Started  time.Time
+	Duration time.Duration
 }
 
-func newProcessor(url, exchange string) (*processor, error) {
-	p, err := amqp.NewPublisher(url, exchange)
-	if err != nil {
-		return nil, err
+// Audits is a collection of audit entries.
+type Audits []Audit
+
+func (a *Audits) append(aud Audit) {
+	dur := time.Duration(0)
+	if len(*a) > 0 {
+		dur = aud.Started.Sub((*a)[len(*a)-1].Started)
 	}
-	return &processor{pub: p}, nil
+	aud.Duration = dur
+	*a = append(*a, aud)
 }
 
-func (p *processor) process(ctx context.Context, req *sync.Request) (*sync.Response, error) {
-	googleReq, err := http.NewRequest("GET", "https://www.google.com", nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create requestfor www.google.com")
-	}
-	rsp, err := tracehttp.NewClient(5*time.Second).Do(ctx, googleReq)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get www.google.com")
-	}
+const (
+	amqpURL      = "amqp://admin:admin@localhost:5672/"
+	amqpExchange = "patron"
+	amqpQueue    = "patron"
+	kafkaTopic   = "patron-topic"
+	kafkaBroker  = "localhost:9092"
+)
 
-	msg, err := amqp.NewJSONMessage("test")
+func init() {
+	err := os.Setenv("PATRON_LOG_LEVEL", "debug")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create json amqp message")
+		log.Fatalf("failed to set log level env var: %v", err)
 	}
-
-	err = p.pub.Publish(ctx, msg)
+	err = os.Setenv("PATRON_JAEGER_SAMPLER_PARAM", "1.0")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to publish amqp message")
+		log.Fatalf("failed to set sampler env vars:: %v", err)
 	}
-
-	return sync.NewResponse(fmt.Sprintf("got %s from google", rsp.Status)), nil
 }
 
 func main() {
 
-	proc, err := newProcessor("amqp://admin:admin@localhost:5672/", "patron")
+	amqpCmp, err := newAmqpComponent("amqp consumer", amqpURL, amqpQueue, amqpExchange)
+	if err != nil {
+		log.Fatalf("failed to create processor %v", err)
+	}
+
+	kafkaCmp, err := newKafkaComponent("kafka consumer", kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
+	if err != nil {
+		log.Fatalf("failed to create processor %v", err)
+	}
+
+	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic)
 	if err != nil {
 		log.Fatalf("failed to create processor %v", err)
 	}
 
 	// Set up routes
 	routes := make([]synchttp.Route, 0)
-	routes = append(routes, synchttp.NewRoute("/", http.MethodGet, proc.process, true))
+	routes = append(routes, synchttp.NewRoute("/", http.MethodPost, httpCmp.process, true))
 
-	srv, err := patron.New("patron", "1.0.0", patron.Routes(routes))
+	srv, err := patron.New("patron", "1.0.0", patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
 	}

@@ -68,19 +68,6 @@ func TestNew(t *testing.T) {
 	}
 }
 
-// func TestRun_Shutdown(t *testing.T) {
-// 	assert := assert.New(t)
-// 	br := createSeedBroker(t, false)
-// 	c, err := New("test", "1", "12", []string{br.Addr()}, "TOPIC", 0)
-// 	assert.NoError(err)
-// 	assert.NotNil(c)
-// 	go func() {
-// 		c.Consume(context.Background())
-// 	}()
-// 	time.Sleep(100 * time.Millisecond)
-// 	assert.NoError(c.Close())
-// }
-
 func Test_determineContentType(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
@@ -115,25 +102,38 @@ func Test_determineContentType(t *testing.T) {
 	}
 }
 
-func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
-	seed := sarama.NewMockBroker(t, 1)
-	lead := sarama.NewMockBroker(t, 2)
+// func TestRun_Shutdown(t *testing.T) {
+// 	assert := assert.New(t)
+// 	br := createSeedBroker(t, false)
+// 	c, err := New("test", "1", "12", []string{br.Addr()}, "TOPIC", 0)
+// 	assert.NoError(err)
+// 	assert.NotNil(c)
+// 	go func() {
+// 		c.Consume(context.Background())
+// 	}()
+// 	time.Sleep(100 * time.Millisecond)
+// 	assert.NoError(c.Close())
+// }
 
-	metadataResponse := new(sarama.MetadataResponse)
-	metadataResponse.AddBroker(lead.Addr(), lead.BrokerID())
-	metadataResponse.AddTopicPartition("TOPIC", 0, lead.BrokerID(), nil, nil, sarama.ErrNoError)
-	seed.Returns(metadataResponse)
+// func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
+// 	seed := sarama.NewMockBroker(t, 1)
+// 	lead := sarama.NewMockBroker(t, 2)
 
-	prodSuccess := new(sarama.ProduceResponse)
-	if retError {
-		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrDuplicateSequenceNumber)
-	} else {
-		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrNoError)
-	}
-	lead.Returns(prodSuccess)
+// 	metadataResponse := new(sarama.MetadataResponse)
+// 	metadataResponse.AddBroker(lead.Addr(), lead.BrokerID())
+// 	metadataResponse.AddTopicPartition("TOPIC", 0, lead.BrokerID(), nil, nil, sarama.ErrNoError)
+// 	seed.Returns(metadataResponse)
 
-	config := sarama.NewConfig()
-	config.Producer.Flush.Messages = 10
-	config.Producer.Return.Successes = true
-	return seed
-}
+// 	prodSuccess := new(sarama.ProduceResponse)
+// 	if retError {
+// 		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrDuplicateSequenceNumber)
+// 	} else {
+// 		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrNoError)
+// 	}
+// 	lead.Returns(prodSuccess)
+
+// 	config := sarama.NewConfig()
+// 	config.Producer.Flush.Messages = 10
+// 	config.Producer.Return.Successes = true
+// 	return seed
+// }

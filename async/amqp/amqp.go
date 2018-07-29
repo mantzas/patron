@@ -45,18 +45,19 @@ func (m *message) Nack() error {
 
 // Consumer defines a AMQP subscriber.
 type Consumer struct {
-	name    string
-	url     string
-	queue   string
-	requeue bool
-	tag     string
-	buffer  int
-	ch      *amqp.Channel
-	conn    *amqp.Connection
+	name     string
+	url      string
+	queue    string
+	exchange string
+	requeue  bool
+	tag      string
+	buffer   int
+	ch       *amqp.Channel
+	conn     *amqp.Connection
 }
 
 // New creates a new AMQP consumer.
-func New(name, url, queue string, requeue bool, buffer int) (*Consumer, error) {
+func New(name, url, queue, exchange string, requeue bool, buffer int) (*Consumer, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -70,31 +71,21 @@ func New(name, url, queue string, requeue bool, buffer int) (*Consumer, error) {
 		return nil, errors.New("RabbitMQ queue name is required")
 	}
 
+	if exchange == "" {
+		return nil, errors.New("RabbitMQ exchange name is required")
+	}
+
 	if buffer < 0 {
 		return nil, errors.New("buffer need to be greater or equal than zero")
 	}
 
-	return &Consumer{name: name, url: url, queue: queue, requeue: requeue, tag: "", ch: nil, conn: nil}, nil
+	return &Consumer{name: name, url: url, queue: queue, exchange: exchange, requeue: requeue, tag: "", ch: nil, conn: nil}, nil
 }
 
 // Consume starts of consuming a AMQP queue.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
-	conn, err := amqp.Dial(c.url)
-	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to dial @ %s", c.url)
-	}
-	c.conn = conn
 
-	ch, err := c.conn.Channel()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed get channel")
-	}
-	c.ch = ch
-
-	c.tag = uuid.New().String()
-	log.Infof("consuming messages for tag %s", c.tag)
-
-	deliveries, err := ch.Consume(c.queue, c.tag, false, false, false, false, nil)
+	deliveries, err := c.consumer()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed initialize consumer")
 	}
@@ -130,7 +121,6 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					span:    sp,
 					requeue: c.requeue,
 				}
-
 			}(&d)
 		}
 	}()
@@ -156,6 +146,40 @@ func (c *Consumer) Close() error {
 		return agr
 	}
 	return nil
+}
+
+func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
+	conn, err := amqp.Dial(c.url)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to dial @ %s", c.url)
+	}
+	c.conn = conn
+
+	ch, err := c.conn.Channel()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed get channel")
+	}
+	c.ch = ch
+
+	c.tag = uuid.New().String()
+	log.Infof("consuming messages for tag %s", c.tag)
+
+	q, err := ch.QueueDeclare(c.queue, true, false, false, false, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to declare queue")
+	}
+
+	err = ch.QueueBind(q.Name, "", c.exchange, false, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to bind queue to exchange queue")
+	}
+
+	deliveries, err := ch.Consume(c.queue, c.tag, false, false, false, false, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed initialize consumer")
+	}
+
+	return deliveries, nil
 }
 
 func mapHeader(hh amqp.Table) map[string]string {
