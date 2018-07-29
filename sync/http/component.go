@@ -29,6 +29,7 @@ type Component struct {
 	srv      *http.Server
 	certFile string
 	keyFile  string
+	log      log.Logger
 }
 
 // New returns a new component.
@@ -52,7 +53,8 @@ func New(oo ...OptionFunc) (*Component, error) {
 // Run starts the HTTP server.
 func (s *Component) Run(ctx context.Context) error {
 	s.m.Lock()
-	log.Infof("applying tracing to routes")
+	s.log = log.SubWithSource(nil)
+	s.log.Infof("applying tracing to routes")
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {
 			s.routes[i].Handler = DefaultMiddleware(s.routes[i].Pattern, s.routes[i].Handler)
@@ -60,15 +62,15 @@ func (s *Component) Run(ctx context.Context) error {
 			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
 		}
 	}
-	s.srv = createHTTPServer(s.port, createHandler(s.routes))
+	s.srv = createHTTPServer(s.port, createHandler(s.routes, s.log.Infof))
 	s.m.Unlock()
 
 	if s.certFile != "" && s.keyFile != "" {
-		log.Infof("HTTPS component listening on port %d", s.port)
+		s.log.Infof("HTTPS component listening on port %d", s.port)
 		return s.srv.ListenAndServeTLS(s.certFile, s.keyFile)
 	}
 
-	log.Infof("HTTP component listening on port %d", s.port)
+	s.log.Infof("HTTP component listening on port %d", s.port)
 	return s.srv.ListenAndServe()
 }
 
@@ -76,7 +78,7 @@ func (s *Component) Run(ctx context.Context) error {
 func (s *Component) Shutdown(ctx context.Context) error {
 	s.m.Lock()
 	defer s.m.Unlock()
-	log.Info("shutting down component")
+	s.log.Info("shutting down component")
 	return s.srv.Shutdown(ctx)
 }
 
@@ -90,12 +92,12 @@ func createHTTPServer(port int, sm http.Handler) *http.Server {
 	}
 }
 
-func createHandler(routes []Route) http.Handler {
-	log.Infof("adding %d routes", len(routes))
+func createHandler(routes []Route, logInfof func(msg string, args ...interface{})) http.Handler {
+	logInfof("adding %d routes", len(routes))
 	router := httprouter.New()
 	for _, route := range routes {
 		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
-		log.Infof("added route %s %s", route.Method, route.Pattern)
+		logInfof("added route %s %s", route.Method, route.Pattern)
 	}
 	return router
 }
