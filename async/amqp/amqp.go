@@ -85,7 +85,7 @@ func New(name, url, queue, exchange string, requeue bool, buffer int) (*Consumer
 
 // Consume starts of consuming a AMQP queue.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
-	c.log = log.SubWithSource(nil)
+	c.log = log.Create()
 	deliveries, err := c.consumer()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed initialize consumer")

@@ -33,7 +33,7 @@ func newAmqpComponent(name, url, queue, exchange string) (*amqpComponent, error)
 }
 
 func (ac *amqpComponent) Process(ctx context.Context, msg async.Message) error {
-	ac.log = log.SubWithSource(nil)
+	ac.log = log.Create()
 	var ads Audits
 
 	err := msg.Decode(&ads)

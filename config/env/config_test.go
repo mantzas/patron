@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mantzas/patron/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,8 +37,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.r)
-
+			got, err := New(tt.r, log.NilMsgf, log.NilMsgf)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -67,7 +67,9 @@ func TestConfig_Set(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Config{}.Set(tt.key, tt.value)
+			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			assert.NoError(err)
+			err = c.Set(tt.key, tt.value)
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
@@ -92,7 +94,9 @@ func TestConfig_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Config{}.Get(tt.key)
+			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			assert.NoError(err)
+			got, err := c.Get(tt.key)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -120,7 +124,9 @@ func TestConfig_GetBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Config{}.GetBool(tt.key)
+			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			assert.NoError(err)
+			got, err := c.GetBool(tt.key)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.False(got)
@@ -148,7 +154,9 @@ func TestConfig_GetInt64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Config{}.GetInt64(tt.key)
+			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			assert.NoError(err)
+			got, err := c.GetInt64(tt.key)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Zero(got)
@@ -174,7 +182,9 @@ func TestConfig_GetString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Config{}.GetString(tt.key)
+			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			assert.NoError(err)
+			got, err := c.GetString(tt.key)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Empty(got)
@@ -202,7 +212,9 @@ func TestConfig_GetFloat64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Config{}.GetFloat64(tt.key)
+			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			assert.NoError(err)
+			got, err := c.GetFloat64(tt.key)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Zero(got)

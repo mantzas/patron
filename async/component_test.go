@@ -56,7 +56,7 @@ func TestRun_ReturnsError(t *testing.T) {
 
 func TestRun_Process_Error(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
@@ -88,7 +88,7 @@ func TestRun_ConsumeError(t *testing.T) {
 
 func TestRun_Process_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),

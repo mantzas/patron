@@ -53,15 +53,15 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 		version = "dev"
 	}
 
-	err := setupDefaultConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	s := Service{name: name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
+
+	err := s.setupDefaultLogging(name, version)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name: name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
-
-	err = s.setupDefaultLogging(name, version)
+	err = s.setupDefaultConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -155,41 +155,46 @@ func (s *Service) Shutdown() error {
 	return nil
 }
 
-func setupDefaultConfig() error {
+func (s *Service) setupDefaultLogging(name, version string) error {
+
+	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
+	if !ok {
+		lvl = string(log.InfoLevel)
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return errors.Wrap(err, "failed to get hostname")
+	}
+
+	f := map[string]interface{}{
+		"srv":  name,
+		"ver":  version,
+		"host": hostname,
+	}
+
+	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)), f)
+	if err != nil {
+		return errors.Wrap(err, "failed to setup logging")
+	}
+
+	s.log = log.Create()
+	s.log.Info("set up default log level to `INFO`")
+	return nil
+}
+
+func (s *Service) setupDefaultConfig() error {
 	f, err := os.Open(".env")
 	if err != nil {
 		f = nil
 	}
 
-	cfg, err := env.New(f)
+	cfg, err := env.New(f, s.log.Infof, s.log.Warnf)
 	if err != nil {
 		return err
 	}
 
 	return config.Setup(cfg)
-}
-
-func (s *Service) setupDefaultLogging(name, version string) error {
-	lvl, err := config.GetString("PATRON_LOG_LEVEL")
-	if err != nil {
-		lvl = string(log.InfoLevel)
-	}
-
-	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)))
-	if err != nil {
-		return errors.Wrap(err, "failed to setup logging")
-	}
-
-	log.AppendField("srv", name)
-	log.AppendField("ver", version)
-	hostname, err := os.Hostname()
-	if err != nil {
-		return errors.Wrap(err, "failed to get hostname")
-	}
-	log.AppendField("host", hostname)
-	s.log = log.SubWithSource(nil)
-	s.log.Info("set up default log level to `INFO`")
-	return nil
 }
 
 func (s *Service) setupDefaultTracing(name, version string) error {

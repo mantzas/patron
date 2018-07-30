@@ -45,7 +45,7 @@ func (c *Component) Run(ctx context.Context) error {
 	c.Lock()
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
-	c.log = log.SubWithSource(nil)
+	c.log = log.Create()
 	c.Unlock()
 
 	chMsg, chErr, err := c.cns.Consume(ctx)

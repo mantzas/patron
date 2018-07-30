@@ -69,7 +69,7 @@ func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) er
 	cls = clsTemp
 	opentracing.SetGlobalTracer(tr)
 	version = ver
-	innerLog = log.SubWithSource(nil)
+	innerLog = log.Create()
 	return nil
 }
 
@@ -151,11 +151,11 @@ type jaegerLoggerAdapter struct {
 }
 
 func (l jaegerLoggerAdapter) Error(msg string) {
-	log.Error(msg)
+	//TODO: add some logger
 }
 
 func (l jaegerLoggerAdapter) Infof(msg string, args ...interface{}) {
-	log.Infof(msg, args...)
+	//TODO: add some logger
 }
 
 type consumerOption struct {

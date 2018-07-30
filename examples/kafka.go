@@ -42,7 +42,7 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 }
 
 func (kc *kafkaComponent) Process(ctx context.Context, msg async.Message) error {
-	kc.log = log.SubWithSource(nil)
+	kc.log = log.Create()
 	var ads Audits
 
 	err := msg.Decode(&ads)

@@ -16,7 +16,7 @@ import (
 
 func TestSetup_Tracer_Close(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
 	err = Setup("TEST", "1.0.0", "0.0.0.0:6831", "const", 1)
 	assert.NoError(err)
@@ -27,9 +27,9 @@ func TestSetup_Tracer_Close(t *testing.T) {
 
 func TestStartFinishConsumerSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
-	innerLog = log.SubWithSource(nil)
+	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	hdr := map[string]string{"key": "val"}
@@ -53,9 +53,9 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 
 func TestStartFinishChildSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
-	innerLog = log.SubWithSource(nil)
+	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	sp, ctx := StartConsumerSpan(context.Background(), "test", AMQPConsumerComponent, nil)
@@ -90,9 +90,9 @@ func TestStartFinishChildSpan(t *testing.T) {
 
 func TestHTTPStartFinishSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
-	innerLog = log.SubWithSource(nil)
+	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	req, err := http.NewRequest("GET", "/", nil)

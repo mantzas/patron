@@ -1,12 +1,12 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/mantzas/patron"
-	"github.com/mantzas/patron/log"
 	synchttp "github.com/mantzas/patron/sync/http"
 )
 
@@ -41,6 +41,7 @@ func init() {
 	err := os.Setenv("PATRON_LOG_LEVEL", "debug")
 	if err != nil {
 		log.Fatalf("failed to set log level env var: %v", err)
+
 	}
 	err = os.Setenv("PATRON_JAEGER_SAMPLER_PARAM", "1.0")
 	if err != nil {

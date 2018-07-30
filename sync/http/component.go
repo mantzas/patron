@@ -53,7 +53,7 @@ func New(oo ...OptionFunc) (*Component, error) {
 // Run starts the HTTP server.
 func (s *Component) Run(ctx context.Context) error {
 	s.m.Lock()
-	s.log = log.SubWithSource(nil)
+	s.log = log.Create()
 	s.log.Infof("applying tracing to routes")
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {

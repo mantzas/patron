@@ -44,7 +44,7 @@ func TestNew(t *testing.T) {
 
 func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
 	rr := []Route{NewRoute("/", "GET", nil, true)}
 	s, err := New(Routes(rr))
@@ -61,7 +61,7 @@ func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
 
 func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
+	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
 	assert.NoError(err)
 	rr := []Route{NewRoute("/", "GET", nil, true)}
 	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.pem"))

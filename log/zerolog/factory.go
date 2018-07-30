@@ -30,19 +30,3 @@ func DefaultFactory(lvl log.Level) log.Factory {
 func (zf *Factory) Create(f map[string]interface{}) log.Logger {
 	return NewLogger(zf.logger, zf.lvl, f)
 }
-
-// CreateSub creates a logger with inherited fields.
-func (zf *Factory) CreateSub(logger log.Logger, fields map[string]interface{}) log.Logger {
-
-	if len(fields) == 0 {
-		return logger
-	}
-
-	all := logger.Fields()
-
-	for k, v := range fields {
-		all[k] = v
-	}
-
-	return NewLogger(zf.logger, zf.lvl, all)
-}
