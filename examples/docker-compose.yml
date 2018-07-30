@@ -61,6 +61,19 @@ services:
     environment:
       - ADVERTISED_HOST=0.0.0.0
       - ADVERTISED_PORT=9092
+  pg:
+    image:  postgres
+    hostname: "pg"
+    networks:
+      examplenw:
+        aliases:
+          - pg
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=test123    
 
 networks:
   examplenw: {}
