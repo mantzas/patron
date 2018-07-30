@@ -80,7 +80,7 @@ func New(name, url, queue, exchange string, requeue bool, buffer int) (*Consumer
 		return nil, errors.New("buffer need to be greater or equal than zero")
 	}
 
-	return &Consumer{name: name, url: url, queue: queue, exchange: exchange, requeue: requeue, tag: "", ch: nil, conn: nil}, nil
+	return &Consumer{name: name, url: url, queue: queue, exchange: exchange, requeue: requeue, ch: nil, conn: nil}, nil
 }
 
 // Consume starts of consuming a AMQP queue.
