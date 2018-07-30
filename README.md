@@ -142,13 +142,26 @@ downstream systems. The tracing information is added to each implementations hea
 
 The log package is designed to be a leveled logger with field support.
 
-The log package defines two interfaces (Logger and Factory) that have to be implemented in order to set up the logging in this framework. After implementing the two interfaces you can setup logging by doing the following:
+The log package defines two interfaces (Logger and Factory) that have to be implemented in order to set up the logging in this framework. 
+After implementing the two interfaces you can setup logging by doing the following:
 
 ```go
-  // instantiate the implemented factory f
-  err := log.Setup(f)
+  // instantiate the implemented factory and fields (map[string]interface{})
+  err := log.Setup(factory, fields)
   // handle error
 ```
+
+`If the setup is omitted the package will not setup any logging!`
+
+In order to get a logger use the the following:
+
+```go
+  logger := log.Create()
+```
+
+which returns a logger with all fields appended along with the source code file of the class where the logger has been created.
+
+`It is advisable to create one logger in every type/package once and use it to get information about the log origin!`
 
 The implementations should support following log levels:
 
@@ -199,14 +212,12 @@ The factory interface defines a factory for creating a logger.
 ```go
 type Factory interface {
   Create(map[string]interface{}) Logger
-  CreateSub(Logger, map[string]interface{}) Logger
 }
 ```
 
 Two methods are supported:
 
 - Create, which creates a logger with the specified fields (or nil)
-- CreateSub, which creates a sub-logger that accepts a logger and fields and creates a sub-logger with the fields merged into the new one.
 
 ## Config
 
