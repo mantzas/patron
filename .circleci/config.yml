@@ -11,32 +11,20 @@ jobs:
 
     steps:
       - checkout
-      - run: 
-            name: Create test result directory
-            command: mkdir -p $TEST_RESULTS
-
-      - run: 
-          name: Getting junit report converter
-          command: go get github.com/jstemmer/go-junit-report
 
       - run:
-          name: Getting linter
-          command: go get -u golang.org/x/lint/golint
-      
-      - run:
-          name: Running linter
-          command: golint -set_exit_status=1 `go list ./...`
-      
-      - run:
-          name: Running tests
+          name: Getting and running linter
           command: |
+            go get -u golang.org/x/lint/golint
+            golint -set_exit_status=1 `go list ./...`
+          
+      - run:
+          name: Running with test coverage and send to codecov
+          command: |
+            mkdir -p $TEST_RESULTS
+            go get github.com/jstemmer/go-junit-report
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            go test ./... -race | tee ${TEST_RESULTS}/go-test.out
-
-      - run:
-          name: Running tests coverage and upload to codecov
-          command: |
-            go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic 
+            go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
             bash <(curl -s https://codecov.io/bash)
 
       - store_artifacts:
