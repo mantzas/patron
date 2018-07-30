@@ -1,7 +1,5 @@
 # patron [![CircleCI](https://circleci.com/gh/mantzas/patron.svg?style=svg)](https://circleci.com/gh/mantzas/patron) [![codecov](https://codecov.io/gh/mantzas/patron/branch/master/graph/badge.svg)](https://codecov.io/gh/mantzas/patron) [![Go Report Card](https://goreportcard.com/badge/github.com/mantzas/patron)](https://goreportcard.com/report/github.com/mantzas/patron) [![GoDoc](https://godoc.org/github.com/mantzas/patron?status.svg)](https://godoc.org/github.com/mantzas/patron)
 
-
-
 Patron is a framework for creating microservices.
 
 `Patron` is french for `template` or `pattern`, but it means also `boss` which we found out later (no pun intended).
@@ -143,7 +141,12 @@ downstream systems. The tracing information is added to each implementations hea
 
 The log package is designed to be a leveled logger with field support.
 
+<<<<<<< HEAD
 The log package defines the logger interface and a factory function type that needs to be implemented in order to set up the logging in this framework.
+=======
+The log package defines two interfaces (Logger and Factory) that have to be implemented in order to set up the logging in this framework.
+After implementing the two interfaces you can setup logging by doing the following:
+>>>>>>> Fixed readme
 
 ```go
   // instantiate the implemented factory func type and fields (map[string]interface{})
