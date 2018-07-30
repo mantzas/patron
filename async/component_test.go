@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,8 +54,6 @@ func TestRun_ReturnsError(t *testing.T) {
 
 func TestRun_Process_Error(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-	assert.NoError(err)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
@@ -88,8 +84,6 @@ func TestRun_ConsumeError(t *testing.T) {
 
 func TestRun_Process_Shutdown(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel))
-	assert.NoError(err)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),

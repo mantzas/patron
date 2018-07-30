@@ -1,7 +1,6 @@
 package http
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,7 +37,7 @@ func TestSetRoutes(t *testing.T) {
 		rr      []Route
 		wantErr bool
 	}{
-		{"success", []Route{NewRoute("/", http.MethodGet, testHandler{}.Process, true)}, false},
+		{"success", []Route{NewGetRoute("/", testHandler{}.Process, true)}, false},
 		{"error for no routes", nil, true},
 	}
 	for _, tt := range tests {

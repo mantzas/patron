@@ -101,7 +101,7 @@ func New(name, clientID, ct, topic string, brokers []string, buffer int, start O
 
 // Consume starts consuming messages from a Kafka topic.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
-	c.log = log.SubWithSource(nil)
+	c.log = log.Create()
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
 

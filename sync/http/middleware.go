@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
 )
 
@@ -80,7 +79,8 @@ func RecoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
 				default:
 					err = errors.New("unknown panic")
 				}
-				log.Errorf("recovering from an error %v", err)
+				_ = err
+				//TODO: log.Errorf("recovering from an error %v", err)
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()

@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.10.3
+
+    working_directory: /go/src/github.com/mantzas/patron
+
+    environment:
+      TEST_RESULTS: /tmp/test-results
+
+    steps:
+      - checkout
+
+      - run:
+          name: Getting and running linter
+          command: |
+            go get -u golang.org/x/lint/golint
+            golint -set_exit_status=1 `go list ./...`
+          
+      - run:
+          name: Running with test coverage and send to codecov
+          command: |
+            mkdir -p $TEST_RESULTS
+            go get github.com/jstemmer/go-junit-report
+            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
+            go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
+            bash <(curl -s https://codecov.io/bash)
+
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+
+      - store_test_results:
+          path: /tmp/test-results

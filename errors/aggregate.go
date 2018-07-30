@@ -1,10 +1,9 @@
 package errors
 
 import (
+	"fmt"
 	"strings"
 	"sync"
-
-	"github.com/mantzas/patron/log"
 )
 
 // Aggregate for aggregating errors into one.
@@ -44,11 +43,11 @@ func (a *Aggregate) Error() string {
 	for _, err := range a.errors {
 		_, err1 := b.WriteString(err.Error())
 		if err1 != nil {
-			log.Errorf("failed to write %v with error %v", err, err1)
+			return fmt.Sprintf("failed to create aggregate error string: %v", err)
 		}
 		_, err1 = b.WriteRune('\n')
 		if err1 != nil {
-			log.Errorf("failed to write newline")
+			return fmt.Sprintf("failed write newline when creating aggregate error string: %v", err)
 		}
 	}
 	return b.String()

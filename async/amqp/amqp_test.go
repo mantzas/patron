@@ -22,11 +22,11 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{"success", args{name: "test", url: "url", queue: "queue", exchange: "exchange", buffer: 10}, false},
-		{"failed with invalid name", args{name: "", url: "url", queue: "queue", exchange: "exchange", buffer: 10}, true},
-		{"failed with invalid url", args{name: "test", url: "", queue: "queue", exchange: "exchange", buffer: 10}, true},
-		{"failed with invalid queue name", args{name: "test", url: "url", queue: "", exchange: "exchange", buffer: 10}, true},
-		{"failed with invalid queue name", args{name: "test", url: "url", queue: "queue", exchange: "", buffer: 10}, true},
-		{"failed with invalid buffer", args{name: "test", url: "url", queue: "queue", exchange: "exchange", buffer: -10}, true},
+		{"fail, invalid name", args{name: "", url: "url", queue: "queue", exchange: "exchange", buffer: 10}, true},
+		{"fail, invalid url", args{name: "test", url: "", queue: "queue", exchange: "exchange", buffer: 10}, true},
+		{"fail, invalid queue name", args{name: "test", url: "url", queue: "", exchange: "exchange", buffer: 10}, true},
+		{"fail, invalid queue name", args{name: "test", url: "url", queue: "queue", exchange: "", buffer: 10}, true},
+		{"fail, invalid buffer", args{name: "test", url: "url", queue: "queue", exchange: "exchange", buffer: -10}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
