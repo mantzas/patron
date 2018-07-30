@@ -62,8 +62,8 @@ var (
 	NilMsg MsgFunc = func(msg string) {}
 	// NilMsgf instance of a nil logging function with formating.
 	NilMsgf MsgfFunc = func(msg string, args ...interface{}) {}
-	factory Factory
-	fields  = make(map[string]interface{})
+	factory Factory  = nilFactory{}
+	fields           = make(map[string]interface{})
 )
 
 // Setup logging by providing a logger factory.
@@ -122,4 +122,58 @@ func getSource(file string, line int) (src string) {
 		src = fmt.Sprintf("%s/%s:%d", d, f, line)
 	}
 	return
+}
+
+type nilFactory struct {
+}
+
+func (nf nilFactory) Create(fields map[string]interface{}) Logger {
+	return &nilLogger{}
+}
+
+type nilLogger struct {
+}
+
+func (nl nilLogger) Level() Level {
+	return DebugLevel
+}
+
+func (nl nilLogger) Fields() map[string]interface{} {
+	return make(map[string]interface{})
+}
+
+func (nl nilLogger) Panic(args ...interface{}) {
+}
+
+func (nl nilLogger) Panicf(msg string, args ...interface{}) {
+}
+
+func (nl nilLogger) Fatal(args ...interface{}) {
+}
+
+func (nl nilLogger) Fatalf(msg string, args ...interface{}) {
+}
+
+func (nl nilLogger) Error(args ...interface{}) {
+}
+
+func (nl nilLogger) Errorf(msg string, args ...interface{}) {
+}
+
+func (nl nilLogger) Warn(args ...interface{}) {
+}
+
+func (nl nilLogger) Warnf(msg string, args ...interface{}) {
+}
+
+func (nl nilLogger) Info(args ...interface{}) {
+}
+
+func (nl nilLogger) Infof(msg string, args ...interface{}) {
+}
+
+func (nl nilLogger) Debug(args ...interface{}) {
+}
+
+func (nl nilLogger) Debugf(msg string, args ...interface{}) {
 }

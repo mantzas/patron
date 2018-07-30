@@ -16,9 +16,7 @@ import (
 
 func TestSetup_Tracer_Close(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
-	assert.NoError(err)
-	err = Setup("TEST", "1.0.0", "0.0.0.0:6831", "const", 1)
+	err := Setup("TEST", "1.0.0", "0.0.0.0:6831", "const", 1)
 	assert.NoError(err)
 	err = Close()
 	assert.NoError(err)
@@ -27,8 +25,6 @@ func TestSetup_Tracer_Close(t *testing.T) {
 
 func TestStartFinishConsumerSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
-	assert.NoError(err)
 	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)

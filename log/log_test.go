@@ -14,7 +14,7 @@ func TestSetup(t *testing.T) {
 		wantErr bool
 	}{
 		{"failure with nil factory", nil, true},
-		{"success", testFactory{}, false},
+		{"success", &nilFactory{}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -246,78 +246,78 @@ func TestSetup(t *testing.T) {
 // 	})
 // }
 
-type testFactory struct {
-}
+// type testFactory struct {
+// }
 
-func (f testFactory) Create(fields map[string]interface{}) Logger {
-	return &testLogger{}
-}
+// func (f testFactory) Create(fields map[string]interface{}) Logger {
+// 	return &testLogger{}
+// }
 
-func (f testFactory) CreateSub(logger Logger, fields map[string]interface{}) Logger {
-	return &testLogger{}
-}
+// func (f testFactory) CreateSub(logger Logger, fields map[string]interface{}) Logger {
+// 	return &testLogger{}
+// }
 
-type testLogger struct {
-	debugCount int
-	infoCount  int
-	warnCount  int
-	errorCount int
-	fatalCount int
-	panicCount int
-}
+// type testLogger struct {
+// 	debugCount int
+// 	infoCount  int
+// 	warnCount  int
+// 	errorCount int
+// 	fatalCount int
+// 	panicCount int
+// }
 
-func (t *testLogger) Level() Level {
-	return DebugLevel
-}
+// func (t *testLogger) Level() Level {
+// 	return DebugLevel
+// }
 
-func (t *testLogger) Fields() map[string]interface{} {
-	return make(map[string]interface{})
-}
+// func (t *testLogger) Fields() map[string]interface{} {
+// 	return make(map[string]interface{})
+// }
 
-func (t *testLogger) Panic(args ...interface{}) {
-	t.panicCount++
-}
+// func (t *testLogger) Panic(args ...interface{}) {
+// 	t.panicCount++
+// }
 
-func (t *testLogger) Panicf(msg string, args ...interface{}) {
-	t.panicCount++
-}
+// func (t *testLogger) Panicf(msg string, args ...interface{}) {
+// 	t.panicCount++
+// }
 
-func (t *testLogger) Fatal(args ...interface{}) {
-	t.fatalCount++
-}
+// func (t *testLogger) Fatal(args ...interface{}) {
+// 	t.fatalCount++
+// }
 
-func (t *testLogger) Fatalf(msg string, args ...interface{}) {
-	t.fatalCount++
-}
+// func (t *testLogger) Fatalf(msg string, args ...interface{}) {
+// 	t.fatalCount++
+// }
 
-func (t *testLogger) Error(args ...interface{}) {
-	t.errorCount++
-}
+// func (t *testLogger) Error(args ...interface{}) {
+// 	t.errorCount++
+// }
 
-func (t *testLogger) Errorf(msg string, args ...interface{}) {
-	t.errorCount++
-}
+// func (t *testLogger) Errorf(msg string, args ...interface{}) {
+// 	t.errorCount++
+// }
 
-func (t *testLogger) Warn(args ...interface{}) {
-	t.warnCount++
-}
+// func (t *testLogger) Warn(args ...interface{}) {
+// 	t.warnCount++
+// }
 
-func (t *testLogger) Warnf(msg string, args ...interface{}) {
-	t.warnCount++
-}
+// func (t *testLogger) Warnf(msg string, args ...interface{}) {
+// 	t.warnCount++
+// }
 
-func (t *testLogger) Info(args ...interface{}) {
-	t.infoCount++
-}
+// func (t *testLogger) Info(args ...interface{}) {
+// 	t.infoCount++
+// }
 
-func (t *testLogger) Infof(msg string, args ...interface{}) {
-	t.infoCount++
-}
+// func (t *testLogger) Infof(msg string, args ...interface{}) {
+// 	t.infoCount++
+// }
 
-func (t *testLogger) Debug(args ...interface{}) {
-	t.debugCount++
-}
+// func (t *testLogger) Debug(args ...interface{}) {
+// 	t.debugCount++
+// }
 
-func (t *testLogger) Debugf(msg string, args ...interface{}) {
-	t.debugCount++
-}
+// func (t *testLogger) Debugf(msg string, args ...interface{}) {
+// 	t.debugCount++
+// }
