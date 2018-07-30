@@ -22,7 +22,9 @@ jobs:
           command: golint -set_exit_status=1 `go list ./...`
       - run:
           name: Running with test coverage
-          command: go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
+          command: |
+            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
+            go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
 
       - run:
           name: Send code coverage to codecov
