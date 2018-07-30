@@ -3,10 +3,15 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.10.3
-      
+
     working_directory: /go/src/github.com/mantzas/patron
+
+    environment:
+      TEST_RESULTS: /tmp/test-results
+
     steps:
       - checkout
+      - run: mkdir -p $TEST_RESULTS
 
       - run:
           name: Getting linter
@@ -17,8 +22,15 @@ jobs:
           command: golint -set_exit_status=1 `go list ./...`
       - run:
           name: Running with test coverage
-          command: go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic
+          command: go test ./... -cover -race -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
 
       - run:
           name: Send code coverage to codecov
           command: bash <(curl -s https://codecov.io/bash)
+
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+
+      - store_test_results:
+          path: /tmp/test-results
