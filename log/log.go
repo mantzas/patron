@@ -86,13 +86,18 @@ func Create() Logger {
 	if factory == nil {
 		return nil
 	}
-	fields = make(map[string]interface{})
 
-	if key, val, ok := sourceFields(); ok {
-		fields[key] = val
+	fls := make(map[string]interface{})
+
+	for k, v := range fields {
+		fls[k] = v
 	}
 
-	return factory.Create(fields)
+	if key, val, ok := sourceFields(); ok {
+		fls[key] = val
+	}
+
+	return factory.Create(fls)
 }
 
 func sourceFields() (key string, src string, ok bool) {
@@ -102,9 +107,6 @@ func sourceFields() (key string, src string, ok bool) {
 	}
 
 	src = getSource(file, line)
-	if src == "" {
-		return
-	}
 	key = "src"
 	ok = true
 	return
@@ -128,10 +130,11 @@ type nilFactory struct {
 }
 
 func (nf nilFactory) Create(fields map[string]interface{}) Logger {
-	return &nilLogger{}
+	return &nilLogger{fls: fields}
 }
 
 type nilLogger struct {
+	fls map[string]interface{}
 }
 
 func (nl nilLogger) Level() Level {
@@ -139,7 +142,7 @@ func (nl nilLogger) Level() Level {
 }
 
 func (nl nilLogger) Fields() map[string]interface{} {
-	return make(map[string]interface{})
+	return nl.fls
 }
 
 func (nl nilLogger) Panic(args ...interface{}) {
