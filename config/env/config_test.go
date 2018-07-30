@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mantzas/patron/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +36,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.r, log.NilMsgf, log.NilMsgf)
+			got, err := New(tt.r)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -67,7 +66,7 @@ func TestConfig_Set(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			c, err := New(nil)
 			assert.NoError(err)
 			err = c.Set(tt.key, tt.value)
 			if tt.wantErr {
@@ -94,7 +93,7 @@ func TestConfig_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			c, err := New(nil)
 			assert.NoError(err)
 			got, err := c.Get(tt.key)
 			if tt.wantErr {
@@ -124,7 +123,7 @@ func TestConfig_GetBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			c, err := New(nil)
 			assert.NoError(err)
 			got, err := c.GetBool(tt.key)
 			if tt.wantErr {
@@ -154,7 +153,7 @@ func TestConfig_GetInt64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			c, err := New(nil)
 			assert.NoError(err)
 			got, err := c.GetInt64(tt.key)
 			if tt.wantErr {
@@ -182,7 +181,7 @@ func TestConfig_GetString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			c, err := New(nil)
 			assert.NoError(err)
 			got, err := c.GetString(tt.key)
 			if tt.wantErr {
@@ -212,7 +211,7 @@ func TestConfig_GetFloat64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(nil, log.NilMsgf, log.NilMsgf)
+			c, err := New(nil)
 			assert.NoError(err)
 			got, err := c.GetFloat64(tt.key)
 			if tt.wantErr {

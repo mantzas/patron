@@ -51,19 +51,9 @@ type Factory interface {
 	Create(map[string]interface{}) Logger
 }
 
-// MsgfFunc defines a logging function type with formatting.
-type MsgfFunc func(msg string, args ...interface{})
-
-// MsgFunc defines a logging function type.
-type MsgFunc func(msg string)
-
 var (
-	// NilMsg instance of a nil logging function.
-	NilMsg MsgFunc = func(msg string) {}
-	// NilMsgf instance of a nil logging function with formating.
-	NilMsgf MsgfFunc = func(msg string, args ...interface{}) {}
-	factory Factory  = nilFactory{}
-	fields           = make(map[string]interface{})
+	factory Factory = nilFactory{}
+	fields          = make(map[string]interface{})
 )
 
 // Setup logging by providing a logger factory.

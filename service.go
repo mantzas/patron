@@ -189,7 +189,7 @@ func (s *Service) setupDefaultConfig() error {
 		f = nil
 	}
 
-	cfg, err := env.New(f, s.log.Infof, s.log.Warnf)
+	cfg, err := env.New(f)
 	if err != nil {
 		return err
 	}

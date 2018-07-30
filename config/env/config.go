@@ -14,15 +14,14 @@ import (
 
 // Config implementation for handling environment vars.
 type Config struct {
-	infof log.MsgfFunc
-	warnf log.MsgfFunc
+	log log.Logger
 }
 
 // New creates a new config.
 // By providing a reader, which might contain environment variables coming for a file, you can set env vars.
 // This is useful for development.
-func New(r io.Reader, infof log.MsgfFunc, warnf log.MsgfFunc) (*Config, error) {
-	c := Config{infof: infof, warnf: warnf}
+func New(r io.Reader) (*Config, error) {
+	c := Config{log: log.Create()}
 	err := c.initialize(r)
 	if err != nil {
 		return nil, err
@@ -37,7 +36,7 @@ func (c *Config) Set(key string, value interface{}) error {
 		return errors.New("failed to type assert value to string")
 	}
 	if _, ok = os.LookupEnv(key); ok {
-		c.warnf("overwrite existing env var %s", key)
+		c.log.Warnf("overwrite existing env var %s", key)
 	}
 	return errors.Wrap(os.Setenv(key, v), "failed to set env var")
 }
@@ -116,10 +115,10 @@ func (c *Config) initialize(r io.Reader) error {
 
 	for k, v := range vars {
 		if _, ok := os.LookupEnv(k); ok {
-			c.warnf("env var %s is already defined, skipping", k)
+			c.log.Warnf("env var %s is already defined, skipping", k)
 			continue
 		}
-		c.infof("setting env var %s", k)
+		c.log.Infof("setting env var %s", k)
 		err := os.Setenv(k, v)
 		if err != nil {
 			return errors.Wrapf(err, "failed to set env var %s", k)
