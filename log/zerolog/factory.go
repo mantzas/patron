@@ -2,6 +2,7 @@ package zerolog
 
 import (
 	"os"
+	"time"
 
 	"github.com/mantzas/patron/log"
 	"github.com/rs/zerolog"
@@ -22,6 +23,7 @@ func NewFactory(l *zerolog.Logger, lvl log.Level) log.Factory {
 func DefaultFactory(lvl log.Level) log.Factory {
 	zerolog.LevelFieldName = "lvl"
 	zerolog.MessageFieldName = "msg"
+	zerolog.TimeFieldFormat = time.RFC3339Nano
 	zl := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	return NewFactory(&zl, lvl)
 }
