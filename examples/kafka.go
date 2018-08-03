@@ -22,7 +22,7 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string, dialTimeout
 
 	kafkaCmp := kafkaComponent{}
 
-	cns, err := kafka.New(name, "kafka-consumer", json.ContentType, topic, []string{broker}, 1000, kafka.OffsetNewest, dialTimeout)
+	cns, err := kafka.New(name, json.ContentType, topic, []string{broker}, 1000, kafka.OffsetNewest, dialTimeout)
 	if err != nil {
 		return nil, err
 	}

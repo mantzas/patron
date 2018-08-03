@@ -2,6 +2,8 @@ package kafka
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -63,14 +65,10 @@ type Consumer struct {
 }
 
 // New creates a ew Kafka consumer.
-func New(name, clientID, ct, topic string, brokers []string, buffer int, start Offset, dialTimeout time.Duration) (*Consumer, error) {
+func New(name, ct, topic string, brokers []string, buffer int, start Offset, dialTimeout time.Duration) (*Consumer, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
-	}
-
-	if clientID == "" {
-		return nil, errors.New("client id is required")
 	}
 
 	if len(brokers) == 0 {
@@ -85,8 +83,13 @@ func New(name, clientID, ct, topic string, brokers []string, buffer int, start O
 		return nil, errors.New("buffer must greater or equal than 0")
 	}
 
+	host, err := os.Hostname()
+	if err != nil {
+		return nil, errors.New("failed to get hostname")
+	}
+
 	config := sarama.NewConfig()
-	config.ClientID = clientID
+	config.ClientID = fmt.Sprintf("%s-%s", host, name)
 	config.Consumer.Return.Errors = true
 	config.Net.DialTimeout = dialTimeout
 
