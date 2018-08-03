@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -62,7 +63,7 @@ type Consumer struct {
 }
 
 // New creates a ew Kafka consumer.
-func New(name, clientID, ct, topic string, brokers []string, buffer int, start Offset) (*Consumer, error) {
+func New(name, clientID, ct, topic string, brokers []string, buffer int, start Offset, dialTimeout time.Duration) (*Consumer, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -87,6 +88,7 @@ func New(name, clientID, ct, topic string, brokers []string, buffer int, start O
 	config := sarama.NewConfig()
 	config.ClientID = clientID
 	config.Consumer.Return.Errors = true
+	config.Net.DialTimeout = dialTimeout
 
 	return &Consumer{
 		name:        name,

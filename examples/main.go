@@ -65,7 +65,7 @@ func main() {
 		logger.Fatalf("failed to create processor %v", err)
 	}
 
-	kafkaCmp, err := newKafkaComponent("kafka consumer", kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
+	kafkaCmp, err := newKafkaComponent("kafka consumer", kafkaBroker, kafkaTopic, amqpURL, amqpExchange, time.Second)
 	if err != nil {
 		logger.Fatalf("failed to create processor %v", err)
 	}
