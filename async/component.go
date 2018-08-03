@@ -11,7 +11,6 @@ import (
 
 // Component implementation of a async component.
 type Component struct {
-	name string
 	proc ProcessorFunc
 	sync.Mutex
 	cns Consumer
@@ -20,11 +19,7 @@ type Component struct {
 }
 
 // New returns a new async component.
-func New(name string, p ProcessorFunc, cns Consumer) (*Component, error) {
-	if name == "" {
-		return nil, errors.New("name is required")
-	}
-
+func New(p ProcessorFunc, cns Consumer) (*Component, error) {
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
@@ -34,7 +29,6 @@ func New(name string, p ProcessorFunc, cns Consumer) (*Component, error) {
 	}
 
 	return &Component{
-		name: name,
 		proc: p,
 		cns:  cns,
 	}, nil
