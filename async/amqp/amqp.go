@@ -3,6 +3,8 @@ package amqp
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
@@ -52,6 +54,7 @@ type Consumer struct {
 	requeue  bool
 	tag      string
 	buffer   int
+	cfg      amqp.Config
 	ch       *amqp.Channel
 	conn     *amqp.Connection
 	log      log.Logger
@@ -80,7 +83,19 @@ func New(name, url, queue, exchange string, requeue bool, buffer int) (*Consumer
 		return nil, errors.New("buffer need to be greater or equal than zero")
 	}
 
-	return &Consumer{name: name, url: url, queue: queue, exchange: exchange, requeue: requeue, ch: nil, conn: nil}, nil
+	cfg := amqp.Config{
+		Dial: func(network, addr string) (net.Conn, error) {
+			return net.DialTimeout(network, addr, 30*time.Second)
+		},
+	}
+	return &Consumer{name: name, url: url, queue: queue, exchange: exchange, requeue: requeue, cfg: cfg, ch: nil, conn: nil}, nil
+}
+
+// SetTimeout set's the dial timeout of AMQP.
+func (c *Consumer) SetTimeout(timeout time.Duration) {
+	c.cfg.Dial = func(network, addr string) (net.Conn, error) {
+		return net.DialTimeout(network, addr, timeout)
+	}
 }
 
 // Consume starts of consuming a AMQP queue.
@@ -149,7 +164,7 @@ func (c *Consumer) Close() error {
 }
 
 func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
-	conn, err := amqp.Dial(c.url)
+	conn, err := amqp.DialConfig(c.url, c.cfg)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to dial @ %s", c.url)
 	}

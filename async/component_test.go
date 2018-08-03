@@ -140,6 +140,9 @@ type mockConsumer struct {
 	chErr        chan error
 }
 
+func (mc *mockConsumer) SetTimeout(timeout time.Duration) {
+}
+
 func (mc *mockConsumer) Consume(context.Context) (<-chan Message, <-chan error, error) {
 	if mc.consumeError {
 		return nil, nil, errors.New("CONSUMER ERROR")

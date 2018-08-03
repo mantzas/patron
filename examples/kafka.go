@@ -18,11 +18,11 @@ type kafkaComponent struct {
 	log log.Logger
 }
 
-func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string, dialTimeout time.Duration) (*kafkaComponent, error) {
+func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComponent, error) {
 
 	kafkaCmp := kafkaComponent{}
 
-	cns, err := kafka.New(name, json.ContentType, topic, []string{broker}, 1000, kafka.OffsetNewest, dialTimeout)
+	cns, err := kafka.New(name, json.ContentType, topic, []string{broker}, 1000, kafka.OffsetNewest)
 	if err != nil {
 		return nil, err
 	}

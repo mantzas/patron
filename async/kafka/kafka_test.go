@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/encoding"
@@ -51,7 +50,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.buffer, OffsetOldest, time.Second)
+			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.buffer, OffsetOldest)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)

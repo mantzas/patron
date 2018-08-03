@@ -65,7 +65,7 @@ type Consumer struct {
 }
 
 // New creates a ew Kafka consumer.
-func New(name, ct, topic string, brokers []string, buffer int, start Offset, dialTimeout time.Duration) (*Consumer, error) {
+func New(name, ct, topic string, brokers []string, buffer int, start Offset) (*Consumer, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -91,7 +91,6 @@ func New(name, ct, topic string, brokers []string, buffer int, start Offset, dia
 	config := sarama.NewConfig()
 	config.ClientID = fmt.Sprintf("%s-%s", host, name)
 	config.Consumer.Return.Errors = true
-	config.Net.DialTimeout = dialTimeout
 
 	return &Consumer{
 		name:        name,
@@ -102,6 +101,11 @@ func New(name, ct, topic string, brokers []string, buffer int, start Offset, dia
 		buffer:      buffer,
 		start:       start,
 	}, nil
+}
+
+// SetTimeout set's the dial timeout of Kafka.
+func (c *Consumer) SetTimeout(timeout time.Duration) {
+	c.cfg.Net.DialTimeout = timeout
 }
 
 // Consume starts consuming messages from a Kafka topic.
