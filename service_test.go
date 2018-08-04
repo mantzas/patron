@@ -12,25 +12,22 @@ import (
 func TestNewServer(t *testing.T) {
 	assert := assert.New(t)
 	route := http.NewRoute("/", "GET", nil, true)
-	goodCfg := &Config{Name: "test"}
-	badCfg := &Config{}
 	type args struct {
-		cfg *Config
-		opt OptionFunc
+		name string
+		opt  OptionFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{cfg: goodCfg, opt: Routes([]http.Route{route})}, false},
-		{"failed missing config", args{cfg: nil, opt: Routes([]http.Route{route})}, true},
-		{"failed missing name", args{cfg: badCfg, opt: Routes([]http.Route{route})}, true},
-		{"failed missing routes", args{cfg: goodCfg, opt: Routes([]http.Route{})}, true},
+		{"success", args{name: "test", opt: Routes([]http.Route{route})}, false},
+		{"failed missing name", args{name: "", opt: Routes([]http.Route{route})}, true},
+		{"failed missing routes", args{name: "test", opt: Routes([]http.Route{})}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.cfg, tt.args.opt)
+			got, err := New(tt.args.name, "", tt.args.opt)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -57,7 +54,7 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := New(&Config{Name: "test", Version: ""}, Components(tt.cp))
+			s, err := New("test", "", Components(tt.cp))
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {

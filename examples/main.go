@@ -53,18 +53,14 @@ func init() {
 }
 
 func main() {
-	cfg, err := patron.Configure("patron", "1.0.0")
-	if err != nil {
-		fmt.Printf("failed to configure patron: %v", err)
-		os.Exit(1)
-	}
+	name := "patron"
 
-	amqpCmp, err := newAmqpComponent(cfg.Name, amqpURL, amqpQueue, amqpExchange)
+	amqpCmp, err := newAmqpComponent(name, amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
 		logger.Fatalf("failed to create processor %v", err)
 	}
 
-	kafkaCmp, err := newKafkaComponent(cfg.Name, kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
+	kafkaCmp, err := newKafkaComponent(name, kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
 	if err != nil {
 		logger.Fatalf("failed to create processor %v", err)
 	}
@@ -79,7 +75,7 @@ func main() {
 		http.NewPostRoute("/", httpCmp.process, true),
 	}
 
-	srv, err := patron.New(cfg, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
+	srv, err := patron.New(name, "1.0.0", patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
 		logger.Fatalf("failed to create service %v", err)
 	}

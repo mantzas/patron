@@ -11,6 +11,7 @@ import (
 
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
@@ -30,7 +31,6 @@ type Component interface {
 // Service is responsible for managing and setting up everything.
 // The service will start by default a HTTP component in order to host management endpoint.
 type Service struct {
-	name   string
 	cps    []Component
 	routes []http.Route
 	hcf    http.HealthCheckFunc
@@ -40,24 +40,25 @@ type Service struct {
 }
 
 // New creates a new named service and allows for customization through functional options.
-func New(cfg *Config, oo ...OptionFunc) (*Service, error) {
+func New(name, version string, oo ...OptionFunc) (*Service, error) {
 
-	if cfg == nil {
-		return nil, errors.New("config is required")
-	}
-
-	if cfg.Name == "" {
+	if name == "" {
 		return nil, errors.New("name is required")
 	}
 
-	if cfg.Version == "" {
-		cfg.Version = "dev"
+	if version == "" {
+		version = "dev"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name: cfg.Name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel, log: log.Create()}
+	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel, log: log.Create()}
 
-	err := s.setupDefaultTracing(cfg)
+	err := s.setupLogging(name, version)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.setupDefaultTracing(name, version)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +147,33 @@ func (s *Service) Shutdown() error {
 	return nil
 }
 
-func (s *Service) setupDefaultTracing(cfg *Config) error {
+func (s *Service) setupLogging(name, version string) error {
+
+	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
+	if !ok {
+		lvl = string(log.InfoLevel)
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return errors.Wrap(err, "failed to get hostname")
+	}
+
+	f := map[string]interface{}{
+		"srv":  name,
+		"ver":  version,
+		"host": hostname,
+	}
+
+	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)), f)
+	if err != nil {
+		return errors.Wrap(err, "failed to setup logging")
+	}
+
+	return nil
+}
+
+func (s *Service) setupDefaultTracing(name, version string) error {
 	agent, ok := os.LookupEnv("PATRON_JAEGER_AGENT")
 	if !ok {
 		agent = "0.0.0.0:6831"
@@ -168,7 +195,7 @@ func (s *Service) setupDefaultTracing(cfg *Config) error {
 		}
 	}
 	s.log.Infof("setting up default tracing to %s, %s with param %f", agent, tp, prm)
-	return trace.Setup(cfg.Name, cfg.Version, agent, tp, prmVal)
+	return trace.Setup(name, version, agent, tp, prmVal)
 }
 
 func (s *Service) createHTTPComponent() (Component, error) {
