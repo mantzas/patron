@@ -12,11 +12,10 @@ func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	brokers := []string{"192.168.1.1"}
 	type args struct {
-		name     string
-		clientID string
-		brokers  []string
-		topic    string
-		buffer   int
+		name    string
+		brokers []string
+		topic   string
+		options []OptionFunc
 	}
 	tests := []struct {
 		name    string
@@ -24,45 +23,44 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "success",
-			args:    args{name: "test", clientID: "clID", brokers: brokers, topic: "topic1", buffer: 0},
-			wantErr: false,
-		},
-		{
 			name:    "fails with missing name",
-			args:    args{name: "", clientID: "clID", brokers: brokers, topic: "topic1", buffer: 0},
-			wantErr: true,
-		},
-		{
-			name:    "fails with missing client id",
-			args:    args{name: "test", clientID: "", brokers: brokers, topic: "topic1", buffer: 0},
+			args:    args{name: "", brokers: brokers, topic: "topic1"},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing brokers",
-			args:    args{name: "test", clientID: "clID", brokers: []string{}, topic: "topic1", buffer: 0},
+			args:    args{name: "test", brokers: []string{}, topic: "topic1"},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing topics",
-			args:    args{name: "test", clientID: "clID", brokers: brokers, topic: "", buffer: 0},
+			args:    args{name: "test", brokers: brokers, topic: ""},
 			wantErr: true,
 		},
 		{
-			name:    "fails with invalid buffer",
-			args:    args{name: "test", clientID: "clID", brokers: brokers, topic: "topic1", buffer: -1},
+			name:    "fails with invalid option",
+			args:    args{name: "test", brokers: brokers, topic: "topic1", options: []OptionFunc{Buffer(-100)}},
 			wantErr: true,
+		},
+		{
+			name:    "success",
+			args:    args{name: "test", brokers: brokers, topic: "topic1"},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.clientID, "", tt.args.topic, tt.args.brokers, tt.args.buffer, OffsetOldest)
+			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.options...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
+				assert.Nil(messagesConsumedCounter)
+				assert.Nil(topicPartitionOffsetDiff)
 			} else {
 				assert.NoError(err)
 				assert.NotNil(got)
+				assert.NotNil(messagesConsumedCounter)
+				assert.NotNil(topicPartitionOffsetDiff)
 			}
 		})
 	}

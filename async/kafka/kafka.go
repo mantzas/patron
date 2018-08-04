@@ -2,6 +2,9 @@ package kafka
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -10,6 +13,12 @@ import (
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	topicPartitionOffsetDiff *prometheus.GaugeVec
+	messagesConsumedCounter  *prometheus.CounterVec
 )
 
 type message struct {
@@ -61,15 +70,11 @@ type Consumer struct {
 	log         log.Logger
 }
 
-// New creates a ew Kafka consumer.
-func New(name, clientID, ct, topic string, brokers []string, buffer int, start Offset) (*Consumer, error) {
+// New creates a ew Kafka consumer with defaults. To override those default you should provide a option.
+func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
-	}
-
-	if clientID == "" {
-		return nil, errors.New("client id is required")
 	}
 
 	if len(brokers) == 0 {
@@ -80,23 +85,34 @@ func New(name, clientID, ct, topic string, brokers []string, buffer int, start O
 		return nil, errors.New("topic is required")
 	}
 
-	if buffer < 0 {
-		return nil, errors.New("buffer must greater or equal than 0")
+	host, err := os.Hostname()
+	if err != nil {
+		return nil, errors.New("failed to get hostname")
 	}
 
 	config := sarama.NewConfig()
-	config.ClientID = clientID
+	config.ClientID = fmt.Sprintf("%s-%s", host, name)
 	config.Consumer.Return.Errors = true
 
-	return &Consumer{
+	c := &Consumer{
 		name:        name,
 		brokers:     brokers,
 		topic:       topic,
 		cfg:         config,
 		contentType: ct,
-		buffer:      buffer,
-		start:       start,
-	}, nil
+		buffer:      1000,
+		start:       OffsetNewest,
+	}
+
+	for _, o := range oo {
+		err = o(c)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	initMetrics(name)
+	return c, nil
 }
 
 // Consume starts consuming messages from a Kafka topic.
@@ -124,6 +140,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					chErr <- consumerError
 				case msg := <-consumer.Messages():
 					c.log.Debugf("data received from topic %s", msg.Topic)
+					reportStats(msg.Topic, msg.Partition, consumer.HighWaterMarkOffset(), msg.Offset)
 					go func() {
 						sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
@@ -208,4 +225,35 @@ func mapHeader(hh []*sarama.RecordHeader) map[string]string {
 		mp[string(h.Key)] = string(h.Value)
 	}
 	return mp
+}
+
+func initMetrics(namespace string) {
+
+	topicPartitionOffsetDiff = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: "kafka_consumer",
+			Name:      "offset_diff",
+			Help:      "Message offset classified by topic and partition",
+		},
+		[]string{"topic", "partition"},
+	)
+
+	messagesConsumedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: "kafka_consumer",
+			Name:      "messages_consumed_total",
+			Help:      "Total messages consumed, classified by topic and queue service",
+		},
+		[]string{"topic"},
+	)
+	prometheus.RegisterOrGet(messagesConsumedCounter)
+	prometheus.RegisterOrGet(topicPartitionOffsetDiff)
+}
+
+func reportStats(topic string, partition int32, highwaterMark, offset int64) {
+	messagesConsumedCounter.WithLabelValues(topic).Inc()
+	topicPartitionOffsetDiff.WithLabelValues(topic, strconv.FormatInt(int64(partition), 10)).
+		Set(float64(highwaterMark - offset))
 }
