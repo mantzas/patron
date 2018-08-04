@@ -15,7 +15,7 @@ func TestNew(t *testing.T) {
 		name    string
 		brokers []string
 		topic   string
-		buffer  int
+		options []OptionFunc
 	}
 	tests := []struct {
 		name    string
@@ -23,40 +23,44 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "success",
-			args:    args{name: "test", brokers: brokers, topic: "topic1", buffer: 0},
-			wantErr: false,
-		},
-		{
 			name:    "fails with missing name",
-			args:    args{name: "", brokers: brokers, topic: "topic1", buffer: 0},
+			args:    args{name: "", brokers: brokers, topic: "topic1"},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing brokers",
-			args:    args{name: "test", brokers: []string{}, topic: "topic1", buffer: 0},
+			args:    args{name: "test", brokers: []string{}, topic: "topic1"},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing topics",
-			args:    args{name: "test", brokers: brokers, topic: "", buffer: 0},
+			args:    args{name: "test", brokers: brokers, topic: ""},
 			wantErr: true,
 		},
 		{
-			name:    "fails with invalid buffer",
-			args:    args{name: "test", brokers: brokers, topic: "topic1", buffer: -1},
+			name:    "fails with invalid option",
+			args:    args{name: "test", brokers: brokers, topic: "topic1", options: []OptionFunc{Buffer(-100)}},
 			wantErr: true,
+		},
+		{
+			name:    "success",
+			args:    args{name: "test", brokers: brokers, topic: "topic1"},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.buffer, OffsetOldest)
+			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.options...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
+				assert.Nil(messagesConsumedCounter)
+				assert.Nil(topicPartitionOffsetDiff)
 			} else {
 				assert.NoError(err)
 				assert.NotNil(got)
+				assert.NotNil(messagesConsumedCounter)
+				assert.NotNil(topicPartitionOffsetDiff)
 			}
 		})
 	}

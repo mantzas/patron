@@ -2,7 +2,6 @@ package async
 
 import (
 	"context"
-	"time"
 
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
@@ -22,7 +21,6 @@ type Message interface {
 
 // Consumer interface which every specific consumer has to implement.
 type Consumer interface {
-	SetTimeout(time.Duration)
 	Consume(context.Context) (<-chan Message, <-chan error, error)
 	Close() error
 }
