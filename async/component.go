@@ -84,6 +84,11 @@ func (c *Component) Run(ctx context.Context) error {
 func (c *Component) Shutdown(ctx context.Context) error {
 	c.Lock()
 	defer c.Unlock()
-	c.cnl()
+	if c.cnl != nil {
+		c.cnl()
+	}
+	if c.cns == nil {
+		return nil
+	}
 	return c.cns.Close()
 }

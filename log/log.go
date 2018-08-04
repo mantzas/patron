@@ -91,27 +91,27 @@ func Create() Logger {
 }
 
 func sourceFields() (key string, src string, ok bool) {
-	_, file, line, ok := runtime.Caller(2)
+	_, file, _, ok := runtime.Caller(2)
 	if !ok {
 		return
 	}
 
-	src = getSource(file, line)
+	src = getSource(file)
 	key = "src"
 	ok = true
 	return
 }
 
-func getSource(file string, line int) (src string) {
+func getSource(file string) (src string) {
 	if file == "" {
 		return
 	}
 	d, f := filepath.Split(file)
 	d = path.Base(d)
 	if d == "." || d == "" {
-		src = fmt.Sprintf("%s:%d", f, line)
+		src = f
 	} else {
-		src = fmt.Sprintf("%s/%s:%d", d, f, line)
+		src = fmt.Sprintf("%s/%s", d, f)
 	}
 	return
 }

@@ -37,8 +37,6 @@ const (
 	kafkaBroker  = "localhost:9092"
 )
 
-var logger log.Logger
-
 func init() {
 	err := os.Setenv("PATRON_LOG_LEVEL", "debug")
 	if err != nil {
@@ -64,17 +62,17 @@ func main() {
 
 	amqpCmp, err := newAmqpComponent(name, amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
-		logger.Fatalf("failed to create processor %v", err)
+		log.Create().Fatalf("failed to create processor %v", err)
 	}
 
 	kafkaCmp, err := newKafkaComponent(name, kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
 	if err != nil {
-		logger.Fatalf("failed to create processor %v", err)
+		log.Create().Fatalf("failed to create processor %v", err)
 	}
 
 	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic)
 	if err != nil {
-		logger.Fatalf("failed to create processor %v", err)
+		log.Create().Fatalf("failed to create processor %v", err)
 	}
 
 	// Set up routes
@@ -84,11 +82,11 @@ func main() {
 
 	srv, err := patron.New(name, version, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
-		logger.Fatalf("failed to create service %v", err)
+		log.Create().Fatalf("failed to create service %v", err)
 	}
 
 	err = srv.Run()
 	if err != nil {
-		logger.Fatalf("failed to create service %v", err)
+		log.Create().Fatalf("failed to create service %v", err)
 	}
 }

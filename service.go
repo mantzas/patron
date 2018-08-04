@@ -204,7 +204,7 @@ func (s *Service) setupDefaultTracing(name, version string) error {
 			return errors.Wrap(err, "env var for jaeger sampler param is not valid")
 		}
 	}
-	s.log.Infof("setting up default tracing to %s, %s with param %f", agent, tp, prm)
+	s.log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
 	return trace.Setup(name, version, agent, tp, prmVal)
 }
 
@@ -221,7 +221,7 @@ func (s *Service) createHTTPComponent() (Component, error) {
 		}
 	}
 
-	s.log.Infof("creating default HTTP component at port %d", port)
+	s.log.Infof("creating default HTTP component at port %s", strconv.FormatInt(portVal, 10))
 
 	options := []http.OptionFunc{
 		http.Port(int(portVal)),
