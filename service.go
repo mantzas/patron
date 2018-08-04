@@ -40,7 +40,11 @@ type Service struct {
 }
 
 // New creates a new named service and allows for customization through functional options.
-func New(cfg Config, oo ...OptionFunc) (*Service, error) {
+func New(cfg *Config, oo ...OptionFunc) (*Service, error) {
+
+	if cfg == nil {
+		return nil, errors.New("config is required")
+	}
 
 	if cfg.Name == "" {
 		return nil, errors.New("name is required")
@@ -142,7 +146,7 @@ func (s *Service) Shutdown() error {
 	return nil
 }
 
-func (s *Service) setupDefaultTracing(cfg Config) error {
+func (s *Service) setupDefaultTracing(cfg *Config) error {
 	agent, ok := os.LookupEnv("PATRON_JAEGER_AGENT")
 	if !ok {
 		agent = "0.0.0.0:6831"

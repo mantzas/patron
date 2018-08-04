@@ -3,8 +3,6 @@ package patron
 import (
 	"os"
 
-	"github.com/mantzas/patron/config"
-	"github.com/mantzas/patron/config/env"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/pkg/errors"
@@ -21,10 +19,6 @@ func Configure(name, version string) (*Config, error) {
 
 	cfg := Config{Name: name, Version: version}
 
-	if err := setupConfig(); err != nil {
-		return nil, err
-	}
-
 	if err := setupLogging(cfg); err != nil {
 		return nil, err
 	}
@@ -34,8 +28,8 @@ func Configure(name, version string) (*Config, error) {
 
 func setupLogging(cfg Config) error {
 
-	lvl, err := config.GetString("PATRON_LOG_LEVEL")
-	if err != nil {
+	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
+	if !ok {
 		lvl = string(log.InfoLevel)
 	}
 
@@ -56,18 +50,4 @@ func setupLogging(cfg Config) error {
 	}
 
 	return nil
-}
-
-func setupConfig() error {
-	f, err := os.Open(".env")
-	if err != nil {
-		f = nil
-	}
-
-	cfg, err := env.New(f)
-	if err != nil {
-		return err
-	}
-
-	return config.Setup(cfg)
 }

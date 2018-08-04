@@ -79,7 +79,7 @@ func main() {
 		http.NewPostRoute("/", httpCmp.process, true),
 	}
 
-	srv, err := patron.New(*cfg, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
+	srv, err := patron.New(cfg, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
 		logger.Fatalf("failed to create service %v", err)
 	}
