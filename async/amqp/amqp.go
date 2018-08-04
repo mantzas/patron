@@ -17,6 +17,14 @@ import (
 	"github.com/streadway/amqp"
 )
 
+var (
+	defaultCfg = amqp.Config{
+		Dial: func(network, addr string) (net.Conn, error) {
+			return net.DialTimeout(network, addr, 30*time.Second)
+		},
+	}
+)
+
 type message struct {
 	span    opentracing.Span
 	ctx     context.Context
@@ -60,8 +68,8 @@ type Consumer struct {
 	log      log.Logger
 }
 
-// New creates a new AMQP consumer.
-func New(name, url, queue, exchange string, requeue bool, buffer int) (*Consumer, error) {
+// New creates a new AMQP consumer with some defaults. Use option to change.
+func New(name, url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -79,23 +87,24 @@ func New(name, url, queue, exchange string, requeue bool, buffer int) (*Consumer
 		return nil, errors.New("RabbitMQ exchange name is required")
 	}
 
-	if buffer < 0 {
-		return nil, errors.New("buffer need to be greater or equal than zero")
+	c := &Consumer{
+		name:     name,
+		url:      url,
+		queue:    queue,
+		exchange: exchange,
+		requeue:  true,
+		cfg:      defaultCfg,
+		buffer:   1000,
 	}
 
-	cfg := amqp.Config{
-		Dial: func(network, addr string) (net.Conn, error) {
-			return net.DialTimeout(network, addr, 30*time.Second)
-		},
+	for _, o := range oo {
+		err := o(c)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return &Consumer{name: name, url: url, queue: queue, exchange: exchange, requeue: requeue, cfg: cfg, ch: nil, conn: nil}, nil
-}
 
-// SetTimeout set's the dial timeout of AMQP.
-func (c *Consumer) SetTimeout(timeout time.Duration) {
-	c.cfg.Dial = func(network, addr string) (net.Conn, error) {
-		return net.DialTimeout(network, addr, timeout)
-	}
+	return c, nil
 }
 
 // Consume starts of consuming a AMQP queue.
