@@ -75,7 +75,7 @@ func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) er
 
 // Close the tracer.
 func Close() error {
-	innerLog.Info("closing tracer")
+	innerLog.Debug("closing tracer")
 	return cls.Close()
 }
 

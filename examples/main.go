@@ -60,12 +60,12 @@ func init() {
 }
 
 func main() {
-	amqpCmp, err := newAmqpComponent("amqp consumer", amqpURL, amqpQueue, amqpExchange)
+	amqpCmp, err := newAmqpComponent("patron", amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
 		logger.Fatalf("failed to create processor %v", err)
 	}
 
-	kafkaCmp, err := newKafkaComponent("kafka consumer", kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
+	kafkaCmp, err := newKafkaComponent("patron", kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
 	if err != nil {
 		logger.Fatalf("failed to create processor %v", err)
 	}
