@@ -19,7 +19,7 @@ func newAmqpComponent(name, url, queue, exchange string) (*amqpComponent, error)
 
 	amqpCmp := amqpComponent{}
 
-	cns, err := amqp.New(name, url, queue, exchange, true, 1000)
+	cns, err := amqp.New(name, url, queue, exchange)
 	if err != nil {
 		return nil, err
 	}

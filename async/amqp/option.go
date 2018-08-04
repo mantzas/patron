@@ -1,8 +1,11 @@
-package kafka
+package amqp
 
 import (
-	"errors"
+	"net"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/streadway/amqp"
 )
 
 // OptionFunc definition for configuring the consumer in a functional way.
@@ -19,18 +22,22 @@ func Buffer(buf int) OptionFunc {
 	}
 }
 
-// Start option for adjusting the start point in the topic.
-func Start(start Offset) OptionFunc {
+// Timeout option for adjusting the timeout of the connection.
+func Timeout(timeout time.Duration) OptionFunc {
 	return func(c *Consumer) error {
-		c.start = start
+		c.cfg = amqp.Config{
+			Dial: func(network, addr string) (net.Conn, error) {
+				return net.DialTimeout(network, addr, timeout)
+			},
+		}
 		return nil
 	}
 }
 
-// Timeout option for adjusting the timeout of the connection.
-func Timeout(timeout time.Duration) OptionFunc {
+// Requeue option for adjusting the requeue policy of a message.
+func Requeue(requeue bool) OptionFunc {
 	return func(c *Consumer) error {
-		c.cfg.Net.DialTimeout = timeout
+		c.requeue = requeue
 		return nil
 	}
 }
