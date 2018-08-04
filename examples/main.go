@@ -7,7 +7,6 @@ import (
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
 )
 
@@ -41,31 +40,34 @@ const (
 var logger log.Logger
 
 func init() {
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
+	err := os.Setenv("PATRON_LOG_LEVEL", "debug")
 	if err != nil {
-		fmt.Printf("failed to setup logging: %v", err)
+		fmt.Printf("failed to set log level env var: %v", err)
 		os.Exit(1)
-	}
-	logger = log.Create()
-
-	err = os.Setenv("PATRON_LOG_LEVEL", "debug")
-	if err != nil {
-		logger.Fatalf("failed to set log level env var: %v", err)
-
 	}
 	err = os.Setenv("PATRON_JAEGER_SAMPLER_PARAM", "1.0")
 	if err != nil {
-		logger.Fatalf("failed to set sampler env vars:: %v", err)
+		fmt.Printf("failed to set sampler env vars: %v", err)
+		os.Exit(1)
 	}
 }
 
 func main() {
-	amqpCmp, err := newAmqpComponent("amqp consumer", amqpURL, amqpQueue, amqpExchange)
+	name := "patron"
+	version := "1.0.0"
+
+	err := patron.SetupLogging(name, version)
+	if err != nil {
+		fmt.Printf("failed to set up logging: %v", err)
+		os.Exit(1)
+	}
+
+	amqpCmp, err := newAmqpComponent(name, amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
 		logger.Fatalf("failed to create processor %v", err)
 	}
 
-	kafkaCmp, err := newKafkaComponent("kafka consumer", kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
+	kafkaCmp, err := newKafkaComponent(name, kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
 	if err != nil {
 		logger.Fatalf("failed to create processor %v", err)
 	}
@@ -80,7 +82,7 @@ func main() {
 		http.NewPostRoute("/", httpCmp.process, true),
 	}
 
-	srv, err := patron.New("patron", "1.0.0", patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
+	srv, err := patron.New(name, version, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
 		logger.Fatalf("failed to create service %v", err)
 	}
@@ -89,5 +91,4 @@ func main() {
 	if err != nil {
 		logger.Fatalf("failed to create service %v", err)
 	}
-
 }

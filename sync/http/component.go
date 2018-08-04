@@ -54,7 +54,7 @@ func New(oo ...OptionFunc) (*Component, error) {
 func (s *Component) Run(ctx context.Context) error {
 	s.m.Lock()
 	s.log = log.Create()
-	s.log.Infof("applying tracing to routes")
+	s.log.Debug("applying tracing to routes")
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {
 			s.routes[i].Handler = DefaultMiddleware(s.routes[i].Pattern, s.routes[i].Handler)
@@ -62,7 +62,7 @@ func (s *Component) Run(ctx context.Context) error {
 			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
 		}
 	}
-	s.srv = createHTTPServer(s.port, createHandler(s.routes, s.log.Infof))
+	s.srv = createHTTPServer(s.port, createHandler(s.routes, s.log.Debugf))
 	s.m.Unlock()
 
 	if s.certFile != "" && s.keyFile != "" {
@@ -92,12 +92,12 @@ func createHTTPServer(port int, sm http.Handler) *http.Server {
 	}
 }
 
-func createHandler(routes []Route, logInfof func(msg string, args ...interface{})) http.Handler {
-	logInfof("adding %d routes", len(routes))
+func createHandler(routes []Route, logf func(msg string, args ...interface{})) http.Handler {
+	logf("adding %d routes", len(routes))
 	router := httprouter.New()
 	for _, route := range routes {
 		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
-		logInfof("added route %s %s", route.Method, route.Pattern)
+		logf("added route %s %s", route.Method, route.Pattern)
 	}
 	return router
 }

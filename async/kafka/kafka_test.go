@@ -54,13 +54,9 @@ func TestNew(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
-				assert.Nil(messagesConsumedCounter)
-				assert.Nil(topicPartitionOffsetDiff)
 			} else {
 				assert.NoError(err)
 				assert.NotNil(got)
-				assert.NotNil(messagesConsumedCounter)
-				assert.NotNil(topicPartitionOffsetDiff)
 			}
 		})
 	}
