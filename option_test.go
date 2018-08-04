@@ -23,7 +23,7 @@ func TestRoutes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := New("test", "1.0.0.0")
+			s, err := New(Config{Name: "test", Version: "1.0.0"})
 			assert.NoError(err)
 			err = Routes(tt.args.rr)(s)
 			if tt.wantErr {
@@ -50,7 +50,7 @@ func TestHealthCheck(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := New("test", "1.0.0.0")
+			s, err := New(Config{Name: "test", Version: "1.0.0"})
 			assert.NoError(err)
 			err = HealthCheck(tt.args.hcf)(s)
 			if tt.wantErr {
@@ -78,7 +78,7 @@ func TestComponents(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := New("test", "1.0.0.0")
+			s, err := New(Config{Name: "test", Version: "1.0.0"})
 			assert.NoError(err)
 			err = Components(tt.args.c)(s)
 			if tt.wantErr {

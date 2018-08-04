@@ -4,17 +4,14 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/mantzas/patron/config"
-	"github.com/mantzas/patron/config/env"
-	"github.com/mantzas/patron/sync/http"
-
 	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
+	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
 	"github.com/pkg/errors"
 	"github.com/uber/jaeger-client-go"
@@ -43,30 +40,20 @@ type Service struct {
 }
 
 // New creates a new named service and allows for customization through functional options.
-func New(name, version string, oo ...OptionFunc) (*Service, error) {
+func New(cfg Config, oo ...OptionFunc) (*Service, error) {
 
-	if name == "" {
+	if cfg.Name == "" {
 		return nil, errors.New("name is required")
 	}
 
-	if version == "" {
-		version = "dev"
+	if cfg.Version == "" {
+		cfg.Version = "dev"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{name: name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
+	s := Service{name: cfg.Name, cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel, log: log.Create()}
 
-	err := s.setupDefaultLogging(name, version)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.setupDefaultConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.setupDefaultTracing(name, version)
+	err := s.setupDefaultTracing(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -155,76 +142,48 @@ func (s *Service) Shutdown() error {
 	return nil
 }
 
-func (s *Service) setupDefaultLogging(name, version string) error {
-
-	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
+func (s *Service) setupDefaultTracing(cfg Config) error {
+	agent, ok := os.LookupEnv("PATRON_JAEGER_AGENT")
 	if !ok {
-		lvl = string(log.InfoLevel)
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		return errors.Wrap(err, "failed to get hostname")
-	}
-
-	f := map[string]interface{}{
-		"srv":  name,
-		"ver":  version,
-		"host": hostname,
-	}
-
-	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)), f)
-	if err != nil {
-		return errors.Wrap(err, "failed to setup logging")
-	}
-
-	s.log = log.Create()
-	s.log.Info("set up default log level to `INFO`")
-	return nil
-}
-
-func (s *Service) setupDefaultConfig() error {
-	f, err := os.Open(".env")
-	if err != nil {
-		f = nil
-	}
-
-	cfg, err := env.New(f)
-	if err != nil {
-		return err
-	}
-
-	return config.Setup(cfg)
-}
-
-func (s *Service) setupDefaultTracing(name, version string) error {
-	agent, err := config.GetString("PATRON_JAEGER_AGENT")
-	if err != nil {
 		agent = "0.0.0.0:6831"
 	}
-	tp, err := config.GetString("PATRON_JAEGER_SAMPLER_TYPE")
-	if err != nil {
+	tp, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_TYPE")
+	if !ok {
 		tp = jaeger.SamplerTypeProbabilistic
 	}
-	prm, err := config.GetFloat64("PATRON_JAEGER_SAMPLER_PARAM")
-	if err != nil {
-		prm = 0.1
+	var prmVal float64
+	var err error
+
+	prm, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM")
+	if !ok {
+		prmVal = 0.1
+	} else {
+		prmVal, err = strconv.ParseFloat(prm, 64)
+		if err != nil {
+			return errors.Wrap(err, "env var for jaeger sampler param is not valid")
+		}
 	}
 	s.log.Infof("setting up default tracing to %s, %s with param %f", agent, tp, prm)
-	return trace.Setup(name, version, agent, tp, prm)
+	return trace.Setup(cfg.Name, cfg.Version, agent, tp, prmVal)
 }
 
 func (s *Service) createHTTPComponent() (Component, error) {
-
-	port, err := config.GetInt64("PATRON_HTTP_DEFAULT_PORT")
-	if err != nil {
-		port = 50000
+	var err error
+	var portVal int64
+	port, ok := os.LookupEnv("PATRON_HTTP_DEFAULT_PORT")
+	if !ok {
+		portVal = 50000
+	} else {
+		portVal, err = strconv.ParseInt(port, 10, 64)
+		if err != nil {
+			return nil, errors.Wrap(err, "env var for HTTP default port is not valid")
+		}
 	}
 
 	s.log.Infof("creating default HTTP component at port %d", port)
 
 	options := []http.OptionFunc{
-		http.Port(int(port)),
+		http.Port(int(portVal)),
 	}
 
 	if s.hcf != nil {

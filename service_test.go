@@ -27,7 +27,7 @@ func TestNewServer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, "", tt.args.opt)
+			got, err := New(Config{Name: tt.args.name, Version: ""}, tt.args.opt)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -54,7 +54,7 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := New("test", "", Components(tt.cp))
+			s, err := New(Config{Name: "test", Version: ""}, Components(tt.cp))
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {
