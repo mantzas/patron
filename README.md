@@ -14,7 +14,6 @@ The entry point of the framework is the `Service`. The `Service` uses `Component
   - synchronous processing (HTTP)
 - metrics and tracing
 - logging
-- configuration management
 
 `Patron` provides same defaults for making the usage as simple as possible.
 
@@ -218,36 +217,3 @@ type Factory interface {
 Two methods are supported:
 
 - Create, which creates a logger with the specified fields (or nil)
-
-## Config
-
-The config package defines a interface that has to be implemented in order to be used inside the application.
-
-```go
-type Config interface {
-  Set(key string, value interface{}) error
-  Get(key string) (interface{}, error)
-  GetBool(key string) (bool, error)
-  GetInt64(key string) (int64, error)
-  GetString(key string) (string, error)
-  GetFloat64(key string) (float64, error)
-}
-```
-
-After implementing the interface a instance has to be provided to the `Setup` method of the package in order to be used directly from the package eg `config.GetBool()`.
-
-The following implementations are provided as sub-packages:
-
-- env, support for env files and env vars
-
-By default the service will use the `env` implementation and look for a `.env` file when starting up in order to set some env vars from a file. This is especially helpful for development.
-
-### env
-
-The env package supports getting env vars from the system. It allows further to provide a file that contain env vars, separated by a equal sign `=`, which are then set up on the environment. In order to setup config just do the following:
-
-```go
-c,err := env.New({reader to the config file})
-// error checking
-config.Setup(c)
-```
