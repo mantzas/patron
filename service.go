@@ -147,8 +147,8 @@ func (s *Service) Shutdown() error {
 	return nil
 }
 
-func (s *Service) setupLogging(name, version string) error {
-
+// SetupLogging set's up default logging.
+func SetupLogging(name, version string) error {
 	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
 	if !ok {
 		lvl = string(log.InfoLevel)
@@ -170,6 +170,16 @@ func (s *Service) setupLogging(name, version string) error {
 		return errors.Wrap(err, "failed to setup logging")
 	}
 
+	return nil
+}
+
+func (s *Service) setupLogging(name, version string) error {
+
+	err := SetupLogging(name, version)
+	if err != nil {
+		return err
+	}
+	s.log = log.Create()
 	return nil
 }
 

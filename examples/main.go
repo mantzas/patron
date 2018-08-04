@@ -47,13 +47,20 @@ func init() {
 	}
 	err = os.Setenv("PATRON_JAEGER_SAMPLER_PARAM", "1.0")
 	if err != nil {
-		fmt.Printf("failed to set sampler env vars:: %v", err)
+		fmt.Printf("failed to set sampler env vars: %v", err)
 		os.Exit(1)
 	}
 }
 
 func main() {
 	name := "patron"
+	version := "1.0.0"
+
+	err := patron.SetupLogging(name, version)
+	if err != nil {
+		fmt.Printf("failed to set up logging: %v", err)
+		os.Exit(1)
+	}
 
 	amqpCmp, err := newAmqpComponent(name, amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
@@ -75,7 +82,7 @@ func main() {
 		http.NewPostRoute("/", httpCmp.process, true),
 	}
 
-	srv, err := patron.New(name, "1.0.0", patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
+	srv, err := patron.New(name, version, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
 		logger.Fatalf("failed to create service %v", err)
 	}
@@ -84,5 +91,4 @@ func main() {
 	if err != nil {
 		logger.Fatalf("failed to create service %v", err)
 	}
-
 }
