@@ -79,6 +79,9 @@ func (s *Component) Shutdown(ctx context.Context) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 	s.log.Info("shutting down component")
+	if s.srv == nil {
+		return nil
+	}
 	return s.srv.Shutdown(ctx)
 }
 

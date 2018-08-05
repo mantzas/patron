@@ -32,7 +32,7 @@ func TestCreate(t *testing.T) {
 	assert := assert.New(t)
 	t.Run("success", func(t *testing.T) {
 		fields = map[string]interface{}{"key": "val"}
-		expected := map[string]interface{}{"key": "val", "src": "log/log_test.go:36"}
+		expected := map[string]interface{}{"key": "val", "src": "log/log_test.go"}
 		l := Create()
 		assert.NotNil(l)
 		assert.Equal(DebugLevel, l.Level())
@@ -53,10 +53,10 @@ func Test_getSource(t *testing.T) {
 		wantSrc string
 	}{
 		{name: "empty", file: "", wantSrc: ""},
-		{name: "no parent folder", file: "main.go", wantSrc: "main.go:10"},
-		{name: "with parent folder", file: "/home/patron/main.go", wantSrc: "patron/main.go:10"},
+		{name: "no parent folder", file: "main.go", wantSrc: "main.go"},
+		{name: "with parent folder", file: "/home/patron/main.go", wantSrc: "patron/main.go"},
 	}
 	for _, tt := range tests {
-		assert.Equal(tt.wantSrc, getSource(tt.file, 10))
+		assert.Equal(tt.wantSrc, getSource(tt.file))
 	}
 }
