@@ -121,7 +121,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to get partitions")
 	}
-
+	c.log.Infof("consuming messages for topic '%s'", c.topic)
 	chMsg := make(chan async.Message, c.buffer)
 	chErr := make(chan error, c.buffer)
 
