@@ -89,7 +89,7 @@ func (ap *AsyncProducer) propagateError() {
 }
 
 func createProducerMessage(msg *Message, sp opentracing.Span) (*sarama.ProducerMessage, error) {
-	c := kafkaHeadersCarrier{hdr: []sarama.RecordHeader{}}
+	c := kafkaHeadersCarrier{}
 	err := sp.Tracer().Inject(sp.Context(), opentracing.TextMap, &c)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to inject tracing headers")
@@ -98,15 +98,13 @@ func createProducerMessage(msg *Message, sp opentracing.Span) (*sarama.ProducerM
 		Topic:   msg.topic,
 		Key:     nil,
 		Value:   sarama.ByteEncoder(msg.body),
-		Headers: c.hdr,
+		Headers: c,
 	}, nil
 }
 
-type kafkaHeadersCarrier struct {
-	hdr []sarama.RecordHeader
-}
+type kafkaHeadersCarrier []sarama.RecordHeader
 
 // Set implements Set() of opentracing.TextMapWriter.
 func (c *kafkaHeadersCarrier) Set(key, val string) {
-	c.hdr = append(c.hdr, sarama.RecordHeader{Key: []byte(key), Value: []byte(val)})
+	*c = append(*c, sarama.RecordHeader{Key: []byte(key), Value: []byte(val)})
 }
