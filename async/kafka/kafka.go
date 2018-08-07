@@ -108,7 +108,10 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 		}
 	}
 
-	setupMetrics(name)
+	err = setupMetrics(name)
+	if err != nil {
+		return nil, err
+	}
 	return c, nil
 }
 
@@ -227,9 +230,9 @@ func mapHeader(hh []*sarama.RecordHeader) map[string]string {
 	return mp
 }
 
-func setupMetrics(namespace string) {
+func setupMetrics(namespace string) error {
 	if topicPartitionOffsetDiff != nil {
-		return
+		return nil
 	}
 
 	topicPartitionOffsetDiff = prometheus.NewGaugeVec(
@@ -242,9 +245,14 @@ func setupMetrics(namespace string) {
 		[]string{"topic", "partition"},
 	)
 
-	prometheus.RegisterOrGet(topicPartitionOffsetDiff)
+	if err := prometheus.Register(topicPartitionOffsetDiff); err != nil {
+		if _, ok := err.(prometheus.AlreadyRegisteredError); ok {
+			return errors.Wrap(err, "failed to register kafka consumer metrics")
+		}
+	}
+	return nil
 }
 
-func topicPartitionOffsetDiffGaugeSet(topic string, partition int32, highOffset, offset int64) {
-	topicPartitionOffsetDiff.WithLabelValues(topic, strconv.FormatInt(int64(partition), 10)).Set(float64(highOffset - offset))
+func topicPartitionOffsetDiffGaugeSet(topic string, partition int32, high, offset int64) {
+	topicPartitionOffsetDiff.WithLabelValues(topic, strconv.FormatInt(int64(partition), 10)).Set(float64(high - offset))
 }
