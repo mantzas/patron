@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -12,6 +13,7 @@ import (
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type message struct {
@@ -48,6 +50,8 @@ const (
 	// OffsetOldest starts consuming from the oldest available message in the topic.
 	OffsetOldest Offset = -2
 )
+
+var topicPartitionOffsetDiff *prometheus.GaugeVec
 
 // Consumer definition of a Kafka consumer.
 type Consumer struct {
@@ -104,6 +108,7 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 		}
 	}
 
+	setupMetrics(name)
 	return c, nil
 }
 
@@ -132,6 +137,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					chErr <- consumerError
 				case msg := <-consumer.Messages():
 					c.log.Debugf("data received from topic %s", msg.Topic)
+					topicPartitionOffsetDiffGaugeSet(msg.Topic, msg.Partition, consumer.HighWaterMarkOffset(), msg.Offset)
 					go func() {
 						sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
@@ -219,4 +225,26 @@ func mapHeader(hh []*sarama.RecordHeader) map[string]string {
 		mp[string(h.Key)] = string(h.Value)
 	}
 	return mp
+}
+
+func setupMetrics(namespace string) {
+	if topicPartitionOffsetDiff != nil {
+		return
+	}
+
+	topicPartitionOffsetDiff = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: "kafka_consumer",
+			Name:      "offset_diff",
+			Help:      "Message offset difference with high watermark, classified by topic and partition",
+		},
+		[]string{"topic", "partition"},
+	)
+
+	prometheus.RegisterOrGet(topicPartitionOffsetDiff)
+}
+
+func topicPartitionOffsetDiffGaugeSet(topic string, partition int32, highOffset, offset int64) {
+	topicPartitionOffsetDiff.WithLabelValues(topic, strconv.FormatInt(int64(partition), 10)).Set(float64(highOffset - offset))
 }
