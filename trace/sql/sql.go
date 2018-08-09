@@ -114,12 +114,12 @@ func (db *DB) Driver() driver.Driver {
 
 // Exec executes a query without returning any rows.
 func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
-
+	return db.db.Exec(query, args...)
 }
 
 // ExecContext executes a query without returning any rows.
 func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-
+	return db.db.ExecContext(ctx, query, args...)
 }
 
 // Ping verifies a connection to the database is still alive, establishing a connection if necessary.
@@ -134,32 +134,40 @@ func (db *DB) PingContext(ctx context.Context) error {
 
 // Prepare creates a prepared statement for later queries or executions.
 func (db *DB) Prepare(query string) (*Stmt, error) {
-
+	stmt, err := db.db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	return &Stmt{stmt: stmt}, nil
 }
 
 // PrepareContext creates a prepared statement for later queries or executions.
 func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
-
+	stmt, err := db.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	return &Stmt{stmt: stmt}, nil
 }
 
 // Query executes a query that returns rows.
 func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
-
+	return db.db.Query(query, args...)
 }
 
 // QueryContext executes a query that returns rows.
 func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-
+	return db.db.QueryContext(ctx, query, args...)
 }
 
 // QueryRow executes a query that is expected to return at most one row.
 func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
-
+	return db.db.QueryRow(query, args...)
 }
 
 // QueryRowContext executes a query that is expected to return at most one row.
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-
+	return db.db.QueryRowContext(ctx, query, args...)
 }
 
 // SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
@@ -194,32 +202,32 @@ func (s *Stmt) Close() error {
 
 // Exec executes a prepared statement.
 func (s *Stmt) Exec(args ...interface{}) (sql.Result, error) {
-
+	return s.stmt.Exec(args...)
 }
 
 // ExecContext executes a prepared statement.
 func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
-
+	return s.stmt.ExecContext(ctx, args...)
 }
 
 // Query executes a prepared query statement.
 func (s *Stmt) Query(args ...interface{}) (*sql.Rows, error) {
-
+	return s.stmt.Query(args...)
 }
 
 // QueryContext executes a prepared query statement.
 func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
-
+	return s.stmt.QueryContext(ctx, args...)
 }
 
 // QueryRow executes a prepared query statement.
 func (s *Stmt) QueryRow(args ...interface{}) *sql.Row {
-
+	return s.stmt.QueryRow(args...)
 }
 
 // QueryRowContext executes a prepared query statement.
 func (s *Stmt) QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row {
-
+	return s.stmt.QueryRowContext(ctx, args...)
 }
 
 // Tx is an in-progress database transaction.
@@ -234,42 +242,50 @@ func (tx *Tx) Commit() error {
 
 // Exec executes a query that doesn't return rows.
 func (tx *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
-
+	return tx.tx.Exec(query, args...)
 }
 
 // ExecContext executes a query that doesn't return rows.
 func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-
+	return tx.tx.ExecContext(ctx, query, args...)
 }
 
 // Prepare creates a prepared statement for use within a transaction.
 func (tx *Tx) Prepare(query string) (*Stmt, error) {
-
+	stmt, err := tx.tx.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	return &Stmt{stmt: stmt}, nil
 }
 
 // PrepareContext creates a prepared statement for use within a transaction.
 func (tx *Tx) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
-
+	stmt, err := tx.tx.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	return &Stmt{stmt: stmt}, nil
 }
 
 // Query executes a query that returns rows.
 func (tx *Tx) Query(query string, args ...interface{}) (*sql.Rows, error) {
-
+	return tx.tx.Query(query, args...)
 }
 
 // QueryContext executes a query that returns rows.
 func (tx *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-
+	return tx.tx.QueryContext(ctx, query, args...)
 }
 
 // QueryRow executes a query that is expected to return at most one row.
 func (tx *Tx) QueryRow(query string, args ...interface{}) *sql.Row {
-
+	return tx.tx.QueryRow(query, args...)
 }
 
 // QueryRowContext executes a query that is expected to return at most one row.
 func (tx *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-
+	return tx.tx.QueryRowContext(ctx, query, args...)
 }
 
 // Rollback aborts the transaction.
@@ -279,10 +295,10 @@ func (tx *Tx) Rollback() error {
 
 // Stmt returns a transaction-specific prepared statement from an existing statement.
 func (tx *Tx) Stmt(stmt *Stmt) *Stmt {
-
+	return &Stmt{stmt: tx.tx.Stmt(stmt.stmt)}
 }
 
 // StmtContext returns a transaction-specific prepared statement from an existing statement.
 func (tx *Tx) StmtContext(ctx context.Context, stmt *Stmt) *Stmt {
-
+	return &Stmt{stmt: tx.tx.StmtContext(ctx, stmt.stmt)}
 }
