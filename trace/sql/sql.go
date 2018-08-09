@@ -77,27 +77,39 @@ func OpenDB(c driver.Connector) *DB {
 
 // Begin starts a transaction.
 func (db *DB) Begin() (*Tx, error) {
-
+	tx, err := db.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	return &Tx{tx: tx}, nil
 }
 
 // BeginTx starts a transaction.
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
-
+	tx, err := db.db.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &Tx{tx: tx}, nil
 }
 
 // Close closes the database, releasing any open resources.
 func (db *DB) Close() error {
-
+	return db.db.Close()
 }
 
 // Conn returns a connection.
-func (db *DB) Conn(ctx context.Context) (*sql.Conn, error) {
-
+func (db *DB) Conn(ctx context.Context) (*Conn, error) {
+	conn, err := db.db.Conn(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &Conn{conn: conn}, nil
 }
 
 // Driver returns the database's underlying driver.
 func (db *DB) Driver() driver.Driver {
-
+	return db.db.Driver()
 }
 
 // Exec executes a query without returning any rows.
@@ -112,12 +124,12 @@ func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}
 
 // Ping verifies a connection to the database is still alive, establishing a connection if necessary.
 func (db *DB) Ping() error {
-
+	return db.db.Ping()
 }
 
 // PingContext verifies a connection to the database is still alive, establishing a connection if necessary.
 func (db *DB) PingContext(ctx context.Context) error {
-
+	return db.db.PingContext(ctx)
 }
 
 // Prepare creates a prepared statement for later queries or executions.
@@ -170,86 +182,107 @@ func (db *DB) Stats() sql.DBStats {
 	return db.db.Stats()
 }
 
+// Stmt is a prepared statement.
 type Stmt struct {
 	stmt *sql.Stmt
 }
 
+// Close closes the statement.
 func (s *Stmt) Close() error {
-
+	return s.stmt.Close()
 }
 
+// Exec executes a prepared statement.
 func (s *Stmt) Exec(args ...interface{}) (sql.Result, error) {
 
 }
 
+// ExecContext executes a prepared statement.
 func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
 
 }
 
+// Query executes a prepared query statement.
 func (s *Stmt) Query(args ...interface{}) (*sql.Rows, error) {
 
 }
 
+// QueryContext executes a prepared query statement.
 func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
 
 }
 
+// QueryRow executes a prepared query statement.
 func (s *Stmt) QueryRow(args ...interface{}) *sql.Row {
 
 }
 
+// QueryRowContext executes a prepared query statement.
 func (s *Stmt) QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row {
 
 }
 
+// Tx is an in-progress database transaction.
 type Tx struct {
 	tx *sql.Tx
 }
 
+// Commit commits the transaction.
 func (tx *Tx) Commit() error {
-
+	return tx.tx.Commit()
 }
 
+// Exec executes a query that doesn't return rows.
 func (tx *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
 
 }
 
+// ExecContext executes a query that doesn't return rows.
 func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 
 }
 
+// Prepare creates a prepared statement for use within a transaction.
 func (tx *Tx) Prepare(query string) (*Stmt, error) {
 
 }
 
+// PrepareContext creates a prepared statement for use within a transaction.
 func (tx *Tx) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 
 }
 
+// Query executes a query that returns rows.
 func (tx *Tx) Query(query string, args ...interface{}) (*sql.Rows, error) {
 
 }
 
+// QueryContext executes a query that returns rows.
 func (tx *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 
 }
 
+// QueryRow executes a query that is expected to return at most one row.
 func (tx *Tx) QueryRow(query string, args ...interface{}) *sql.Row {
 
 }
 
+// QueryRowContext executes a query that is expected to return at most one row.
 func (tx *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
 
 }
 
+// Rollback aborts the transaction.
 func (tx *Tx) Rollback() error {
-
+	return tx.tx.Rollback()
 }
 
+// Stmt returns a transaction-specific prepared statement from an existing statement.
 func (tx *Tx) Stmt(stmt *Stmt) *Stmt {
 
 }
 
+// StmtContext returns a transaction-specific prepared statement from an existing statement.
 func (tx *Tx) StmtContext(ctx context.Context, stmt *Stmt) *Stmt {
 
 }
