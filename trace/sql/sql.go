@@ -264,23 +264,54 @@ type Stmt struct {
 	stmt *sql.Stmt
 }
 
+func (s *Stmt) startSpan(
+	ctx context.Context,
+	opName, stmt string,
+	tags ...opentracing.Tag,
+) (opentracing.Span, context.Context) {
+	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", s.instance, s.user, stmt)
+}
+
 // Close closes the statement.
 func (s *Stmt) Close(ctx context.Context) error {
-	return s.stmt.Close()
+	sp, _ := s.startSpan(ctx, "stmt.Close", "")
+	err := s.stmt.Close()
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return nil
 }
 
 // ExecContext executes a prepared statement.
 func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
-	return s.stmt.ExecContext(ctx, args...)
+	sp, _ := s.startSpan(ctx, "stmt.ExecContext", "")
+	res, err := s.stmt.ExecContext(ctx, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return res, nil
 }
 
 // QueryContext executes a prepared query statement.
 func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
-	return s.stmt.QueryContext(ctx, args...)
+	sp, _ := s.startSpan(ctx, "stmt.ExecContext", "")
+	rows, err := s.stmt.QueryContext(ctx, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return rows, nil
 }
 
 // QueryRowContext executes a prepared query statement.
 func (s *Stmt) QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row {
+	sp, _ := s.startSpan(ctx, "stmt.QueryRowContext", "")
+	defer trace.FinishSpanWithSuccess(sp)
 	return s.stmt.QueryRowContext(ctx, args...)
 }
 
