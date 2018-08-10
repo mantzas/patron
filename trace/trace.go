@@ -60,7 +60,7 @@ func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) er
 	time.Sleep(100 * time.Millisecond)
 	metricsFactory := prometheus.New()
 	tr, clsTemp, err := cfg.NewTracer(
-		config.Logger(jaegerLoggerAdapter{}),
+		config.Logger(jaegerLoggerAdapter{log: log.Create()}),
 		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
 	)
 	if err != nil {
@@ -79,8 +79,8 @@ func Close() error {
 	return cls.Close()
 }
 
-// StartConsumerSpan starts a new consumer span.
-func StartConsumerSpan(
+// ConsumerSpan starts a new consumer span.
+func ConsumerSpan(
 	ctx context.Context,
 	name, cmp string,
 	hdr map[string]string,
@@ -95,20 +95,20 @@ func StartConsumerSpan(
 	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
-// FinishSpanWithSuccess finishes a span with a success indicator.
-func FinishSpanWithSuccess(sp opentracing.Span) {
+// SpanSuccess finishes a span with a success indicator.
+func SpanSuccess(sp opentracing.Span) {
 	ext.Error.Set(sp, false)
 	sp.Finish()
 }
 
-// FinishSpanWithError finishes a span with a error indicator.
-func FinishSpanWithError(sp opentracing.Span) {
+// SpanError finishes a span with a error indicator.
+func SpanError(sp opentracing.Span) {
 	ext.Error.Set(sp, true)
 	sp.Finish()
 }
 
-// StartHTTPSpan starts a new HTTP span.
-func StartHTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
+// HTTPSpan starts a new HTTP span.
+func HTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
 	ctx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
 		innerLog.Errorf("failed to extract HTTP span: %v", err)
@@ -127,8 +127,8 @@ func FinishHTTPSpan(sp opentracing.Span, code int) {
 	sp.Finish()
 }
 
-// StartChildSpan starts a new child span with specified tags.
-func StartChildSpan(
+// ChildSpan starts a new child span with specified tags.
+func ChildSpan(
 	ctx context.Context,
 	opName, cmp string,
 	tags ...opentracing.Tag,
@@ -142,20 +142,40 @@ func StartChildSpan(
 	return sp, ctx
 }
 
+// SQLSpan starts a new SQL child span with specified tags.
+func SQLSpan(
+	ctx context.Context,
+	opName, cmp, sqlType, instance, user, stmt string,
+	tags ...opentracing.Tag,
+) (opentracing.Span, context.Context) {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
+	ext.Component.Set(sp, cmp)
+	ext.DBType.Set(sp, sqlType)
+	ext.DBInstance.Set(sp, instance)
+	ext.DBUser.Set(sp, user)
+	ext.DBStatement.Set(sp, stmt)
+	for _, t := range tags {
+		sp.SetTag(t.Key, t.Value)
+	}
+	sp.SetTag("version", version)
+	return sp, ctx
+}
+
 // HTTPOpName return a string representation of the HTTP request operation.
 func HTTPOpName(method, path string) string {
 	return "HTTP " + method + " " + path
 }
 
 type jaegerLoggerAdapter struct {
+	log log.Logger
 }
 
 func (l jaegerLoggerAdapter) Error(msg string) {
-	//TODO: add some logger
+	l.log.Error(msg)
 }
 
 func (l jaegerLoggerAdapter) Infof(msg string, args ...interface{}) {
-	//TODO: add some logger
+	l.log.Infof(msg, args...)
 }
 
 type consumerOption struct {

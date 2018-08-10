@@ -29,14 +29,14 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	hdr := map[string]string{"key": "val"}
-	sp, ctx := StartConsumerSpan(context.Background(), "test", AMQPConsumerComponent, hdr)
+	sp, ctx := ConsumerSpan(context.Background(), "test", AMQPConsumerComponent, hdr)
 	assert.NotNil(sp)
 	assert.NotNil(ctx)
 	assert.IsType(&mocktracer.MockSpan{}, sp)
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)
 	assert.Equal("test", jsp.OperationName)
-	FinishSpanWithError(sp)
+	SpanError(sp)
 	assert.NotNil(sp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(map[string]interface{}{
@@ -54,10 +54,10 @@ func TestStartFinishChildSpan(t *testing.T) {
 	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
-	sp, ctx := StartConsumerSpan(context.Background(), "test", AMQPConsumerComponent, nil)
+	sp, ctx := ConsumerSpan(context.Background(), "test", AMQPConsumerComponent, nil)
 	assert.NotNil(sp)
 	assert.NotNil(ctx)
-	childSp, childCtx := StartChildSpan(ctx, "opName", "cmp", opentracing.Tag{Key: "key", Value: "value"})
+	childSp, childCtx := ChildSpan(ctx, "opName", "cmp", opentracing.Tag{Key: "key", Value: "value"})
 	assert.NotNil(childSp)
 	assert.NotNil(childCtx)
 	childSp.LogKV("log event")
@@ -65,7 +65,7 @@ func TestStartFinishChildSpan(t *testing.T) {
 	jsp := childSp.(*mocktracer.MockSpan)
 	assert.NotNil(jsp)
 	assert.Equal("opName", jsp.OperationName)
-	FinishSpanWithError(childSp)
+	SpanError(childSp)
 	assert.NotNil(childSp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(map[string]interface{}{
@@ -74,7 +74,7 @@ func TestStartFinishChildSpan(t *testing.T) {
 		"key":       "value",
 		"version":   "dev",
 	}, rawSpan.Tags())
-	FinishSpanWithSuccess(sp)
+	SpanSuccess(sp)
 	rawSpan = mtr.FinishedSpans()[1]
 	assert.Equal(map[string]interface{}{
 		"component": "amqp-consumer",
@@ -93,7 +93,7 @@ func TestHTTPStartFinishSpan(t *testing.T) {
 	opentracing.SetGlobalTracer(mtr)
 	req, err := http.NewRequest("GET", "/", nil)
 	assert.NoError(err)
-	sp, req := StartHTTPSpan("/", req)
+	sp, req := HTTPSpan("/", req)
 	assert.NotNil(sp)
 	assert.NotNil(req)
 	assert.IsType(&mocktracer.MockSpan{}, sp)

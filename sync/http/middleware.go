@@ -58,7 +58,7 @@ func DefaultMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
 // TracingMiddleware for handling tracing and metrics.
 func TracingMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sp, r := trace.StartHTTPSpan(path, r)
+		sp, r := trace.HTTPSpan(path, r)
 		lw := newResponseWriter(w)
 		next(lw, r)
 		trace.FinishHTTPSpan(sp, lw.Status())

@@ -43,13 +43,13 @@ func (m *message) Decode(v interface{}) error {
 
 func (m *message) Ack() error {
 	err := m.del.Ack(false)
-	trace.FinishSpanWithSuccess(m.span)
+	trace.SpanSuccess(m.span)
 	return err
 }
 
 func (m *message) Nack() error {
 	err := m.del.Nack(false, m.requeue)
-	trace.FinishSpanWithError(m.span)
+	trace.SpanError(m.span)
 	return err
 }
 
@@ -126,14 +126,14 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 		case d := <-deliveries:
 			c.log.Debugf("processing message %s", d.MessageId)
 			go func(d *amqp.Delivery) {
-				sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
+				sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
 
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {
 					agr := agr_errors.New()
 					agr.Append(errors.Wrapf(err, "failed to determine encoding %s. Nack message", d.ContentType))
 					agr.Append(errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
-					trace.FinishSpanWithError(sp)
+					trace.SpanError(sp)
 					chErr <- agr
 					return
 				}
