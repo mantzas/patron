@@ -25,7 +25,7 @@ func (c *Conn) startSpan(
 	opName, stmt string,
 	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
-	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", c.instance, c.user, "")
+	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", c.instance, c.user, stmt)
 }
 
 // BeginTx starts a transaction.
@@ -113,6 +113,14 @@ func (c *Conn) QueryRowContext(ctx context.Context, query string, args ...interf
 type DB struct {
 	connInfo
 	db *sql.DB
+}
+
+func (db *DB) startSpan(
+	ctx context.Context,
+	opName, stmt string,
+	tags ...opentracing.Tag,
+) (opentracing.Span, context.Context) {
+	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", db.instance, db.user, stmt)
 }
 
 // Open opens a database.
