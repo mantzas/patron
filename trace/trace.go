@@ -60,7 +60,7 @@ func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) er
 	time.Sleep(100 * time.Millisecond)
 	metricsFactory := prometheus.New()
 	tr, clsTemp, err := cfg.NewTracer(
-		config.Logger(jaegerLoggerAdapter{}),
+		config.Logger(jaegerLoggerAdapter{log: log.Create()}),
 		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
 	)
 	if err != nil {
@@ -142,20 +142,40 @@ func StartChildSpan(
 	return sp, ctx
 }
 
+// StartSQLSpan starts a new SQL child span with specified tags.
+func StartSQLSpan(
+	ctx context.Context,
+	opName, cmp, sqlType, instance, user, stmt string,
+	tags ...opentracing.Tag,
+) (opentracing.Span, context.Context) {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
+	ext.Component.Set(sp, cmp)
+	ext.DBType.Set(sp, sqlType)
+	ext.DBInstance.Set(sp, instance)
+	ext.DBUser.Set(sp, user)
+	ext.DBStatement.Set(sp, stmt)
+	for _, t := range tags {
+		sp.SetTag(t.Key, t.Value)
+	}
+	sp.SetTag("version", version)
+	return sp, ctx
+}
+
 // HTTPOpName return a string representation of the HTTP request operation.
 func HTTPOpName(method, path string) string {
 	return "HTTP " + method + " " + path
 }
 
 type jaegerLoggerAdapter struct {
+	log log.Logger
 }
 
 func (l jaegerLoggerAdapter) Error(msg string) {
-	//TODO: add some logger
+	l.log.Error(msg)
 }
 
 func (l jaegerLoggerAdapter) Infof(msg string, args ...interface{}) {
-	//TODO: add some logger
+	l.log.Infof(msg, args...)
 }
 
 type consumerOption struct {

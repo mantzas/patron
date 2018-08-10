@@ -5,54 +5,104 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"time"
+
+	"github.com/mantzas/patron/trace"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // Conn represents a single database connection.
 type Conn struct {
-	conn *sql.Conn
+	instance, user string
+	conn           *sql.Conn
+}
+
+func (c *Conn) startSpan(
+	ctx context.Context,
+	opName, stmt string,
+	tags ...opentracing.Tag,
+) (opentracing.Span, context.Context) {
+	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", c.instance, c.user, "")
 }
 
 // BeginTx starts a transaction.
 func (c *Conn) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
+	sp, _ := c.startSpan(ctx, "conn.BeginTx", "")
 	tx, err := c.conn.BeginTx(ctx, opts)
 	if err != nil {
+		trace.FinishSpanWithError(sp)
 		return nil, err
 	}
+
+	trace.FinishSpanWithSuccess(sp)
 	return &Tx{tx: tx}, nil
 }
 
 // Close returns the connection to the connection pool.
-func (c *Conn) Close() error {
-	return c.conn.Close()
+func (c *Conn) Close(ctx context.Context) error {
+	sp, _ := c.startSpan(ctx, "conn.Close", "")
+	err := c.conn.Close()
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return nil
 }
 
 // ExecContext executes a query without returning any rows.
 func (c *Conn) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	return c.conn.ExecContext(ctx, query, args...)
+	sp, _ := c.startSpan(ctx, "conn.ExecContext", query)
+	res, err := c.conn.ExecContext(ctx, query, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return res, nil
 }
 
 // PingContext verifies the connection to the database is still alive.
 func (c *Conn) PingContext(ctx context.Context) error {
-	return c.conn.PingContext(ctx)
+	sp, _ := c.startSpan(ctx, "conn.PingContext", "")
+	err := c.conn.PingContext(ctx)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return nil
 }
 
 // PrepareContext creates a prepared statement for later queries or executions.
 func (c *Conn) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
+	sp, _ := c.startSpan(ctx, "conn.PrepareContext", query)
 	stmt, err := c.conn.PrepareContext(ctx, query)
 	if err != nil {
+		trace.FinishSpanWithError(sp)
 		return nil, err
 	}
+	trace.FinishSpanWithSuccess(sp)
 	return &Stmt{stmt: stmt}, nil
 }
 
 // QueryContext executes a query that returns rows.
 func (c *Conn) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	return c.conn.QueryContext(ctx, query, args...)
+	sp, _ := c.startSpan(ctx, "conn.QueryContext", query)
+	rows, err := c.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return rows, nil
 }
 
 // QueryRowContext executes a query that is expected to return at most one row.
 func (c *Conn) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	return c.conn.QueryRowContext(ctx, query, args...)
+	sp, _ := c.startSpan(ctx, "conn.QueryRowContext", query)
+	row := c.conn.QueryRowContext(ctx, query, args...)
+	trace.FinishSpanWithSuccess(sp)
+	return row
 }
 
 // DB contains the underlying db to be traced.
