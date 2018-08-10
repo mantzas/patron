@@ -140,58 +140,99 @@ func OpenDB(ctx context.Context, c driver.Connector) *DB {
 
 // BeginTx starts a transaction.
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
+	sp, _ := db.startSpan(ctx, "db.BeginTx", "")
 	tx, err := db.db.BeginTx(ctx, opts)
 	if err != nil {
+		trace.FinishSpanWithError(sp)
 		return nil, err
 	}
+	trace.FinishSpanWithSuccess(sp)
 	return &Tx{tx: tx}, nil
 }
 
 // Close closes the database, releasing any open resources.
 func (db *DB) Close(ctx context.Context) error {
-	return db.db.Close()
+	sp, _ := db.startSpan(ctx, "db.BeginTx", "")
+	err := db.db.Close()
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return nil
 }
 
 // Conn returns a connection.
 func (db *DB) Conn(ctx context.Context) (*Conn, error) {
+	sp, _ := db.startSpan(ctx, "db.Conn", "")
 	conn, err := db.db.Conn(ctx)
 	if err != nil {
+		trace.FinishSpanWithError(sp)
 		return nil, err
 	}
+	trace.FinishSpanWithSuccess(sp)
 	return &Conn{conn: conn, connInfo: db.connInfo}, nil
 }
 
 // Driver returns the database's underlying driver.
 func (db *DB) Driver(ctx context.Context) driver.Driver {
+	sp, _ := db.startSpan(ctx, "db.Driver", "")
+	defer trace.FinishSpanWithSuccess(sp)
 	return db.db.Driver()
 }
 
 // ExecContext executes a query without returning any rows.
 func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	return db.db.ExecContext(ctx, query, args...)
+	sp, _ := db.startSpan(ctx, "db.Driver", query)
+	res, err := db.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return res, nil
 }
 
 // PingContext verifies a connection to the database is still alive, establishing a connection if necessary.
 func (db *DB) PingContext(ctx context.Context) error {
-	return db.db.PingContext(ctx)
+	sp, _ := db.startSpan(ctx, "db.PingContext", "")
+	err := db.db.PingContext(ctx)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return nil
 }
 
 // PrepareContext creates a prepared statement for later queries or executions.
 func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
+	sp, _ := db.startSpan(ctx, "db.PrepareContext", "")
 	stmt, err := db.db.PrepareContext(ctx, query)
 	if err != nil {
+		trace.FinishSpanWithError(sp)
 		return nil, err
 	}
+	trace.FinishSpanWithSuccess(sp)
 	return &Stmt{stmt: stmt}, nil
 }
 
 // QueryContext executes a query that returns rows.
 func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	return db.db.QueryContext(ctx, query, args...)
+	sp, _ := db.startSpan(ctx, "db.QueryContext", "")
+	rows, err := db.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return rows, err
 }
 
 // QueryRowContext executes a query that is expected to return at most one row.
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	sp, _ := db.startSpan(ctx, "db.QueryRowContext", "")
+	trace.FinishSpanWithSuccess(sp)
 	return db.db.QueryRowContext(ctx, query, args...)
 }
 
@@ -212,6 +253,8 @@ func (db *DB) SetMaxOpenConns(n int) {
 
 // Stats returns database statistics.
 func (db *DB) Stats(ctx context.Context) sql.DBStats {
+	sp, _ := db.startSpan(ctx, "db.Stats", "")
+	defer trace.FinishSpanWithSuccess(sp)
 	return db.db.Stats()
 }
 
