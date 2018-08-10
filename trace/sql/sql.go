@@ -14,18 +14,18 @@ type connInfo struct {
 	instance, user string
 }
 
-// Conn represents a single database connection.
-type Conn struct {
-	connInfo
-	conn *sql.Conn
-}
-
-func (c *Conn) startSpan(
+func (c *connInfo) startSpan(
 	ctx context.Context,
 	opName, stmt string,
 	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
 	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", c.instance, c.user, stmt)
+}
+
+// Conn represents a single database connection.
+type Conn struct {
+	connInfo
+	conn *sql.Conn
 }
 
 // BeginTx starts a transaction.
@@ -53,8 +53,8 @@ func (c *Conn) Close(ctx context.Context) error {
 	return nil
 }
 
-// ExecContext executes a query without returning any rows.
-func (c *Conn) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+// Exec executes a query without returning any rows.
+func (c *Conn) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	sp, _ := c.startSpan(ctx, "conn.ExecContext", query)
 	res, err := c.conn.ExecContext(ctx, query, args...)
 	if err != nil {
@@ -65,8 +65,8 @@ func (c *Conn) ExecContext(ctx context.Context, query string, args ...interface{
 	return res, nil
 }
 
-// PingContext verifies the connection to the database is still alive.
-func (c *Conn) PingContext(ctx context.Context) error {
+// Ping verifies the connection to the database is still alive.
+func (c *Conn) Ping(ctx context.Context) error {
 	sp, _ := c.startSpan(ctx, "conn.PingContext", "")
 	err := c.conn.PingContext(ctx)
 	if err != nil {
@@ -77,8 +77,8 @@ func (c *Conn) PingContext(ctx context.Context) error {
 	return nil
 }
 
-// PrepareContext creates a prepared statement for later queries or executions.
-func (c *Conn) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
+// Prepare creates a prepared statement for later queries or executions.
+func (c *Conn) Prepare(ctx context.Context, query string) (*Stmt, error) {
 	sp, _ := c.startSpan(ctx, "conn.PrepareContext", query)
 	stmt, err := c.conn.PrepareContext(ctx, query)
 	if err != nil {
@@ -89,8 +89,8 @@ func (c *Conn) PrepareContext(ctx context.Context, query string) (*Stmt, error) 
 	return &Stmt{stmt: stmt}, nil
 }
 
-// QueryContext executes a query that returns rows.
-func (c *Conn) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+// Query executes a query that returns rows.
+func (c *Conn) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	sp, _ := c.startSpan(ctx, "conn.QueryContext", query)
 	rows, err := c.conn.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -101,8 +101,8 @@ func (c *Conn) QueryContext(ctx context.Context, query string, args ...interface
 	return rows, nil
 }
 
-// QueryRowContext executes a query that is expected to return at most one row.
-func (c *Conn) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+// QueryRow executes a query that is expected to return at most one row.
+func (c *Conn) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	sp, _ := c.startSpan(ctx, "conn.QueryRowContext", query)
 	row := c.conn.QueryRowContext(ctx, query, args...)
 	trace.FinishSpanWithSuccess(sp)
@@ -113,14 +113,6 @@ func (c *Conn) QueryRowContext(ctx context.Context, query string, args ...interf
 type DB struct {
 	connInfo
 	db *sql.DB
-}
-
-func (db *DB) startSpan(
-	ctx context.Context,
-	opName, stmt string,
-	tags ...opentracing.Tag,
-) (opentracing.Span, context.Context) {
-	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", db.instance, db.user, stmt)
 }
 
 // Open opens a database.
@@ -181,8 +173,8 @@ func (db *DB) Driver(ctx context.Context) driver.Driver {
 	return db.db.Driver()
 }
 
-// ExecContext executes a query without returning any rows.
-func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+// Exec executes a query without returning any rows.
+func (db *DB) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	sp, _ := db.startSpan(ctx, "db.Driver", query)
 	res, err := db.db.ExecContext(ctx, query, args...)
 	if err != nil {
@@ -193,8 +185,8 @@ func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}
 	return res, nil
 }
 
-// PingContext verifies a connection to the database is still alive, establishing a connection if necessary.
-func (db *DB) PingContext(ctx context.Context) error {
+// Ping verifies a connection to the database is still alive, establishing a connection if necessary.
+func (db *DB) Ping(ctx context.Context) error {
 	sp, _ := db.startSpan(ctx, "db.PingContext", "")
 	err := db.db.PingContext(ctx)
 	if err != nil {
@@ -205,8 +197,8 @@ func (db *DB) PingContext(ctx context.Context) error {
 	return nil
 }
 
-// PrepareContext creates a prepared statement for later queries or executions.
-func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
+// Prepare creates a prepared statement for later queries or executions.
+func (db *DB) Prepare(ctx context.Context, query string) (*Stmt, error) {
 	sp, _ := db.startSpan(ctx, "db.PrepareContext", "")
 	stmt, err := db.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -217,8 +209,8 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 	return &Stmt{stmt: stmt}, nil
 }
 
-// QueryContext executes a query that returns rows.
-func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+// Query executes a query that returns rows.
+func (db *DB) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	sp, _ := db.startSpan(ctx, "db.QueryContext", "")
 	rows, err := db.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -229,8 +221,8 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 	return rows, err
 }
 
-// QueryRowContext executes a query that is expected to return at most one row.
-func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+// QueryRow executes a query that is expected to return at most one row.
+func (db *DB) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	sp, _ := db.startSpan(ctx, "db.QueryRowContext", "")
 	trace.FinishSpanWithSuccess(sp)
 	return db.db.QueryRowContext(ctx, query, args...)
@@ -264,14 +256,6 @@ type Stmt struct {
 	stmt *sql.Stmt
 }
 
-func (s *Stmt) startSpan(
-	ctx context.Context,
-	opName, stmt string,
-	tags ...opentracing.Tag,
-) (opentracing.Span, context.Context) {
-	return trace.StartSQLSpan(ctx, opName, "sql", "rdbms", s.instance, s.user, stmt)
-}
-
 // Close closes the statement.
 func (s *Stmt) Close(ctx context.Context) error {
 	sp, _ := s.startSpan(ctx, "stmt.Close", "")
@@ -284,8 +268,8 @@ func (s *Stmt) Close(ctx context.Context) error {
 	return nil
 }
 
-// ExecContext executes a prepared statement.
-func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
+// Exec executes a prepared statement.
+func (s *Stmt) Exec(ctx context.Context, args ...interface{}) (sql.Result, error) {
 	sp, _ := s.startSpan(ctx, "stmt.ExecContext", "")
 	res, err := s.stmt.ExecContext(ctx, args...)
 	if err != nil {
@@ -296,8 +280,8 @@ func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result
 	return res, nil
 }
 
-// QueryContext executes a prepared query statement.
-func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
+// Query executes a prepared query statement.
+func (s *Stmt) Query(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
 	sp, _ := s.startSpan(ctx, "stmt.ExecContext", "")
 	rows, err := s.stmt.QueryContext(ctx, args...)
 	if err != nil {
@@ -308,8 +292,8 @@ func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows
 	return rows, nil
 }
 
-// QueryRowContext executes a prepared query statement.
-func (s *Stmt) QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row {
+// QueryRow executes a prepared query statement.
+func (s *Stmt) QueryRow(ctx context.Context, args ...interface{}) *sql.Row {
 	sp, _ := s.startSpan(ctx, "stmt.QueryRowContext", "")
 	defer trace.FinishSpanWithSuccess(sp)
 	return s.stmt.QueryRowContext(ctx, args...)
@@ -323,39 +307,74 @@ type Tx struct {
 
 // Commit commits the transaction.
 func (tx *Tx) Commit(ctx context.Context) error {
-	return tx.tx.Commit()
-}
-
-// ExecContext executes a query that doesn't return rows.
-func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	return tx.tx.ExecContext(ctx, query, args...)
-}
-
-// PrepareContext creates a prepared statement for use within a transaction.
-func (tx *Tx) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
-	stmt, err := tx.tx.PrepareContext(ctx, query)
+	sp, _ := tx.startSpan(ctx, "tx.Commit", "")
+	err := tx.tx.Commit()
 	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return nil
+}
+
+// Exec executes a query that doesn't return rows.
+func (tx *Tx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	sp, _ := tx.startSpan(ctx, "tx.ExecContext", "")
+	res, err := tx.tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
 		return nil, err
 	}
+	trace.FinishSpanWithSuccess(sp)
+	return res, nil
+}
+
+// Prepare creates a prepared statement for use within a transaction.
+func (tx *Tx) Prepare(ctx context.Context, query string) (*Stmt, error) {
+	sp, _ := tx.startSpan(ctx, "tx.PrepareContext", query)
+	stmt, err := tx.tx.PrepareContext(ctx, query)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
 	return &Stmt{stmt: stmt}, nil
 }
 
-// QueryContext executes a query that returns rows.
-func (tx *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	return tx.tx.QueryContext(ctx, query, args...)
+// Query executes a query that returns rows.
+func (tx *Tx) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	sp, _ := tx.startSpan(ctx, "tx.QueryContext", query)
+	rows, err := tx.tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return nil, err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return rows, nil
 }
 
-// QueryRowContext executes a query that is expected to return at most one row.
-func (tx *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+// QueryRow executes a query that is expected to return at most one row.
+func (tx *Tx) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	sp, _ := tx.startSpan(ctx, "tx.QueryRowContext", query)
+	defer trace.FinishSpanWithSuccess(sp)
 	return tx.tx.QueryRowContext(ctx, query, args...)
 }
 
 // Rollback aborts the transaction.
-func (tx *Tx) Rollback() error {
-	return tx.tx.Rollback()
+func (tx *Tx) Rollback(ctx context.Context) error {
+	sp, _ := tx.startSpan(ctx, "tx.Rollback", "")
+	err := tx.tx.Rollback()
+	if err != nil {
+		trace.FinishSpanWithError(sp)
+		return err
+	}
+	trace.FinishSpanWithSuccess(sp)
+	return nil
 }
 
-// StmtContext returns a transaction-specific prepared statement from an existing statement.
-func (tx *Tx) StmtContext(ctx context.Context, stmt *Stmt) *Stmt {
+// Stmt returns a transaction-specific prepared statement from an existing statement.
+func (tx *Tx) Stmt(ctx context.Context, stmt *Stmt) *Stmt {
+	sp, _ := tx.startSpan(ctx, "tx.StmtContext", "")
+	defer trace.FinishSpanWithSuccess(sp)
 	return &Stmt{stmt: tx.tx.StmtContext(ctx, stmt.stmt)}
 }
