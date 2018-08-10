@@ -32,12 +32,12 @@ func (m *message) Decode(v interface{}) error {
 }
 
 func (m *message) Ack() error {
-	trace.FinishSpanWithSuccess(m.span)
+	trace.SpanSuccess(m.span)
 	return nil
 }
 
 func (m *message) Nack() error {
-	trace.FinishSpanWithError(m.span)
+	trace.SpanError(m.span)
 	return nil
 }
 
@@ -142,7 +142,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					c.log.Debugf("data received from topic %s", msg.Topic)
 					topicPartitionOffsetDiffGaugeSet(msg.Topic, msg.Partition, consumer.HighWaterMarkOffset(), msg.Offset)
 					go func() {
-						sp, chCtx := trace.StartConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
+						sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
 						var ct string
 						if c.contentType != "" {
@@ -150,7 +150,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 						} else {
 							ct, err = determineContentType(msg.Headers)
 							if err != nil {
-								trace.FinishSpanWithError(sp)
+								trace.SpanError(sp)
 								chErr <- errors.Wrap(err, "failed to determine content type")
 								return
 							}
@@ -158,7 +158,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 
 						dec, err := async.DetermineDecoder(ct)
 						if err != nil {
-							trace.FinishSpanWithError(sp)
+							trace.SpanError(sp)
 							chErr <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
 							return
 						}
