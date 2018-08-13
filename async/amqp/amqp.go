@@ -122,28 +122,25 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 			log.Info("canceling consuming messages requested")
 			return
 		case d := <-deliveries:
-			log.Debugf("processing message %s", d.MessageId)
-			go func(del *amqp.Delivery) {
-				sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(del.Headers))
+			log.Debugf("processing message %d", d.DeliveryTag)
+			sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
+			dec, err := async.DetermineDecoder(d.ContentType)
+			if err != nil {
+				agr := agr_errors.New()
+				agr.Append(errors.Wrapf(err, "failed to determine encoding %s. Nack message", d.ContentType))
+				agr.Append(errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
+				trace.SpanError(sp)
+				chErr <- agr
+				return
+			}
 
-				dec, err := async.DetermineDecoder(del.ContentType)
-				if err != nil {
-					agr := agr_errors.New()
-					agr.Append(errors.Wrapf(err, "failed to determine encoding %s. Nack message", del.ContentType))
-					agr.Append(errors.Wrap(del.Nack(false, c.requeue), "failed to NACK message"))
-					trace.SpanError(sp)
-					chErr <- agr
-					return
-				}
-
-				chMsg <- &message{
-					ctx:     chCtx,
-					dec:     dec,
-					del:     del,
-					span:    sp,
-					requeue: c.requeue,
-				}
-			}(&d)
+			chMsg <- &message{
+				ctx:     chCtx,
+				dec:     dec,
+				del:     &d,
+				span:    sp,
+				requeue: c.requeue,
+			}
 		}
 	}()
 
