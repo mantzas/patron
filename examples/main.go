@@ -30,7 +30,7 @@ func (a *Audits) append(aud Audit) {
 }
 
 const (
-	amqpURL      = "amqp://admin:admin@localhost:5672/"
+	amqpURL      = "amqp://guest:guest@localhost:5672/"
 	amqpExchange = "patron"
 	amqpQueue    = "patron"
 	kafkaTopic   = "patron-topic"
@@ -62,17 +62,17 @@ func main() {
 
 	amqpCmp, err := newAmqpComponent(name, amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
-		log.Create().Fatalf("failed to create processor %v", err)
+		log.Fatalf("failed to create processor %v", err)
 	}
 
 	kafkaCmp, err := newKafkaComponent(name, kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
 	if err != nil {
-		log.Create().Fatalf("failed to create processor %v", err)
+		log.Fatalf("failed to create processor %v", err)
 	}
 
 	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic)
 	if err != nil {
-		log.Create().Fatalf("failed to create processor %v", err)
+		log.Fatalf("failed to create processor %v", err)
 	}
 
 	// Set up routes
@@ -82,11 +82,11 @@ func main() {
 
 	srv, err := patron.New(name, version, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
-		log.Create().Fatalf("failed to create service %v", err)
+		log.Fatalf("failed to create service %v", err)
 	}
 
 	err = srv.Run()
 	if err != nil {
-		log.Create().Fatalf("failed to create service %v", err)
+		log.Fatalf("failed to create service %v", err)
 	}
 }

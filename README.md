@@ -141,26 +141,21 @@ downstream systems. The tracing information is added to each implementations hea
 
 The log package is designed to be a leveled logger with field support.
 
-The log package defines two interfaces (Logger and Factory) that have to be implemented in order to set up the logging in this framework. 
-After implementing the two interfaces you can setup logging by doing the following:
+The log package defines the logger interface and a factory function type that needs to be implemented in order to set up the logging in this framework.
 
 ```go
-  // instantiate the implemented factory and fields (map[string]interface{})
+  // instantiate the implemented factory func type and fields (map[string]interface{})
   err := log.Setup(factory, fields)
   // handle error
 ```
 
 `If the setup is omitted the package will not setup any logging!`
 
-In order to get a logger use the the following:
+From there logging is as simple as
 
 ```go
-  logger := log.Create()
+  log.Info("Hello world!")
 ```
-
-which returns a logger with all fields appended along with the source code file of the class where the logger has been created.
-
-`It is advisable to create one logger in every type/package once and use it to get information about the log origin!`
 
 The implementations should support following log levels:
 
@@ -175,7 +170,7 @@ The first four (Debug, Info, Warn and Error) give the opportunity to differentia
 
 The package supports fields, which are logged along with the message, to augment the information further to ease querying in the log management system.
 
-The following implementations are provided as sub-package:
+The following implementations are provided as sub-package and are by default wired up in the framework:
 
 - zerolog, which supports the excellent [zerolog](https://github.com/rs/zerolog) library and is set up by default
 
@@ -185,8 +180,6 @@ The logger interface defines the actual logger.
 
 ```go
 type Logger interface {
-  Level() Level
-  Fields() map[string]interface{}
   Fatal(...interface{})
   Fatalf(string, ...interface{})
   Panic(...interface{})
@@ -206,14 +199,8 @@ In order to be consistent with the design the implementation of the `Fatal(f)` h
 
 ### Factory
 
-The factory interface defines a factory for creating a logger.
+The factory function type defines a factory for creating a logger.
 
 ```go
-type Factory interface {
-  Create(map[string]interface{}) Logger
-}
+type FactoryFunc func(map[string]interface{}) Logger
 ```
-
-Two methods are supported:
-
-- Create, which creates a logger with the specified fields (or nil)

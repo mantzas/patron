@@ -31,9 +31,8 @@ const (
 )
 
 var (
-	cls      io.Closer
-	innerLog log.Logger
-	version  string
+	cls     io.Closer
+	version string
 )
 
 func init() {
@@ -60,7 +59,7 @@ func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) er
 	time.Sleep(100 * time.Millisecond)
 	metricsFactory := prometheus.New()
 	tr, clsTemp, err := cfg.NewTracer(
-		config.Logger(jaegerLoggerAdapter{log: log.Create()}),
+		config.Logger(jaegerLoggerAdapter{}),
 		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
 	)
 	if err != nil {
@@ -69,13 +68,12 @@ func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) er
 	cls = clsTemp
 	opentracing.SetGlobalTracer(tr)
 	version = ver
-	innerLog = log.Create()
 	return nil
 }
 
 // Close the tracer.
 func Close() error {
-	innerLog.Debug("closing tracer")
+	log.Debug("closing tracer")
 	return cls.Close()
 }
 
@@ -87,7 +85,7 @@ func ConsumerSpan(
 ) (opentracing.Span, context.Context) {
 	spCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
-		innerLog.Errorf("failed to extract consumer span: %v", err)
+		log.Errorf("failed to extract consumer span: %v", err)
 	}
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
@@ -111,7 +109,7 @@ func SpanError(sp opentracing.Span) {
 func HTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
 	ctx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
-		innerLog.Errorf("failed to extract HTTP span: %v", err)
+		log.Errorf("failed to extract HTTP span: %v", err)
 	}
 	sp := opentracing.StartSpan(HTTPOpName(r.Method, path), ext.RPCServerOption(ctx))
 	ext.HTTPMethod.Set(sp, r.Method)
@@ -167,15 +165,14 @@ func HTTPOpName(method, path string) string {
 }
 
 type jaegerLoggerAdapter struct {
-	log log.Logger
 }
 
 func (l jaegerLoggerAdapter) Error(msg string) {
-	l.log.Error(msg)
+	log.Error(msg)
 }
 
 func (l jaegerLoggerAdapter) Infof(msg string, args ...interface{}) {
-	l.log.Infof(msg, args...)
+	log.Infof(msg, args...)
 }
 
 type consumerOption struct {

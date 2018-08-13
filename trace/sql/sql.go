@@ -17,7 +17,6 @@ type connInfo struct {
 func (c *connInfo) startSpan(
 	ctx context.Context,
 	opName, stmt string,
-	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
 	return trace.SQLSpan(ctx, opName, "sql", "rdbms", c.instance, c.user, stmt)
 }

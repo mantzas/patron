@@ -24,8 +24,6 @@ func init() {
 // Logger abstraction based on zerolog.
 type Logger struct {
 	logger *zerolog.Logger
-	fields map[string]interface{}
-	lvl    log.Level
 }
 
 // NewLogger creates a new logger.
@@ -34,17 +32,7 @@ func NewLogger(l *zerolog.Logger, lvl log.Level, f map[string]interface{}) log.L
 		f = make(map[string]interface{})
 	}
 	zl := l.Level(levelMap[lvl]).With().Fields(f).Logger()
-	return &Logger{logger: &zl, fields: f, lvl: lvl}
-}
-
-// Level returns the minimum level.
-func (zl Logger) Level() log.Level {
-	return zl.lvl
-}
-
-// Fields returns the fields associated with this logger.
-func (zl Logger) Fields() map[string]interface{} {
-	return zl.fields
+	return &Logger{logger: &zl}
 }
 
 // Panic logging.
