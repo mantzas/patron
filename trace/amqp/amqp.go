@@ -80,7 +80,7 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 
 	err = ch.ExchangeDeclare(
 		exc,                 // name
-		amqp.ExchangeFanout, // type
+		amqp.ExchangeDirect, // type
 		true,                // durable
 		false,               // auto-deleted
 		false,               // internal
