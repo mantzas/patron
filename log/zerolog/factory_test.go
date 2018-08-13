@@ -29,7 +29,6 @@ func TestFactory_Create(t *testing.T) {
 	f := createFactory(&b)
 	l := f.Create(nil)
 	assert.NotNil(l)
-	assert.Len(l.Fields(), 0)
 }
 
 func Test_getSource(t *testing.T) {
@@ -53,7 +52,7 @@ func Test_sourceFields(t *testing.T) {
 	key, src, ok := sourceFields(1)
 	assert.True(ok)
 	assert.Equal("src", key)
-	assert.Equal("zerolog/factory_test.go:53", src)
+	assert.Equal("zerolog/factory_test.go:52", src)
 }
 
 func createFactory(wr io.Writer) log.Factory {

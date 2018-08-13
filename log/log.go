@@ -26,8 +26,6 @@ const (
 
 // Logger interface definition of a logger.
 type Logger interface {
-	Level() Level
-	Fields() map[string]interface{}
 	Fatal(...interface{})
 	Fatalf(string, ...interface{})
 	Panic(...interface{})

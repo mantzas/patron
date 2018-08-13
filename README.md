@@ -185,8 +185,6 @@ The logger interface defines the actual logger.
 
 ```go
 type Logger interface {
-  Level() Level
-  Fields() map[string]interface{}
   Fatal(...interface{})
   Fatalf(string, ...interface{})
   Panic(...interface{})

@@ -27,17 +27,8 @@ func TestNewLogger(t *testing.T) {
 
 			l := NewLogger(&zerolog.Logger{}, tt.lvl, tt.f)
 			assert.NotNil(l)
-			assert.Equal(l.Level(), tt.lvl)
-			assert.Len(l.Fields(), tt.expectedFields)
 		})
 	}
-}
-
-func TestLogger_Fields(t *testing.T) {
-	assert := assert.New(t)
-	l := NewLogger(&zerolog.Logger{}, log.DebugLevel, f)
-	assert.NotNil(l)
-	assert.Equal(f, l.Fields())
 }
 
 func TestLogger_Panic(t *testing.T) {
