@@ -12,7 +12,6 @@ import (
 
 type amqpComponent struct {
 	cmp patron.Component
-	log log.Logger
 }
 
 func newAmqpComponent(name, url, queue, exchange string) (*amqpComponent, error) {
@@ -33,7 +32,6 @@ func newAmqpComponent(name, url, queue, exchange string) (*amqpComponent, error)
 }
 
 func (ac *amqpComponent) Process(ctx context.Context, msg async.Message) error {
-	ac.log = log.Create()
 	var ads Audits
 
 	err := msg.Decode(&ads)
@@ -44,7 +42,7 @@ func (ac *amqpComponent) Process(ctx context.Context, msg async.Message) error {
 	ads.append(Audit{Name: "AMQP consumer", Started: time.Now()})
 
 	for _, a := range ads {
-		ac.log.Infof("%s@ took %s", a.Name, a.Duration)
+		log.Infof("%s@ took %s", a.Name, a.Duration)
 	}
 
 	return nil

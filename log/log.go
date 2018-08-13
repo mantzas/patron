@@ -2,10 +2,6 @@ package log
 
 import (
 	"errors"
-	"fmt"
-	"path"
-	"path/filepath"
-	"runtime"
 )
 
 // The Level type definition.
@@ -30,8 +26,6 @@ const (
 
 // Logger interface definition of a logger.
 type Logger interface {
-	Level() Level
-	Fields() map[string]interface{}
 	Fatal(...interface{})
 	Fatalf(string, ...interface{})
 	Panic(...interface{})
@@ -46,18 +40,13 @@ type Logger interface {
 	Debugf(string, ...interface{})
 }
 
-// Factory interface for creating loggers.
-type Factory interface {
-	Create(map[string]interface{}) Logger
-}
+// FactoryFunc function type for creating loggers.
+type FactoryFunc func(map[string]interface{}) Logger
 
-var (
-	factory Factory = nilFactory{}
-	fields          = make(map[string]interface{})
-)
+var logger Logger = nilLogger{}
 
 // Setup logging by providing a logger factory.
-func Setup(f Factory, fls map[string]interface{}) error {
+func Setup(f FactoryFunc, fls map[string]interface{}) error {
 	if f == nil {
 		return errors.New("factory is nil")
 	}
@@ -66,73 +55,71 @@ func Setup(f Factory, fls map[string]interface{}) error {
 		fls = make(map[string]interface{})
 	}
 
-	factory = f
-	fields = fls
+	logger = f(fls)
 	return nil
 }
 
-// Create returns a new logger with all fields inherited and with source file mapping.
-func Create() Logger {
-	if factory == nil {
-		return nil
-	}
-
-	fls := make(map[string]interface{})
-
-	for k, v := range fields {
-		fls[k] = v
-	}
-
-	if key, val, ok := sourceFields(); ok {
-		fls[key] = val
-	}
-
-	return factory.Create(fls)
+// Panic logging.
+func Panic(args ...interface{}) {
+	logger.Panic(args...)
 }
 
-func sourceFields() (key string, src string, ok bool) {
-	_, file, _, ok := runtime.Caller(2)
-	if !ok {
-		return
-	}
-
-	src = getSource(file)
-	key = "src"
-	ok = true
-	return
+// Panicf logging.
+func Panicf(msg string, args ...interface{}) {
+	logger.Panicf(msg, args...)
 }
 
-func getSource(file string) (src string) {
-	if file == "" {
-		return
-	}
-	d, f := filepath.Split(file)
-	d = path.Base(d)
-	if d == "." || d == "" {
-		src = f
-	} else {
-		src = fmt.Sprintf("%s/%s", d, f)
-	}
-	return
+// Fatal logging.
+func Fatal(args ...interface{}) {
+	logger.Fatal(args...)
 }
 
-type nilFactory struct {
+// Fatalf logging.
+func Fatalf(msg string, args ...interface{}) {
+	logger.Fatalf(msg, args...)
 }
 
-func (nf nilFactory) Create(fields map[string]interface{}) Logger {
-	return &nilLogger{fls: fields}
+// Error logging.
+func Error(args ...interface{}) {
+	logger.Error(args...)
+}
+
+// Errorf logging.
+func Errorf(msg string, args ...interface{}) {
+	logger.Errorf(msg, args...)
+}
+
+// Warn logging.
+func Warn(args ...interface{}) {
+	logger.Warn(args...)
+}
+
+// Warnf logging.
+func Warnf(msg string, args ...interface{}) {
+	logger.Warnf(msg, args...)
+}
+
+// Info logging.
+func Info(args ...interface{}) {
+	logger.Info(args...)
+}
+
+// Infof logging.
+func Infof(msg string, args ...interface{}) {
+	logger.Infof(msg, args...)
+}
+
+// Debug logging.
+func Debug(args ...interface{}) {
+	logger.Debug(args...)
+}
+
+// Debugf logging.
+func Debugf(msg string, args ...interface{}) {
+	logger.Debugf(msg, args...)
 }
 
 type nilLogger struct {
-	fls map[string]interface{}
-}
-
-func (nl nilLogger) Level() Level {
-	return DebugLevel
-}
-
-func (nl nilLogger) Fields() map[string]interface{} {
-	return nl.fls
 }
 
 func (nl nilLogger) Panic(args ...interface{}) {

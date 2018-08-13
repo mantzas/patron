@@ -3,6 +3,7 @@ package patron
 import (
 	"errors"
 
+	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync/http"
 )
 
@@ -16,7 +17,7 @@ func Routes(rr []http.Route) OptionFunc {
 			return errors.New("routes are required")
 		}
 		s.routes = rr
-		s.log.Info("routes options are set")
+		log.Info("routes options are set")
 		return nil
 	}
 }
@@ -28,7 +29,7 @@ func HealthCheck(hcf http.HealthCheckFunc) OptionFunc {
 			return errors.New("health check func is required")
 		}
 		s.hcf = hcf
-		s.log.Info("health check func is set")
+		log.Info("health check func is set")
 		return nil
 	}
 }
@@ -40,7 +41,7 @@ func Components(cc ...Component) OptionFunc {
 			return errors.New("components are required")
 		}
 		s.cps = append(s.cps, cc...)
-		s.log.Info("component options are set")
+		log.Info("component options are set")
 		return nil
 	}
 }

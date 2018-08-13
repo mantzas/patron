@@ -36,7 +36,6 @@ type Service struct {
 	hcf    http.HealthCheckFunc
 	ctx    context.Context
 	cancel context.CancelFunc
-	log    log.Logger
 }
 
 // New creates a new named service and allows for customization through functional options.
@@ -51,9 +50,9 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel, log: log.Create()}
+	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
 
-	err := s.setupLogging(name, version)
+	err := SetupLogging(name, version)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,7 @@ func (s *Service) setupTermSignal() {
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 		<-stop
-		s.log.Info("term signal received, cancelling")
+		log.Info("term signal received, cancelling")
 		s.cancel()
 	}()
 }
@@ -105,14 +104,14 @@ func (s *Service) Run() error {
 
 	select {
 	case err := <-errCh:
-		s.log.Error("component returned a error")
+		log.Error("component returned a error")
 		err1 := s.Shutdown()
 		if err1 != nil {
 			return errors.Wrapf(err, "failed to shutdown %v", err1)
 		}
 		return err
 	case <-s.ctx.Done():
-		s.log.Info("stop signal received")
+		log.Info("stop signal received")
 		return s.Shutdown()
 	}
 }
@@ -124,10 +123,10 @@ func (s *Service) Shutdown() error {
 	defer func() {
 		err := trace.Close()
 		if err != nil {
-			s.log.Errorf("failed to close trace %v", err)
+			log.Errorf("failed to close trace %v", err)
 		}
 	}()
-	s.log.Info("shutting down components")
+	log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}
 	agr := agr_errors.New()
@@ -165,21 +164,11 @@ func SetupLogging(name, version string) error {
 		"host": hostname,
 	}
 
-	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)), f)
+	err = log.Setup(zerolog.Create(log.Level(lvl)), f)
 	if err != nil {
 		return errors.Wrap(err, "failed to setup logging")
 	}
 
-	return nil
-}
-
-func (s *Service) setupLogging(name, version string) error {
-
-	err := SetupLogging(name, version)
-	if err != nil {
-		return err
-	}
-	s.log = log.Create()
 	return nil
 }
 
@@ -204,7 +193,7 @@ func (s *Service) setupDefaultTracing(name, version string) error {
 			return errors.Wrap(err, "env var for jaeger sampler param is not valid")
 		}
 	}
-	s.log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
+	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
 	return trace.Setup(name, version, agent, tp, prmVal)
 }
 
@@ -221,7 +210,7 @@ func (s *Service) createHTTPComponent() (Component, error) {
 		}
 	}
 
-	s.log.Infof("creating default HTTP component at port %s", strconv.FormatInt(portVal, 10))
+	log.Infof("creating default HTTP component at port %s", strconv.FormatInt(portVal, 10))
 
 	options := []http.OptionFunc{
 		http.Port(int(portVal)),

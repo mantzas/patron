@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/opentracing/opentracing-go/ext"
@@ -25,7 +23,6 @@ func TestSetup_Tracer_Close(t *testing.T) {
 
 func TestStartFinishConsumerSpan(t *testing.T) {
 	assert := assert.New(t)
-	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	hdr := map[string]string{"key": "val"}
@@ -49,9 +46,6 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 
 func TestStartFinishChildSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
-	assert.NoError(err)
-	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	sp, ctx := ConsumerSpan(context.Background(), "test", AMQPConsumerComponent, nil)
@@ -86,9 +80,6 @@ func TestStartFinishChildSpan(t *testing.T) {
 
 func TestHTTPStartFinishSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
-	assert.NoError(err)
-	innerLog = log.Create()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	req, err := http.NewRequest("GET", "/", nil)
