@@ -24,6 +24,7 @@ func DefaultFactory(lvl log.Level) log.Factory {
 	zerolog.LevelFieldName = "lvl"
 	zerolog.MessageFieldName = "msg"
 	zerolog.TimeFieldFormat = time.RFC3339Nano
+	zerolog.CallerFieldName = "src"
 	zl := zerolog.New(os.Stdout).With().Timestamp().Caller().Logger()
 	return NewFactory(&zl, lvl)
 }
