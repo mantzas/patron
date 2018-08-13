@@ -46,9 +46,7 @@ type Factory interface {
 }
 
 var (
-	factory Factory = nilFactory{}
-	logger  Logger  = nilLogger{}
-	fields          = make(map[string]interface{})
+	logger Logger = nilLogger{}
 )
 
 // Setup logging by providing a logger factory.
@@ -61,9 +59,7 @@ func Setup(f Factory, fls map[string]interface{}) error {
 		fls = make(map[string]interface{})
 	}
 
-	factory = f
 	logger = f.Create(fls)
-	fields = fls
 	return nil
 }
 
