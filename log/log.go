@@ -45,9 +45,7 @@ type Factory interface {
 	Create(map[string]interface{}) Logger
 }
 
-var (
-	logger Logger = nilLogger{}
-)
+var logger Logger = nilLogger{}
 
 // Setup logging by providing a logger factory.
 func Setup(f Factory, fls map[string]interface{}) error {
@@ -132,14 +130,6 @@ func (nf nilFactory) Create(fields map[string]interface{}) Logger {
 
 type nilLogger struct {
 	fls map[string]interface{}
-}
-
-func (nl nilLogger) Level() Level {
-	return DebugLevel
-}
-
-func (nl nilLogger) Fields() map[string]interface{} {
-	return nl.fls
 }
 
 func (nl nilLogger) Panic(args ...interface{}) {

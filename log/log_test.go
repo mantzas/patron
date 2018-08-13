@@ -112,17 +112,6 @@ func TestLog_Debugf(t *testing.T) {
 	assert.Equal(t, 1, l.debugCount)
 }
 
-type testFactory struct {
-}
-
-func (f testFactory) Create(fields map[string]interface{}) Logger {
-	return &testLogger{}
-}
-
-func (f testFactory) CreateSub(logger Logger, fields map[string]interface{}) Logger {
-	return &testLogger{}
-}
-
 type testLogger struct {
 	debugCount int
 	infoCount  int
@@ -130,14 +119,6 @@ type testLogger struct {
 	errorCount int
 	fatalCount int
 	panicCount int
-}
-
-func (t *testLogger) Level() Level {
-	return DebugLevel
-}
-
-func (t *testLogger) Fields() map[string]interface{} {
-	return make(map[string]interface{})
 }
 
 func (t *testLogger) Panic(args ...interface{}) {
