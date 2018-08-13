@@ -28,7 +28,7 @@ func DefaultFactory(lvl log.Level) log.Factory {
 	zerolog.LevelFieldName = "lvl"
 	zerolog.MessageFieldName = "msg"
 	zerolog.TimeFieldFormat = time.RFC3339Nano
-	zl := zerolog.New(os.Stdout).With().Timestamp().Logger().Hook(sourceHook{})
+	zl := zerolog.New(os.Stdout).With().Timestamp().Logger().Hook(sourceHook{skip: 7})
 	return NewFactory(&zl, lvl)
 }
 
@@ -37,18 +37,20 @@ func (zf *Factory) Create(f map[string]interface{}) log.Logger {
 	return NewLogger(zf.logger, zf.lvl, f)
 }
 
-type sourceHook struct{}
+type sourceHook struct {
+	skip int
+}
 
 func (sh sourceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-	k, v, ok := sourceFields()
+	k, v, ok := sourceFields(sh.skip)
 	if !ok {
 		return
 	}
 	e.Str(k, v)
 }
 
-func sourceFields() (key string, src string, ok bool) {
-	_, file, line, ok := runtime.Caller(7)
+func sourceFields(skip int) (key string, src string, ok bool) {
+	_, file, line, ok := runtime.Caller(skip)
 	if !ok {
 		return
 	}

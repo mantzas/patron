@@ -48,6 +48,14 @@ func Test_getSource(t *testing.T) {
 	}
 }
 
+func Test_sourceFields(t *testing.T) {
+	assert := assert.New(t)
+	key, src, ok := sourceFields(1)
+	assert.True(ok)
+	assert.Equal("src", key)
+	assert.Equal("zerolog/factory_test.go:53", src)
+}
+
 func createFactory(wr io.Writer) log.Factory {
 	l := zerolog.New(wr)
 	return NewFactory(&l, log.DebugLevel)
