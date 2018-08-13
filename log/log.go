@@ -73,25 +73,6 @@ func Setup(f Factory, fls map[string]interface{}) error {
 	return nil
 }
 
-// Create returns a new logger with all fields inherited and with source file mapping.
-func Create() Logger {
-	if factory == nil {
-		return nil
-	}
-
-	fls := make(map[string]interface{})
-
-	for k, v := range fields {
-		fls[k] = v
-	}
-
-	if key, val, ok := sourceFields(); ok {
-		fls[key] = val
-	}
-
-	return factory.Create(fls)
-}
-
 // Panic logging.
 func Panic(args ...interface{}) {
 	logger.Panic(args...)

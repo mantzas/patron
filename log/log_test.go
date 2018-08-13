@@ -28,23 +28,6 @@ func TestSetup(t *testing.T) {
 	}
 }
 
-func TestCreate(t *testing.T) {
-	assert := assert.New(t)
-	t.Run("success", func(t *testing.T) {
-		fields = map[string]interface{}{"key": "val"}
-		expected := map[string]interface{}{"key": "val", "src": "log/log_test.go"}
-		l := Create()
-		assert.NotNil(l)
-		assert.Equal(DebugLevel, l.Level())
-		assert.Equal(expected, l.Fields())
-	})
-	t.Run("factory nil", func(t *testing.T) {
-		factory = nil
-		l := Create()
-		assert.Nil(l)
-	})
-}
-
 func Test_getSource(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {

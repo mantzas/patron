@@ -64,7 +64,6 @@ type Consumer struct {
 	contentType string
 	cnl         context.CancelFunc
 	ms          sarama.Consumer
-	log         log.Logger
 }
 
 // New creates a ew Kafka consumer with defaults. To override those default you should provide a option.
@@ -117,7 +116,6 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 
 // Consume starts consuming messages from a Kafka topic.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
-	c.log = log.Create()
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
 
@@ -134,12 +132,12 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 			for {
 				select {
 				case <-ctx.Done():
-					c.log.Info("canceling consuming messages requested")
+					log.Info("canceling consuming messages requested")
 					return
 				case consumerError := <-consumer.Errors():
 					chErr <- consumerError
 				case msg := <-consumer.Messages():
-					c.log.Debugf("data received from topic %s", msg.Topic)
+					log.Debugf("data received from topic %s", msg.Topic)
 					topicPartitionOffsetDiffGaugeSet(msg.Topic, msg.Partition, consumer.HighWaterMarkOffset(), msg.Offset)
 					go func() {
 						sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))

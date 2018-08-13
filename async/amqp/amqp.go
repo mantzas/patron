@@ -65,7 +65,6 @@ type Consumer struct {
 	cfg      amqp.Config
 	ch       *amqp.Channel
 	conn     *amqp.Connection
-	log      log.Logger
 }
 
 // New creates a new AMQP consumer with some defaults. Use option to change.
@@ -109,7 +108,6 @@ func New(name, url, queue, exchange string, oo ...OptionFunc) (*Consumer, error)
 
 // Consume starts of consuming a AMQP queue.
 func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
-	c.log = log.Create()
 	deliveries, err := c.consumer()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed initialize consumer")
@@ -121,10 +119,10 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	go func() {
 		select {
 		case <-ctx.Done():
-			c.log.Info("canceling consuming messages requested")
+			log.Info("canceling consuming messages requested")
 			return
 		case d := <-deliveries:
-			c.log.Debugf("processing message %s", d.MessageId)
+			log.Debugf("processing message %s", d.MessageId)
 			go func(d *amqp.Delivery) {
 				sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
 
@@ -186,7 +184,7 @@ func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
 	c.ch = ch
 
 	c.tag = uuid.New().String()
-	c.log.Infof("consuming messages for tag %s", c.tag)
+	log.Infof("consuming messages for tag %s", c.tag)
 
 	q, err := ch.QueueDeclare(c.queue, true, false, false, false, nil)
 	if err != nil {

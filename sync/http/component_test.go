@@ -82,7 +82,6 @@ func Test_createHTTPServer(t *testing.T) {
 
 func TestCreateHandler(t *testing.T) {
 	assert := assert.New(t)
-	infof := func(msg string, args ...interface{}) {}
-	h := createHandler([]Route{NewRoute("/", "GET", nil, false)}, infof)
+	h := createHandler([]Route{NewRoute("/", "GET", nil, false)})
 	assert.NotNil(h)
 }
