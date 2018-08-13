@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/opentracing/opentracing-go/ext"
@@ -48,8 +46,6 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 
 func TestStartFinishChildSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
-	assert.NoError(err)
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	sp, ctx := ConsumerSpan(context.Background(), "test", AMQPConsumerComponent, nil)
@@ -84,8 +80,6 @@ func TestStartFinishChildSpan(t *testing.T) {
 
 func TestHTTPStartFinishSpan(t *testing.T) {
 	assert := assert.New(t)
-	err := log.Setup(zerolog.DefaultFactory(log.DebugLevel), nil)
-	assert.NoError(err)
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	req, err := http.NewRequest("GET", "/", nil)

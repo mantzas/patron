@@ -1,34 +1,16 @@
 package zerolog
 
 import (
-	"bytes"
-	"io"
 	"testing"
 
 	"github.com/mantzas/patron/log"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewFactory(t *testing.T) {
-	assert := assert.New(t)
-	var b bytes.Buffer
-	f := createFactory(&b)
-	assert.NotNil(f)
-}
-
 func TestDefaultFactory(t *testing.T) {
 	assert := assert.New(t)
-	f := DefaultFactory(log.InfoLevel)
+	f := Create(log.InfoLevel)
 	assert.NotNil(f)
-}
-
-func TestFactory_Create(t *testing.T) {
-	assert := assert.New(t)
-	var b bytes.Buffer
-	f := createFactory(&b)
-	l := f.Create(nil)
-	assert.NotNil(l)
 }
 
 func Test_getSource(t *testing.T) {
@@ -52,10 +34,5 @@ func Test_sourceFields(t *testing.T) {
 	key, src, ok := sourceFields(1)
 	assert.True(ok)
 	assert.Equal("src", key)
-	assert.Equal("zerolog/factory_test.go:52", src)
-}
-
-func createFactory(wr io.Writer) log.Factory {
-	l := zerolog.New(wr)
-	return NewFactory(&l, log.DebugLevel)
+	assert.Equal("zerolog/factory_test.go:34", src)
 }

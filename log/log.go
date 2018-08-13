@@ -40,15 +40,13 @@ type Logger interface {
 	Debugf(string, ...interface{})
 }
 
-// Factory interface for creating loggers.
-type Factory interface {
-	Create(map[string]interface{}) Logger
-}
+// FactoryFunc function type for creating loggers.
+type FactoryFunc func(map[string]interface{}) Logger
 
 var logger Logger = nilLogger{}
 
 // Setup logging by providing a logger factory.
-func Setup(f Factory, fls map[string]interface{}) error {
+func Setup(f FactoryFunc, fls map[string]interface{}) error {
 	if f == nil {
 		return errors.New("factory is nil")
 	}
@@ -57,7 +55,7 @@ func Setup(f Factory, fls map[string]interface{}) error {
 		fls = make(map[string]interface{})
 	}
 
-	logger = f.Create(fls)
+	logger = f(fls)
 	return nil
 }
 
@@ -121,15 +119,7 @@ func Debugf(msg string, args ...interface{}) {
 	logger.Debugf(msg, args...)
 }
 
-type nilFactory struct {
-}
-
-func (nf nilFactory) Create(fields map[string]interface{}) Logger {
-	return &nilLogger{fls: fields}
-}
-
 type nilLogger struct {
-	fls map[string]interface{}
 }
 
 func (nl nilLogger) Panic(args ...interface{}) {

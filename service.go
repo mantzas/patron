@@ -52,7 +52,7 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
 
-	err := s.setupLogging(name, version)
+	err := SetupLogging(name, version)
 	if err != nil {
 		return nil, err
 	}
@@ -164,20 +164,11 @@ func SetupLogging(name, version string) error {
 		"host": hostname,
 	}
 
-	err = log.Setup(zerolog.DefaultFactory(log.Level(lvl)), f)
+	err = log.Setup(zerolog.Create(log.Level(lvl)), f)
 	if err != nil {
 		return errors.Wrap(err, "failed to setup logging")
 	}
 
-	return nil
-}
-
-func (s *Service) setupLogging(name, version string) error {
-
-	err := SetupLogging(name, version)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
