@@ -28,22 +28,6 @@ func TestSetup(t *testing.T) {
 	}
 }
 
-func Test_getSource(t *testing.T) {
-	assert := assert.New(t)
-	tests := []struct {
-		name    string
-		file    string
-		wantSrc string
-	}{
-		{name: "empty", file: "", wantSrc: ""},
-		{name: "no parent folder", file: "main.go", wantSrc: "main.go"},
-		{name: "with parent folder", file: "/home/patron/main.go", wantSrc: "patron/main.go"},
-	}
-	for _, tt := range tests {
-		assert.Equal(tt.wantSrc, getSource(tt.file))
-	}
-}
-
 func TestLog_Panic(t *testing.T) {
 	l := testLogger{}
 	logger = &l

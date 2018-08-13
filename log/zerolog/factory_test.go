@@ -32,6 +32,22 @@ func TestFactory_Create(t *testing.T) {
 	assert.Len(l.Fields(), 0)
 }
 
+func Test_getSource(t *testing.T) {
+	assert := assert.New(t)
+	tests := []struct {
+		name    string
+		file    string
+		wantSrc string
+	}{
+		{name: "empty", file: "", wantSrc: ""},
+		{name: "no parent folder", file: "main.go", wantSrc: "main.go:10"},
+		{name: "with parent folder", file: "/home/patron/main.go", wantSrc: "patron/main.go:10"},
+	}
+	for _, tt := range tests {
+		assert.Equal(tt.wantSrc, getSource(tt.file, 10))
+	}
+}
+
 func createFactory(wr io.Writer) log.Factory {
 	l := zerolog.New(wr)
 	return NewFactory(&l, log.DebugLevel)

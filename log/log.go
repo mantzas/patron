@@ -2,10 +2,6 @@ package log
 
 import (
 	"errors"
-	"fmt"
-	"path"
-	"path/filepath"
-	"runtime"
 )
 
 // The Level type definition.
@@ -131,32 +127,6 @@ func Debug(args ...interface{}) {
 // Debugf logging.
 func Debugf(msg string, args ...interface{}) {
 	logger.Debugf(msg, args...)
-}
-
-func sourceFields() (key string, src string, ok bool) {
-	_, file, _, ok := runtime.Caller(2)
-	if !ok {
-		return
-	}
-
-	src = getSource(file)
-	key = "src"
-	ok = true
-	return
-}
-
-func getSource(file string) (src string) {
-	if file == "" {
-		return
-	}
-	d, f := filepath.Split(file)
-	d = path.Base(d)
-	if d == "." || d == "" {
-		src = f
-	} else {
-		src = fmt.Sprintf("%s/%s", d, f)
-	}
-	return
 }
 
 type nilFactory struct {
