@@ -110,13 +110,7 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 		return errors.Wrap(err, "failed to inject tracing headers")
 	}
 
-	err = tc.ch.Publish(
-		tc.exc, // exchange
-		"",     // routing key
-		false,  // mandatory
-		false,  // immediate
-		p,
-	)
+	err = tc.ch.Publish(tc.exc, "", false, false, p)
 	if err != nil {
 		trace.SpanError(sp)
 		return errors.Wrap(err, "failed to publish message")

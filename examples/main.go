@@ -87,6 +87,6 @@ func main() {
 
 	err = srv.Run()
 	if err != nil {
-		log.Fatalf("failed to create service %v", err)
+		log.Fatalf("failed to run service %v", err)
 	}
 }

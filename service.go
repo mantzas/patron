@@ -104,12 +104,13 @@ func (s *Service) Run() error {
 
 	select {
 	case err := <-errCh:
-		log.Error("component returned a error")
-		err1 := s.Shutdown()
-		if err1 != nil {
-			return errors.Wrapf(err, "failed to shutdown %v", err1)
+		agr := agr_errors.New()
+		agr.Append(errors.Wrap(err, "component failed"))
+		agr.Append(errors.Wrap(s.Shutdown(), "failed to shutdown"))
+		if agr.Count() > 0 {
+			return agr
 		}
-		return err
+		return nil
 	case <-s.ctx.Done():
 		log.Info("stop signal received")
 		return s.Shutdown()
