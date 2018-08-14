@@ -136,10 +136,10 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					return
 				case consumerError := <-consumer.Errors():
 					chErr <- consumerError
-				case msg := <-consumer.Messages():
-					log.Debugf("data received from topic %s", msg.Topic)
-					topicPartitionOffsetDiffGaugeSet(msg.Topic, msg.Partition, consumer.HighWaterMarkOffset(), msg.Offset)
-					go func() {
+				case m := <-consumer.Messages():
+					log.Debugf("data received from topic %s", m.Topic)
+					topicPartitionOffsetDiffGaugeSet(m.Topic, m.Partition, consumer.HighWaterMarkOffset(), m.Offset)
+					go func(msg *sarama.ConsumerMessage) {
 						sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
 
 						var ct string
@@ -167,7 +167,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 							span: sp,
 							val:  msg.Value,
 						}
-					}()
+					}(m)
 				}
 			}
 		}(pc)
