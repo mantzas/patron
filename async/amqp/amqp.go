@@ -117,15 +117,14 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	chErr := make(chan error, c.buffer)
 
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info("canceling consuming messages requested")
-			return
-		case d := <-deliveries:
-			log.Debugf("processing message %s", d.MessageId)
-			go func(d *amqp.Delivery) {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Info("canceling consuming messages requested")
+				return
+			case d := <-deliveries:
+				log.Debugf("processing message %d", d.DeliveryTag)
 				sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
-
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {
 					agr := agr_errors.New()
@@ -139,11 +138,11 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				chMsg <- &message{
 					ctx:     chCtx,
 					dec:     dec,
-					del:     d,
+					del:     &d,
 					span:    sp,
 					requeue: c.requeue,
 				}
-			}(&d)
+			}
 		}
 	}()
 
@@ -185,6 +184,11 @@ func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
 
 	c.tag = uuid.New().String()
 	log.Infof("consuming messages for tag %s", c.tag)
+
+	err = ch.ExchangeDeclare(c.exchange, amqp.ExchangeDirect, true, false, false, false, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to declare exchange")
+	}
 
 	q, err := ch.QueueDeclare(c.queue, true, false, false, false, nil)
 	if err != nil {

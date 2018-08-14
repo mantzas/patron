@@ -59,6 +59,8 @@ func TestServer_Run_Shutdown(t *testing.T) {
 			err = s.Run()
 			if tt.wantRunErr {
 				assert.Error(err)
+			} else if tt.wantShutdownErr {
+				assert.Error(err)
 			} else {
 				assert.NoError(err)
 			}

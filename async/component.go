@@ -53,9 +53,9 @@ func (c *Component) Run(ctx context.Context) error {
 				log.Info("canceling consuming messages requested")
 				failCh <- nil
 				return
-			case msg := <-chMsg:
+			case m := <-chMsg:
 				log.Debug("New message from consumer arrived")
-				go func() {
+				go func(msg Message) {
 					err = c.proc(ctx, msg)
 					if err != nil {
 						agr := agr_errors.New()
@@ -67,7 +67,7 @@ func (c *Component) Run(ctx context.Context) error {
 					if err := msg.Ack(); err != nil {
 						failCh <- err
 					}
-				}()
+				}(m)
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during message consumption")
 				return
