@@ -62,29 +62,17 @@ func main() {
 
 	amqpCmp, err := newAmqpComponent(amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
-<<<<<<< HEAD
 		log.Fatalf("failed to create processor %v", err)
-=======
-		log.Create().Fatalf("failed to create processor: %v", err)
->>>>>>> Fixed kafka producer header tracing
 	}
 
 	kafkaCmp, err := newKafkaComponent(name, kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
 	if err != nil {
-<<<<<<< HEAD
 		log.Fatalf("failed to create processor %v", err)
-=======
-		log.Create().Fatalf("failed to create processor: %v", err)
->>>>>>> Fixed kafka producer header tracing
 	}
 
 	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic, "http://localhost:50000/second")
 	if err != nil {
-<<<<<<< HEAD
 		log.Fatalf("failed to create processor %v", err)
-=======
-		log.Create().Fatalf("failed to create processor: %v", err)
->>>>>>> Fixed kafka producer header tracing
 	}
 
 	// Set up routes
@@ -95,19 +83,11 @@ func main() {
 
 	srv, err := patron.New(name, version, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
 	if err != nil {
-<<<<<<< HEAD
 		log.Fatalf("failed to create service %v", err)
-=======
-		log.Create().Fatalf("failed to create service: %v", err)
->>>>>>> Fixed kafka producer header tracing
 	}
 
 	err = srv.Run()
 	if err != nil {
-<<<<<<< HEAD
 		log.Fatalf("failed to run service %v", err)
-=======
-		log.Create().Fatalf("service failure: %v", err)
->>>>>>> Fixed kafka producer header tracing
 	}
 }

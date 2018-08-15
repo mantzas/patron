@@ -182,16 +182,12 @@ func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
 	c.ch = ch
 
 	c.tag = uuid.New().String()
-<<<<<<< HEAD
 	log.Infof("consuming messages for tag %s", c.tag)
 
 	err = ch.ExchangeDeclare(c.exchange, amqp.ExchangeDirect, true, false, false, false, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to declare exchange")
 	}
-=======
-	c.log.Infof("consuming messages for queue '%s' tag '%s'", c.queue, c.tag)
->>>>>>> Minor fixes
 
 	q, err := ch.QueueDeclare(c.queue, true, false, false, false, nil)
 	if err != nil {

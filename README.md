@@ -141,12 +141,7 @@ downstream systems. The tracing information is added to each implementations hea
 
 The log package is designed to be a leveled logger with field support.
 
-<<<<<<< HEAD
 The log package defines the logger interface and a factory function type that needs to be implemented in order to set up the logging in this framework.
-=======
-The log package defines two interfaces (Logger and Factory) that have to be implemented in order to set up the logging in this framework.
-After implementing the two interfaces you can setup logging by doing the following:
->>>>>>> Fixed readme
 
 ```go
   // instantiate the implemented factory func type and fields (map[string]interface{})
