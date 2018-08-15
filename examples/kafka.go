@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"time"
 
 	"github.com/mantzas/patron"
@@ -40,7 +39,7 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 	return &kafkaCmp, nil
 }
 
-func (kc *kafkaComponent) Process(ctx context.Context, msg async.Message) error {
+func (kc *kafkaComponent) Process(msg async.Message) error {
 	var ads Audits
 
 	err := msg.Decode(&ads)
@@ -55,7 +54,7 @@ func (kc *kafkaComponent) Process(ctx context.Context, msg async.Message) error 
 		return err
 	}
 
-	err = kc.pub.Publish(ctx, amqpMsg)
+	err = kc.pub.Publish(msg.Context(), amqpMsg)
 	if err != nil {
 		return err
 	}

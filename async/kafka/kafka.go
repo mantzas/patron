@@ -55,7 +55,6 @@ var topicPartitionOffsetDiff *prometheus.GaugeVec
 
 // Consumer definition of a Kafka consumer.
 type Consumer struct {
-	name        string
 	brokers     []string
 	topic       string
 	buffer      int
@@ -91,7 +90,6 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 	config.Consumer.Return.Errors = true
 
 	c := &Consumer{
-		name:        name,
 		brokers:     brokers,
 		topic:       topic,
 		cfg:         config,
@@ -140,8 +138,12 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					log.Debugf("data received from topic %s", m.Topic)
 					topicPartitionOffsetDiffGaugeSet(m.Topic, m.Partition, consumer.HighWaterMarkOffset(), m.Offset)
 					go func(msg *sarama.ConsumerMessage) {
-						sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.KafkaConsumerComponent, mapHeader(msg.Headers))
-
+						sp, chCtx := trace.ConsumerSpan(
+							ctx,
+							fmt.Sprintf("%s %s", trace.KafkaConsumerComponent, c.topic),
+							trace.KafkaConsumerComponent,
+							mapHeader(msg.Headers),
+						)
 						var ct string
 						if c.contentType != "" {
 							ct = c.contentType

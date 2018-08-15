@@ -60,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	amqpCmp, err := newAmqpComponent(name, amqpURL, amqpQueue, amqpExchange)
+	amqpCmp, err := newAmqpComponent(amqpURL, amqpQueue, amqpExchange)
 	if err != nil {
 		log.Fatalf("failed to create processor %v", err)
 	}
