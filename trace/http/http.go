@@ -8,6 +8,7 @@ import (
 	"github.com/mantzas/patron/trace"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 // Client interface of a HTTP client.
@@ -38,5 +39,12 @@ func (tc *TracedClient) Do(ctx context.Context, req *http.Request) (*http.Respon
 		nethttp.OperationName(trace.HTTPOpName("Client", req.Method, req.URL.String())),
 		nethttp.ComponentName(trace.HTTPClientComponent))
 	defer ht.Finish()
-	return tc.cl.Do(req)
+	rsp, err := tc.cl.Do(req)
+	if err != nil {
+		ext.Error.Set(ht.Span(), true)
+	}
+	ext.HTTPMethod.Set(ht.Span(), req.Method)
+	ext.HTTPUrl.Set(ht.Span(), req.URL.String())
+	ext.HTTPStatusCode.Set(ht.Span(), uint16(rsp.StatusCode))
+	return rsp, err
 }

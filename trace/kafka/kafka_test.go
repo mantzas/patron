@@ -90,6 +90,7 @@ func createKafkaBroker(t *testing.T, retError bool) *sarama.MockBroker {
 	config := sarama.NewConfig()
 	config.Producer.Flush.Messages = 10
 	config.Producer.Return.Successes = true
+	config.Version = sarama.V0_11_0_0
 	seed := sarama.NewMockBroker(t, 1)
 	seed.Returns(metadataResponse)
 	return seed
