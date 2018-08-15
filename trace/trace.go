@@ -32,12 +32,8 @@ const (
 
 var (
 	cls     io.Closer
-	version string
-)
-
-func init() {
 	version = "dev"
-}
+)
 
 // Setup tracing by providing all necessary parameters.
 func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) error {

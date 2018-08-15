@@ -7,18 +7,14 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var levelMap map[log.Level]zerolog.Level
-
-func init() {
-	levelMap = map[log.Level]zerolog.Level{
-		log.NoLevel:    zerolog.NoLevel,
-		log.DebugLevel: zerolog.DebugLevel,
-		log.InfoLevel:  zerolog.InfoLevel,
-		log.WarnLevel:  zerolog.WarnLevel,
-		log.ErrorLevel: zerolog.ErrorLevel,
-		log.FatalLevel: zerolog.FatalLevel,
-		log.PanicLevel: zerolog.PanicLevel,
-	}
+var levelMap = map[log.Level]zerolog.Level{
+	log.NoLevel:    zerolog.NoLevel,
+	log.DebugLevel: zerolog.DebugLevel,
+	log.InfoLevel:  zerolog.InfoLevel,
+	log.WarnLevel:  zerolog.WarnLevel,
+	log.ErrorLevel: zerolog.ErrorLevel,
+	log.FatalLevel: zerolog.FatalLevel,
+	log.PanicLevel: zerolog.PanicLevel,
 }
 
 // Logger abstraction based on zerolog.

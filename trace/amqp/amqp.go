@@ -120,7 +120,7 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 }
 
 // Close the connection and channel of the publisher.
-func (tc *TracedPublisher) Close(ctx context.Context) error {
+func (tc *TracedPublisher) Close(_ context.Context) error {
 	aggError := patronerrors.New()
 
 	aggError.Append(tc.ch.Close())
