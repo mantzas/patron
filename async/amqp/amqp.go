@@ -122,6 +122,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				log.Debugf("processing message %d", d.DeliveryTag)
 				sp, chCtx := trace.ConsumerSpan(
 					ctx,
+					trace.ComponentOpName(trace.AMQPConsumerComponent, c.queue),
 					trace.AMQPConsumerComponent,
 					mapHeader(d.Headers),
 					c.traceTag,

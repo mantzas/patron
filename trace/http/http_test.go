@@ -34,5 +34,5 @@ func TestTracedClient_Do(t *testing.T) {
 	assert.NotNil(rsp)
 	sp := mtr.FinishedSpans()[0]
 	assert.NotNil(sp)
-	assert.Equal(trace.HTTPOpName("GET", ts.URL), sp.OperationName)
+	assert.Equal(trace.HTTPOpName("Client", "GET", ts.URL), sp.OperationName)
 }

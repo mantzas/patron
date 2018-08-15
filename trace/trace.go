@@ -74,10 +74,30 @@ func Close() error {
 	return cls.Close()
 }
 
+// HTTPSpan starts a new HTTP span.
+func HTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
+	ctx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+	if err != nil && err != opentracing.ErrSpanContextNotFound {
+		log.Errorf("failed to extract HTTP span: %v", err)
+	}
+	sp := opentracing.StartSpan(HTTPOpName("Server", r.Method, path), ext.RPCServerOption(ctx))
+	ext.HTTPMethod.Set(sp, r.Method)
+	ext.HTTPUrl.Set(sp, r.URL.String())
+	ext.Component.Set(sp, "http")
+	sp.SetTag(versionTag, version)
+	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
+}
+
+// FinishHTTPSpan finishes a HTTP span by providing a HTTP status code.
+func FinishHTTPSpan(sp opentracing.Span, code int) {
+	ext.HTTPStatusCode.Set(sp, uint16(code))
+	sp.Finish()
+}
+
 // ConsumerSpan starts a new consumer span.
 func ConsumerSpan(
 	ctx context.Context,
-	cmp string,
+	opName, cmp string,
 	hdr map[string]string,
 	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
@@ -85,7 +105,7 @@ func ConsumerSpan(
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
 		log.Errorf("failed to extract consumer span: %v", err)
 	}
-	sp := opentracing.StartSpan(cmp, consumerOption{ctx: spCtx})
+	sp := opentracing.StartSpan(opName, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
 	sp.SetTag(versionTag, version)
 	for _, t := range tags {
@@ -106,33 +126,13 @@ func SpanError(sp opentracing.Span) {
 	sp.Finish()
 }
 
-// HTTPSpan starts a new HTTP span.
-func HTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
-	ctx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	if err != nil && err != opentracing.ErrSpanContextNotFound {
-		log.Errorf("failed to extract HTTP span: %v", err)
-	}
-	sp := opentracing.StartSpan(HTTPOpName(r.Method, path), ext.RPCServerOption(ctx))
-	ext.HTTPMethod.Set(sp, r.Method)
-	ext.HTTPUrl.Set(sp, r.URL.String())
-	ext.Component.Set(sp, "http")
-	sp.SetTag(versionTag, version)
-	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
-}
-
-// FinishHTTPSpan finishes a HTTP span by providing a HTTP status code.
-func FinishHTTPSpan(sp opentracing.Span, code int) {
-	ext.HTTPStatusCode.Set(sp, uint16(code))
-	sp.Finish()
-}
-
 // ChildSpan starts a new child span with specified tags.
 func ChildSpan(
 	ctx context.Context,
-	cmp string,
+	opName, cmp string,
 	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
-	sp, ctx := opentracing.StartSpanFromContext(ctx, cmp)
+	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
 	ext.Component.Set(sp, cmp)
 	for _, t := range tags {
 		sp.SetTag(t.Key, t.Value)
@@ -161,8 +161,8 @@ func SQLSpan(
 }
 
 // HTTPOpName return a string representation of the HTTP request operation.
-func HTTPOpName(method, path string) string {
-	return "HTTP " + method + " " + path
+func HTTPOpName(cmp, method, path string) string {
+	return cmp + " HTTP " + method + " " + path
 }
 
 type jaegerLoggerAdapter struct {
@@ -185,4 +185,9 @@ func (r consumerOption) Apply(o *opentracing.StartSpanOptions) {
 		opentracing.ChildOf(r.ctx).Apply(o)
 	}
 	ext.SpanKindConsumer.Apply(o)
+}
+
+// ComponentOpName returns a operation name for a compoent.
+func ComponentOpName(cmp, target string) string {
+	return cmp + " " + target
 }

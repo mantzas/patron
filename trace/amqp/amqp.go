@@ -94,7 +94,13 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 
 // Publish a message to a exchange.
 func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
-	sp, _ := trace.ChildSpan(ctx, trace.AMQPPublisherComponent, ext.SpanKindProducer, tc.tag)
+	sp, _ := trace.ChildSpan(
+		ctx,
+		trace.ComponentOpName(trace.AMQPPublisherComponent, tc.exc),
+		trace.AMQPPublisherComponent,
+		ext.SpanKindProducer,
+		tc.tag,
+	)
 
 	p := amqp.Publishing{
 		Headers:     amqp.Table{},

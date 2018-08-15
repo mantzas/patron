@@ -35,7 +35,7 @@ func (tc *TracedClient) Do(ctx context.Context, req *http.Request) (*http.Respon
 	req, ht := nethttp.TraceRequest(
 		opentracing.GlobalTracer(),
 		req,
-		nethttp.OperationName(trace.HTTPOpName(req.Method, req.URL.String())),
+		nethttp.OperationName(trace.HTTPOpName("Client", req.Method, req.URL.String())),
 		nethttp.ComponentName(trace.HTTPClientComponent))
 	defer ht.Finish()
 	return tc.cl.Do(req)
