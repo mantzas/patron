@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"time"
 
 	"github.com/mantzas/patron"
@@ -14,11 +13,11 @@ type amqpComponent struct {
 	cmp patron.Component
 }
 
-func newAmqpComponent(name, url, queue, exchange string) (*amqpComponent, error) {
+func newAmqpComponent(url, queue, exchange string) (*amqpComponent, error) {
 
 	amqpCmp := amqpComponent{}
 
-	cns, err := amqp.New(name, url, queue, exchange)
+	cns, err := amqp.New(url, queue, exchange)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +30,7 @@ func newAmqpComponent(name, url, queue, exchange string) (*amqpComponent, error)
 	return &amqpCmp, nil
 }
 
-func (ac *amqpComponent) Process(ctx context.Context, msg async.Message) error {
+func (ac *amqpComponent) Process(msg async.Message) error {
 	var ads Audits
 
 	err := msg.Decode(&ads)

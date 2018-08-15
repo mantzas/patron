@@ -10,7 +10,6 @@ import (
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
-		name     string
 		url      string
 		queue    string
 		exchange string
@@ -20,15 +19,14 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{name: "test", url: "url", queue: "queue", exchange: "exchange"}, false},
-		{"fail, invalid name", args{name: "", url: "url", queue: "queue", exchange: "exchange"}, true},
-		{"fail, invalid url", args{name: "test", url: "", queue: "queue", exchange: "exchange"}, true},
-		{"fail, invalid queue name", args{name: "test", url: "url", queue: "", exchange: "exchange"}, true},
-		{"fail, invalid queue name", args{name: "test", url: "url", queue: "queue", exchange: ""}, true},
+		{"success", args{url: "url", queue: "queue", exchange: "exchange"}, false},
+		{"fail, invalid url", args{url: "", queue: "queue", exchange: "exchange"}, true},
+		{"fail, invalid queue name", args{url: "url", queue: "", exchange: "exchange"}, true},
+		{"fail, invalid queue name", args{url: "url", queue: "queue", exchange: ""}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, tt.args.url, tt.args.queue, tt.args.exchange)
+			got, err := New(tt.args.url, tt.args.queue, tt.args.exchange)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)

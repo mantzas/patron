@@ -55,7 +55,6 @@ func (m *message) Nack() error {
 
 // Consumer defines a AMQP subscriber.
 type Consumer struct {
-	name     string
 	url      string
 	queue    string
 	exchange string
@@ -68,11 +67,7 @@ type Consumer struct {
 }
 
 // New creates a new AMQP consumer with some defaults. Use option to change.
-func New(name, url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
-
-	if name == "" {
-		return nil, errors.New("name is required")
-	}
+func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 
 	if url == "" {
 		return nil, errors.New("RabbitMQ url is required")
@@ -87,7 +82,6 @@ func New(name, url, queue, exchange string, oo ...OptionFunc) (*Consumer, error)
 	}
 
 	c := &Consumer{
-		name:     name,
 		url:      url,
 		queue:    queue,
 		exchange: exchange,
@@ -124,7 +118,12 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				return
 			case d := <-deliveries:
 				log.Debugf("processing message %d", d.DeliveryTag)
-				sp, chCtx := trace.ConsumerSpan(ctx, c.name, trace.AMQPConsumerComponent, mapHeader(d.Headers))
+				sp, chCtx := trace.ConsumerSpan(
+					ctx,
+					fmt.Sprintf("%s %s", trace.AMQPConsumerComponent, c.queue),
+					trace.AMQPConsumerComponent,
+					mapHeader(d.Headers),
+				)
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {
 					agr := agr_errors.New()
