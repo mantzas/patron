@@ -40,11 +40,10 @@ type Publisher interface {
 
 // TracedPublisher defines a RabbitMQ publisher with tracing instrumentation.
 type TracedPublisher struct {
-	cn     *amqp.Connection
-	ch     *amqp.Channel
-	exc    string
-	opName string
-	tag    opentracing.Tag
+	cn  *amqp.Connection
+	ch  *amqp.Channel
+	exc string
+	tag opentracing.Tag
 }
 
 // NewPublisher creates a new publisher with the following defaults
@@ -61,9 +60,8 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 	}
 
 	p := TracedPublisher{
-		exc:    exc,
-		opName: "amqp PUB exchange " + exc,
-		tag:    opentracing.Tag{Key: "exchange", Value: exc},
+		exc: exc,
+		tag: opentracing.Tag{Key: "exchange", Value: exc},
 	}
 
 	conn, err := amqp.Dial(url)
@@ -96,7 +94,7 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 
 // Publish a message to a exchange.
 func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
-	sp, _ := trace.ChildSpan(ctx, tc.opName, trace.AMQPPublisherComponent, ext.SpanKindProducer, tc.tag)
+	sp, _ := trace.ChildSpan(ctx, trace.AMQPPublisherComponent, ext.SpanKindProducer, tc.tag)
 
 	p := amqp.Publishing{
 		Headers:     amqp.Table{},

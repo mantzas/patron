@@ -28,6 +28,7 @@ const (
 	HTTPComponent = "http"
 	// HTTPClientComponent definition.
 	HTTPClientComponent = "http-client"
+	versionTag          = "version"
 )
 
 var (
@@ -78,6 +79,7 @@ func ConsumerSpan(
 	ctx context.Context,
 	name, cmp string,
 	hdr map[string]string,
+	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
 	spCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.TextMapCarrier(hdr))
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
@@ -85,7 +87,7 @@ func ConsumerSpan(
 	}
 	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
-	sp.SetTag("version", version)
+	sp.SetTag(versionTag, version)
 	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
@@ -111,7 +113,7 @@ func HTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
 	ext.HTTPMethod.Set(sp, r.Method)
 	ext.HTTPUrl.Set(sp, r.URL.String())
 	ext.Component.Set(sp, "http")
-	sp.SetTag("version", version)
+	sp.SetTag(versionTag, version)
 	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
 }
 
@@ -124,15 +126,15 @@ func FinishHTTPSpan(sp opentracing.Span, code int) {
 // ChildSpan starts a new child span with specified tags.
 func ChildSpan(
 	ctx context.Context,
-	opName, cmp string,
+	cmp string,
 	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
-	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
+	sp, ctx := opentracing.StartSpanFromContext(ctx, cmp)
 	ext.Component.Set(sp, cmp)
 	for _, t := range tags {
 		sp.SetTag(t.Key, t.Value)
 	}
-	sp.SetTag("version", version)
+	sp.SetTag(versionTag, version)
 	return sp, ctx
 }
 
@@ -151,7 +153,7 @@ func SQLSpan(
 	for _, t := range tags {
 		sp.SetTag(t.Key, t.Value)
 	}
-	sp.SetTag("version", version)
+	sp.SetTag(versionTag, version)
 	return sp, ctx
 }
 
