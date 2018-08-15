@@ -43,7 +43,7 @@ func sourceFields(skip int) (key string, src string, ok bool) {
 	src = getSource(file, line)
 	key = "src"
 	ok = true
-	return
+	return key, src, ok
 }
 
 func getSource(file string, line int) (src string) {
@@ -57,5 +57,5 @@ func getSource(file string, line int) (src string) {
 	} else {
 		src = fmt.Sprintf("%s/%s:%d", d, f, line)
 	}
-	return
+	return src
 }

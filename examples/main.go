@@ -70,14 +70,15 @@ func main() {
 		log.Fatalf("failed to create processor %v", err)
 	}
 
-	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic)
+	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic, "http://localhost:50000/second")
 	if err != nil {
 		log.Fatalf("failed to create processor %v", err)
 	}
 
 	// Set up routes
 	routes := []http.Route{
-		http.NewPostRoute("/", httpCmp.process, true),
+		http.NewPostRoute("/", httpCmp.first, true),
+		http.NewGetRoute("/second", httpCmp.second, true),
 	}
 
 	srv, err := patron.New(name, version, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))

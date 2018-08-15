@@ -49,7 +49,10 @@ type AsyncProducer struct {
 // NewAsyncProducer creates a new async producer with default configuration.
 func NewAsyncProducer(brokers []string) (*AsyncProducer, error) {
 
-	prod, err := sarama.NewAsyncProducer(brokers, nil)
+	config := sarama.NewConfig()
+	config.Version = sarama.V0_11_0_0
+
+	prod, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create sync producer")
 	}
@@ -60,8 +63,14 @@ func NewAsyncProducer(brokers []string) (*AsyncProducer, error) {
 
 // Send a message to a topic.
 func (ap *AsyncProducer) Send(ctx context.Context, msg *Message) error {
-	sp, _ := trace.ChildSpan(ctx, "kafka PROD topic "+msg.topic, trace.KafkaAsyncProducerComponent,
-		ext.SpanKindProducer, ap.tag, opentracing.Tag{Key: "topic", Value: msg.topic})
+	sp, _ := trace.ChildSpan(
+		ctx,
+		trace.ComponentOpName(trace.KafkaAsyncProducerComponent, msg.topic),
+		trace.KafkaAsyncProducerComponent,
+		ext.SpanKindProducer,
+		ap.tag,
+		opentracing.Tag{Key: "topic", Value: msg.topic},
+	)
 	pm, err := createProducerMessage(msg, sp)
 	if err != nil {
 		trace.SpanError(sp)
@@ -89,7 +98,7 @@ func (ap *AsyncProducer) propagateError() {
 }
 
 func createProducerMessage(msg *Message, sp opentracing.Span) (*sarama.ProducerMessage, error) {
-	c := kafkaHeadersCarrier{hdr: []sarama.RecordHeader{}}
+	c := kafkaHeadersCarrier{}
 	err := sp.Tracer().Inject(sp.Context(), opentracing.TextMap, &c)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to inject tracing headers")
@@ -98,15 +107,13 @@ func createProducerMessage(msg *Message, sp opentracing.Span) (*sarama.ProducerM
 		Topic:   msg.topic,
 		Key:     nil,
 		Value:   sarama.ByteEncoder(msg.body),
-		Headers: c.hdr,
+		Headers: c,
 	}, nil
 }
 
-type kafkaHeadersCarrier struct {
-	hdr []sarama.RecordHeader
-}
+type kafkaHeadersCarrier []sarama.RecordHeader
 
 // Set implements Set() of opentracing.TextMapWriter.
 func (c *kafkaHeadersCarrier) Set(key, val string) {
-	c.hdr = append(c.hdr, sarama.RecordHeader{Key: []byte(key), Value: []byte(val)})
+	*c = append(*c, sarama.RecordHeader{Key: []byte(key), Value: []byte(val)})
 }

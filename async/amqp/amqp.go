@@ -61,6 +61,7 @@ type Consumer struct {
 	requeue  bool
 	tag      string
 	buffer   int
+	traceTag opentracing.Tag
 	cfg      amqp.Config
 	ch       *amqp.Channel
 	conn     *amqp.Connection
@@ -88,6 +89,7 @@ func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 		requeue:  true,
 		cfg:      defaultCfg,
 		buffer:   1000,
+		traceTag: opentracing.Tag{Key: "queue", Value: queue},
 	}
 
 	for _, o := range oo {
@@ -120,9 +122,10 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				log.Debugf("processing message %d", d.DeliveryTag)
 				sp, chCtx := trace.ConsumerSpan(
 					ctx,
-					fmt.Sprintf("%s %s", trace.AMQPConsumerComponent, c.queue),
+					trace.ComponentOpName(trace.AMQPConsumerComponent, c.queue),
 					trace.AMQPConsumerComponent,
 					mapHeader(d.Headers),
+					c.traceTag,
 				)
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {

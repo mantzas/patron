@@ -115,7 +115,7 @@ type DB struct {
 }
 
 // Open opens a database.
-func Open(ctx context.Context, driverName, dataSourceName string) (*DB, error) {
+func Open(driverName, dataSourceName string) (*DB, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func Open(ctx context.Context, driverName, dataSourceName string) (*DB, error) {
 }
 
 // OpenDB opens a database.
-func OpenDB(ctx context.Context, c driver.Connector) *DB {
+func OpenDB(c driver.Connector) *DB {
 	db := sql.OpenDB(c)
 	return &DB{db: db}
 }

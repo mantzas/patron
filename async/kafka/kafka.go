@@ -88,6 +88,7 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 	config := sarama.NewConfig()
 	config.ClientID = fmt.Sprintf("%s-%s", host, name)
 	config.Consumer.Return.Errors = true
+	config.Version = sarama.V0_11_0_0
 
 	c := &Consumer{
 		brokers:     brokers,
@@ -121,7 +122,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to get partitions")
 	}
-
+	log.Infof("consuming messages for topic '%s'", c.topic)
 	chMsg := make(chan async.Message, c.buffer)
 	chErr := make(chan error, c.buffer)
 
@@ -140,7 +141,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					go func(msg *sarama.ConsumerMessage) {
 						sp, chCtx := trace.ConsumerSpan(
 							ctx,
-							fmt.Sprintf("%s %s", trace.KafkaConsumerComponent, c.topic),
+							trace.ComponentOpName(trace.KafkaConsumerComponent, msg.Topic),
 							trace.KafkaConsumerComponent,
 							mapHeader(msg.Headers),
 						)
