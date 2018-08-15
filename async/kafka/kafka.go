@@ -88,6 +88,7 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 	config := sarama.NewConfig()
 	config.ClientID = fmt.Sprintf("%s-%s", host, name)
 	config.Consumer.Return.Errors = true
+	config.Version = sarama.V0_11_0_0
 
 	c := &Consumer{
 		brokers:     brokers,

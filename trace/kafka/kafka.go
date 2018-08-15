@@ -49,7 +49,10 @@ type AsyncProducer struct {
 // NewAsyncProducer creates a new async producer with default configuration.
 func NewAsyncProducer(brokers []string) (*AsyncProducer, error) {
 
-	prod, err := sarama.NewAsyncProducer(brokers, nil)
+	config := sarama.NewConfig()
+	config.Version = sarama.V0_11_0_0
+
+	prod, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create sync producer")
 	}
