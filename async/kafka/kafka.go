@@ -140,7 +140,6 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					go func(msg *sarama.ConsumerMessage) {
 						sp, chCtx := trace.ConsumerSpan(
 							ctx,
-							fmt.Sprintf("%s %s", trace.KafkaConsumerComponent, c.topic),
 							trace.KafkaConsumerComponent,
 							mapHeader(msg.Headers),
 						)

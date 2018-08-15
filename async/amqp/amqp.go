@@ -123,7 +123,6 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				sp, chCtx := trace.ConsumerSpan(
 					ctx,
 					trace.AMQPConsumerComponent,
-					trace.AMQPConsumerComponent,
 					mapHeader(d.Headers),
 					c.traceTag,
 				)

@@ -77,7 +77,7 @@ func Close() error {
 // ConsumerSpan starts a new consumer span.
 func ConsumerSpan(
 	ctx context.Context,
-	name, cmp string,
+	cmp string,
 	hdr map[string]string,
 	tags ...opentracing.Tag,
 ) (opentracing.Span, context.Context) {
@@ -85,9 +85,12 @@ func ConsumerSpan(
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
 		log.Errorf("failed to extract consumer span: %v", err)
 	}
-	sp := opentracing.StartSpan(name, consumerOption{ctx: spCtx})
+	sp := opentracing.StartSpan(cmp, consumerOption{ctx: spCtx})
 	ext.Component.Set(sp, cmp)
 	sp.SetTag(versionTag, version)
+	for _, t := range tags {
+		sp.SetTag(t.Key, t.Value)
+	}
 	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
