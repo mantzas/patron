@@ -1,12 +1,31 @@
 package kafka
 
 import (
-	"errors"
 	"time"
+
+	"github.com/Shopify/sarama"
+	"github.com/pkg/errors"
 )
 
 // OptionFunc definition for configuring the consumer in a functional way.
 type OptionFunc func(*Consumer) error
+
+// Version option for setting the Kafka version.
+func Version(version string) OptionFunc {
+	return func(c *Consumer) error {
+		if version == "" {
+			return errors.New("versions has to be provided")
+		}
+
+		v, err := sarama.ParseKafkaVersion(version)
+		if err != nil {
+			return errors.Wrap(err, "invalid kafka version provided")
+		}
+
+		c.cfg.Version = v
+		return nil
+	}
+}
 
 // Buffer option for adjusting the incoming messages buffer.
 func Buffer(buf int) OptionFunc {

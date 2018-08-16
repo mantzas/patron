@@ -19,8 +19,7 @@ type httpComponent struct {
 }
 
 func newHTTPComponent(kafkabroker, topic, url string) (*httpComponent, error) {
-
-	prd, err := kafka.NewAsyncProducer([]string{kafkaBroker})
+	prd, err := kafka.NewAsyncProducer([]string{kafkaBroker}, "")
 	if err != nil {
 		return nil, err
 	}
