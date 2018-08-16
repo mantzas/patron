@@ -47,10 +47,20 @@ type AsyncProducer struct {
 }
 
 // NewAsyncProducer creates a new async producer with default configuration.
-func NewAsyncProducer(brokers []string) (*AsyncProducer, error) {
+func NewAsyncProducer(brokers []string, version string) (*AsyncProducer, error) {
+	var v sarama.KafkaVersion
+	var err error
+	if version == "" {
+		v = sarama.V0_11_0_0
+	} else {
+		v, err = sarama.ParseKafkaVersion(version)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse kafka version")
+		}
+	}
 
 	config := sarama.NewConfig()
-	config.Version = sarama.V0_11_0_0
+	config.Version = v
 
 	prod, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
