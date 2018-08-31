@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	// ContentType JSON definition
-	ContentType string = "application/json"
-	// ContentTypeCharset JSON definition with charset
-	ContentTypeCharset string = "application/json; charset=utf-8"
+	// Type JSON definition.
+	Type string = "application/json"
+	// TypeCharset JSON definition with charset.
+	TypeCharset string = "application/json; charset=utf-8"
 )
 
 // Decode a JSON input in the form of a read.

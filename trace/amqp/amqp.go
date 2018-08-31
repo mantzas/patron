@@ -29,7 +29,7 @@ func NewJSONMessage(d interface{}) (*Message, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal to JSON")
 	}
-	return &Message{contentType: json.ContentType, body: body}, nil
+	return &Message{contentType: json.Type, body: body}, nil
 }
 
 // Publisher interface of a RabbitMQ publisher.

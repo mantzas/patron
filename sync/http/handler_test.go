@@ -24,16 +24,28 @@ func Test_extractFields(t *testing.T) {
 }
 
 func Test_determineEncoding(t *testing.T) {
-
 	assert := assert.New(t)
-	hdrContentJSON := http.Header{}
-	hdrContentJSON.Add(encoding.ContentTypeHeader, json.ContentTypeCharset)
-	hdrEmptyHeader := http.Header{}
-	hdrUnsupportedEncoding := http.Header{}
-	hdrUnsupportedEncoding.Add(encoding.ContentTypeHeader, "application/xml")
+	reqSuc, err := http.NewRequest(http.MethodGet, "/", nil)
+	assert.NoError(err)
+	reqSuc.Header.Set(encoding.ContentTypeHeader, json.Type)
+	reqSuc.Header.Set(encoding.AcceptHeader, json.TypeCharset)
+	reqMissingAccept, err := http.NewRequest(http.MethodGet, "/", nil)
+	assert.NoError(err)
+	reqMissingAccept.Header.Set(encoding.ContentTypeHeader, json.Type)
+	reqWrongAccept, err := http.NewRequest(http.MethodGet, "/", nil)
+	assert.NoError(err)
+	reqWrongAccept.Header.Set(encoding.ContentTypeHeader, json.Type)
+	reqWrongAccept.Header.Set(encoding.AcceptHeader, "application/xml")
+	reqMissingContent, err := http.NewRequest(http.MethodGet, "/", nil)
+	assert.NoError(err)
+	reqMissingContent.Header.Set(encoding.AcceptHeader, json.Type)
+	reqWrongContent, err := http.NewRequest(http.MethodGet, "/", nil)
+	assert.NoError(err)
+	reqWrongContent.Header.Set(encoding.ContentTypeHeader, "application/xml")
+	reqWrongContent.Header.Set(encoding.AcceptHeader, json.Type)
 
 	type args struct {
-		hdr http.Header
+		req *http.Request
 	}
 	tests := []struct {
 		name    string
@@ -42,13 +54,15 @@ func Test_determineEncoding(t *testing.T) {
 		encode  encoding.EncodeFunc
 		wantErr bool
 	}{
-		{"content type json", args{hdr: hdrContentJSON}, json.Decode, json.Encode, false},
-		{"empty header", args{hdr: hdrEmptyHeader}, nil, nil, true},
-		{"unsupported encoding", args{hdr: hdrUnsupportedEncoding}, nil, nil, true},
+		{"success", args{req: reqSuc}, json.Decode, json.Encode, false},
+		{"missing accept", args{req: reqMissingAccept}, nil, nil, true},
+		{"wrong accept", args{req: reqWrongAccept}, nil, nil, true},
+		{"missing content", args{req: reqMissingContent}, nil, nil, true},
+		{"wrong content", args{req: reqWrongContent}, nil, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ct, got, got1, err := determineEncoding(tt.args.hdr)
+			ct, got, got1, err := determineEncoding(tt.args.req)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)
@@ -58,7 +72,7 @@ func Test_determineEncoding(t *testing.T) {
 				assert.NoError(err)
 				assert.NotNil(got)
 				assert.NotNil(got1)
-				assert.Equal(json.ContentTypeCharset, ct)
+				assert.Equal(json.TypeCharset, ct)
 			}
 		})
 	}
@@ -157,7 +171,8 @@ func Test_handler(t *testing.T) {
 	assert.NoError(err)
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
-	req.Header.Set(encoding.ContentTypeHeader, json.ContentType)
+	req.Header.Set(encoding.ContentTypeHeader, json.Type)
+	req.Header.Set(encoding.AcceptHeader, json.Type)
 
 	// success handling
 	// failure handling
@@ -203,15 +218,16 @@ func Test_handler(t *testing.T) {
 func Test_prepareResponse(t *testing.T) {
 	assert := assert.New(t)
 	rsp := httptest.NewRecorder()
-	prepareResponse(rsp, json.ContentTypeCharset)
-	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
+	prepareResponse(rsp, json.TypeCharset)
+	assert.Equal(json.TypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
 }
 
 func Test_extractParams(t *testing.T) {
 	assert := assert.New(t)
 	req, err := http.NewRequest(http.MethodGet, "/users/1/status", nil)
 	assert.NoError(err)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(encoding.ContentTypeHeader, json.Type)
+	req.Header.Set(encoding.AcceptHeader, json.Type)
 	var fields map[string]string
 
 	proc := func(_ context.Context, req *sync.Request) (*sync.Response, error) {

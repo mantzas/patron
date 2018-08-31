@@ -5,6 +5,8 @@ import (
 )
 
 const (
+	// AcceptHeader for defining accept encoding.
+	AcceptHeader string = "Accept"
 	// ContentTypeHeader for defining content type headers.
 	ContentTypeHeader string = "Content-Type"
 )
