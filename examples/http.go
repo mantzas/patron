@@ -33,6 +33,7 @@ func (hc *httpComponent) first(ctx context.Context, req *sync.Request) (*sync.Re
 		return nil, errors.Wrap(err, "failed to create requestfor www.google.com")
 	}
 	secondRouteReq.Header.Add("Content-Type", "application/json")
+	secondRouteReq.Header.Add("Accept", "application/json")
 	rsp, err := tracehttp.NewClient(5*time.Second).Do(ctx, secondRouteReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get www.google.com")
