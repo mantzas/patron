@@ -6,8 +6,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/sync"
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/sync"
 )
 
 func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
@@ -42,22 +42,40 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 
 func determineEncoding(r *http.Request) (string, encoding.DecodeFunc, encoding.EncodeFunc, error) {
 
-	dec, err := determineDecoder(r.Header)
+	ct, dec, err := determineDecoder(r.Header)
 	if err != nil {
 		return "", nil, nil, err
 	}
 
-	c, enc, err := determineEncoder(r.Header)
+	ct, enc, err := determineEncoder(r.Header, ct)
 	if err != nil {
 		return "", nil, nil, err
 	}
 
-	return c, dec, enc, nil
+	return ct, dec, enc, nil
 }
 
-func determineEncoder(hdr http.Header) (string, encoding.EncodeFunc, error) {
+func determineDecoder(hdr http.Header) (string, encoding.DecodeFunc, error) {
+	h, ok := hdr[encoding.ContentTypeHeader]
+	if !ok {
+		return "", nil, errors.New("content type header is missing")
+	}
+
+	switch h[0] {
+	case json.Type, json.TypeCharset:
+		return h[0], json.Decode, nil
+	}
+
+	return "", nil, errors.New("content type header not supported")
+}
+
+func determineEncoder(hdr http.Header, ct string) (string, encoding.EncodeFunc, error) {
 	h, ok := hdr[encoding.AcceptHeader]
 	if !ok {
+		switch ct {
+		case json.Type, json.TypeCharset:
+			return ct, json.Encode, nil
+		}
 		return "", nil, errors.New("accept header is missing")
 	}
 
@@ -67,20 +85,6 @@ func determineEncoder(hdr http.Header) (string, encoding.EncodeFunc, error) {
 	}
 
 	return "", nil, errors.New("accept header not supported")
-}
-
-func determineDecoder(hdr http.Header) (encoding.DecodeFunc, error) {
-	h, ok := hdr[encoding.ContentTypeHeader]
-	if !ok {
-		return nil, errors.New("content type header is missing")
-	}
-
-	switch h[0] {
-	case json.Type, json.TypeCharset:
-		return json.Decode, nil
-	}
-
-	return nil, errors.New("content type header not supported")
 }
 
 func extractFields(r *http.Request) map[string]string {
