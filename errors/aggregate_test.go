@@ -9,7 +9,7 @@ import (
 
 func TestAggregate(t *testing.T) {
 	assert := assert.New(t)
-	a := New()
+	a := NewAggregate()
 	a.Append(errors.New("Error 1"))
 	a.Append(errors.New("Error 2"))
 	a.Append(nil)

@@ -13,8 +13,8 @@ type Aggregate struct {
 	errors []error
 }
 
-// New creates a new aggregate error.
-func New() *Aggregate {
+// NewAggregate creates a new aggregate error.
+func NewAggregate() *Aggregate {
 	return &Aggregate{errors: []error{}}
 }
 

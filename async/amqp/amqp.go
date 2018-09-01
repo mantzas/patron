@@ -129,7 +129,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				)
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {
-					agr := agr_errors.New()
+					agr := agr_errors.NewAggregate()
 					agr.Append(errors.Wrapf(err, "failed to determine encoding %s. Nack message", d.ContentType))
 					agr.Append(errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
 					trace.SpanError(sp)
@@ -153,7 +153,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 
 // Close handles closing channel and connection of AMQP.
 func (c *Consumer) Close() error {
-	agr := agr_errors.New()
+	agr := agr_errors.NewAggregate()
 
 	if c.ch != nil {
 		err := c.ch.Cancel(c.tag, true)
