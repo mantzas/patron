@@ -14,7 +14,7 @@ import (
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/uber/jaeger-client-go"
 )
 
@@ -104,7 +104,7 @@ func (s *Service) Run() error {
 
 	select {
 	case err := <-errCh:
-		agr := agr_errors.New()
+		agr := agr_errors.NewAggregate()
 		agr.Append(errors.Wrap(err, "component failed"))
 		agr.Append(errors.Wrap(s.Shutdown(), "failed to shutdown"))
 		if agr.Count() > 0 {
@@ -130,7 +130,7 @@ func (s *Service) Shutdown() error {
 	log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}
-	agr := agr_errors.New()
+	agr := agr_errors.NewAggregate()
 	for _, cp := range s.cps {
 
 		wg.Add(1)

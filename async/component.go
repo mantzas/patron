@@ -4,9 +4,8 @@ import (
 	"context"
 	"sync"
 
-	agr_errors "github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
-	"github.com/pkg/errors"
 )
 
 // Component implementation of a async component.
@@ -107,7 +106,7 @@ func (c *Component) executeFailureStrategy(msg Message, err error) error {
 	log.Errorf("failed to process message, failure strategy executed: %v", err)
 	switch c.failStrategy {
 	case NackExitStrategy:
-		agr := agr_errors.New()
+		agr := errors.NewAggregate()
 		agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
 		agr.Append(errors.Wrap(msg.Nack(), "failed to NACK message"))
 		return agr

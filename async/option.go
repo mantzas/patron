@@ -1,8 +1,7 @@
 package async
 
 import (
-	"errors"
-
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 )
 

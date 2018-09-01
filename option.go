@@ -1,10 +1,9 @@
 package patron
 
 import (
-	"errors"
-
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync/http"
+	"github.com/mantzas/patron/errors"
 )
 
 // OptionFunc definition for configuring the service in a functional way.

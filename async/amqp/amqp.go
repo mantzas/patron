@@ -9,11 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
-	agr_errors "github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 )
 
@@ -129,7 +128,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				)
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {
-					agr := agr_errors.New()
+					agr := errors.NewAggregate()
 					agr.Append(errors.Wrapf(err, "failed to determine encoding %s. Nack message", d.ContentType))
 					agr.Append(errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
 					trace.SpanError(sp)
@@ -153,7 +152,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 
 // Close handles closing channel and connection of AMQP.
 func (c *Consumer) Close() error {
-	agr := agr_errors.New()
+	agr := errors.NewAggregate()
 
 	if c.ch != nil {
 		err := c.ch.Cancel(c.tag, true)

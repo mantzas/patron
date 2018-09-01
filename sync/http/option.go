@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 )
 
 // OptionFunc defines a option func for the HTTP component.

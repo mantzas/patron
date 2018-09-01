@@ -1,11 +1,11 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/stretchr/testify/assert"
 )
 

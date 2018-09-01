@@ -5,7 +5,7 @@ import (
 
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 )
 
 // ProcessorFunc definition of a async processor.
