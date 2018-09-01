@@ -8,8 +8,8 @@ import (
 
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/sync"
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/sync"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +31,7 @@ func Test_determineEncoding(t *testing.T) {
 	reqSuc.Header.Set(encoding.AcceptHeader, json.TypeCharset)
 	reqMissingAccept, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
-	reqMissingAccept.Header.Set(encoding.ContentTypeHeader, json.Type)
+	reqMissingAccept.Header.Set(encoding.ContentTypeHeader, json.TypeCharset)
 	reqWrongAccept, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(err)
 	reqWrongAccept.Header.Set(encoding.ContentTypeHeader, json.Type)
@@ -55,7 +55,7 @@ func Test_determineEncoding(t *testing.T) {
 		wantErr bool
 	}{
 		{"success", args{req: reqSuc}, json.Decode, json.Encode, false},
-		{"missing accept", args{req: reqMissingAccept}, nil, nil, true},
+		{"success, missing accept", args{req: reqMissingAccept}, json.Decode, json.Encode, false},
 		{"wrong accept", args{req: reqWrongAccept}, nil, nil, true},
 		{"missing content", args{req: reqMissingContent}, nil, nil, true},
 		{"wrong content", args{req: reqWrongContent}, nil, nil, true},
