@@ -15,19 +15,21 @@ func TestNew(t *testing.T) {
 	type args struct {
 		p   ProcessorFunc
 		cns Consumer
+		opt OptionFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{name: "success", args: args{p: proc.Process, cns: &mockConsumer{}}, wantErr: false},
-		{name: "failed, missing processor func", args: args{p: nil, cns: &mockConsumer{}}, wantErr: true},
-		{name: "failed, missing consumer", args: args{p: proc.Process, cns: nil}, wantErr: true},
+		{name: "success", args: args{p: proc.Process, cns: &mockConsumer{}, opt: FailureStrategy(ExitStrategy)}, wantErr: false},
+		{name: "failed, missing processor func", args: args{p: nil, cns: &mockConsumer{}, opt: FailureStrategy(ExitStrategy)}, wantErr: true},
+		{name: "failed, missing consumer", args: args{p: proc.Process, cns: nil, opt: FailureStrategy(ExitStrategy)}, wantErr: true},
+		{name: "failed, invalid fail strategy", args: args{p: proc.Process, cns: &mockConsumer{}, opt: FailureStrategy(3)}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.p, tt.args.cns)
+			got, err := New(tt.args.p, tt.args.cns, tt.args.opt)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(got)

@@ -11,14 +11,16 @@ import (
 
 // Component implementation of a async component.
 type Component struct {
-	proc ProcessorFunc
+	proc         ProcessorFunc
+	failStrategy FailStrategy
 	sync.Mutex
 	cns Consumer
 	cnl context.CancelFunc
 }
 
-// New returns a new async component.
-func New(p ProcessorFunc, cns Consumer) (*Component, error) {
+// New returns a new async component. The default behavior is to return a error of failure.
+// Use options to change the default behavior.
+func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
@@ -27,10 +29,20 @@ func New(p ProcessorFunc, cns Consumer) (*Component, error) {
 		return nil, errors.New("consumer is required")
 	}
 
-	return &Component{
-		proc: p,
-		cns:  cns,
-	}, nil
+	c := &Component{
+		proc:         p,
+		cns:          cns,
+		failStrategy: ExitStrategy,
+	}
+
+	for _, o := range oo {
+		err := o(c)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c, nil
 }
 
 // Run starts the consumer processing loop messages.
