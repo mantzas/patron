@@ -22,9 +22,9 @@ var (
 
 // Component implementation of HTTP.
 type Component struct {
-	hc       HealthCheckFunc
-	port     int
-	m        sync.Mutex
+	hc   HealthCheckFunc
+	port int
+	sync.Mutex
 	routes   []Route
 	srv      *http.Server
 	certFile string
@@ -33,7 +33,7 @@ type Component struct {
 
 // New returns a new component.
 func New(oo ...OptionFunc) (*Component, error) {
-	s := Component{hc: DefaultHealthCheck, port: port, routes: []Route{}, m: sync.Mutex{}, srv: nil}
+	s := Component{hc: DefaultHealthCheck, port: port, routes: []Route{}, srv: nil}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -51,7 +51,7 @@ func New(oo ...OptionFunc) (*Component, error) {
 
 // Run starts the HTTP server.
 func (s *Component) Run(ctx context.Context) error {
-	s.m.Lock()
+	s.Lock()
 	log.Debug("applying tracing to routes")
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {
@@ -61,7 +61,7 @@ func (s *Component) Run(ctx context.Context) error {
 		}
 	}
 	s.srv = createHTTPServer(s.port, createHandler(s.routes))
-	s.m.Unlock()
+	s.Unlock()
 
 	if s.certFile != "" && s.keyFile != "" {
 		log.Infof("HTTPS component listening on port %d", s.port)
@@ -74,8 +74,8 @@ func (s *Component) Run(ctx context.Context) error {
 
 // Shutdown the component.
 func (s *Component) Shutdown(ctx context.Context) error {
-	s.m.Lock()
-	defer s.m.Unlock()
+	s.Lock()
+	defer s.Unlock()
 	log.Info("shutting down component")
 	if s.srv == nil {
 		return nil

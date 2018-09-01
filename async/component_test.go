@@ -96,8 +96,7 @@ func TestRun_Process_Error_NackStrategy(t *testing.T) {
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	ch := make(chan bool)
 	go func() {
-		err = cmp.Run(ctx)
-		assert.NoError(err)
+		assert.NoError(cmp.Run(ctx))
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
@@ -119,8 +118,7 @@ func TestRun_Process_Error_AckStrategy(t *testing.T) {
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	ch := make(chan bool)
 	go func() {
-		err = cmp.Run(ctx)
-		assert.NoError(err)
+		assert.NoError(cmp.Run(ctx))
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
