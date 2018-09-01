@@ -11,14 +11,16 @@ import (
 
 // Component implementation of a async component.
 type Component struct {
-	proc ProcessorFunc
+	proc         ProcessorFunc
+	failStrategy FailStrategy
 	sync.Mutex
 	cns Consumer
 	cnl context.CancelFunc
 }
 
-// New returns a new async component.
-func New(p ProcessorFunc, cns Consumer) (*Component, error) {
+// New returns a new async component. The default behavior is to return a error of failure.
+// Use options to change the default behavior.
+func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
@@ -27,10 +29,20 @@ func New(p ProcessorFunc, cns Consumer) (*Component, error) {
 		return nil, errors.New("consumer is required")
 	}
 
-	return &Component{
-		proc: p,
-		cns:  cns,
-	}, nil
+	c := &Component{
+		proc:         p,
+		cns:          cns,
+		failStrategy: NackExitStrategy,
+	}
+
+	for _, o := range oo {
+		err := o(c)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c, nil
 }
 
 // Run starts the consumer processing loop messages.
@@ -58,10 +70,10 @@ func (c *Component) Run(ctx context.Context) error {
 				go func(msg Message) {
 					err = c.proc(msg)
 					if err != nil {
-						agr := agr_errors.New()
-						agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
-						agr.Append(errors.Wrap(msg.Nack(), "failed to NACK message"))
-						failCh <- agr
+						err := c.executeFailureStrategy(msg, err)
+						if err != nil {
+							failCh <- err
+						}
 						return
 					}
 					if err := msg.Ack(); err != nil {
@@ -89,4 +101,28 @@ func (c *Component) Shutdown(ctx context.Context) error {
 		return nil
 	}
 	return c.cns.Close()
+}
+
+func (c *Component) executeFailureStrategy(msg Message, err error) error {
+	log.Errorf("failed to process message, failure strategy executed: %v", err)
+	switch c.failStrategy {
+	case NackExitStrategy:
+		agr := agr_errors.New()
+		agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
+		agr.Append(errors.Wrap(msg.Nack(), "failed to NACK message"))
+		return agr
+	case NackStrategy:
+		err := msg.Nack()
+		if err != nil {
+			return errors.Wrap(err, "nack failed when executing failure strategy")
+		}
+	case AckStrategy:
+		err := msg.Ack()
+		if err != nil {
+			return errors.Wrap(err, "ack failed when executing failure strategy")
+		}
+	default:
+		return errors.New("invalid failure strategy")
+	}
+	return nil
 }

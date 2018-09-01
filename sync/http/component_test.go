@@ -46,13 +46,11 @@ func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
 	s, err := New(Routes(rr))
 	assert.NoError(err)
 	go func() {
-		err1 := s.Run(context.Background())
-		assert.Error(err1)
+		assert.Error(s.Run(context.Background()))
 	}()
 	time.Sleep(100 * time.Millisecond)
 	assert.Len(s.routes, 13)
-	err = s.Shutdown(context.Background())
-	assert.NoError(err)
+	assert.NoError(s.Shutdown(context.Background()))
 }
 
 func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
@@ -61,13 +59,11 @@ func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
 	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.pem"))
 	assert.NoError(err)
 	go func() {
-		err1 := s.Run(context.Background())
-		assert.Error(err1)
+		assert.Error(s.Run(context.Background()))
 	}()
 	time.Sleep(100 * time.Millisecond)
 	assert.Len(s.routes, 13)
-	err = s.Shutdown(context.Background())
-	assert.NoError(err)
+	assert.NoError(s.Shutdown(context.Background()))
 }
 
 func Test_createHTTPServer(t *testing.T) {
