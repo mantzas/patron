@@ -32,7 +32,7 @@ func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 	c := &Component{
 		proc:         p,
 		cns:          cns,
-		failStrategy: ExitStrategy,
+		failStrategy: NackExitStrategy,
 	}
 
 	for _, o := range oo {
@@ -70,10 +70,10 @@ func (c *Component) Run(ctx context.Context) error {
 				go func(msg Message) {
 					err = c.proc(msg)
 					if err != nil {
-						agr := agr_errors.New()
-						agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
-						agr.Append(errors.Wrap(msg.Nack(), "failed to NACK message"))
-						failCh <- agr
+						err := c.executeFailureStrategy(msg, err)
+						if err != nil {
+							failCh <- err
+						}
 						return
 					}
 					if err := msg.Ack(); err != nil {
@@ -101,4 +101,28 @@ func (c *Component) Shutdown(ctx context.Context) error {
 		return nil
 	}
 	return c.cns.Close()
+}
+
+func (c *Component) executeFailureStrategy(msg Message, err error) error {
+	log.Errorf("failed to process message, failure strategy executed: %v", err)
+	switch c.failStrategy {
+	case NackExitStrategy:
+		agr := agr_errors.New()
+		agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
+		agr.Append(errors.Wrap(msg.Nack(), "failed to NACK message"))
+		return agr
+	case NackStrategy:
+		err := msg.Nack()
+		if err != nil {
+			return errors.Wrap(err, "nack failed when executing failure strategy")
+		}
+	case AckStrategy:
+		err := msg.Ack()
+		if err != nil {
+			return errors.Wrap(err, "ack failed when executing failure strategy")
+		}
+	default:
+		return errors.New("invalid failure strategy")
+	}
+	return nil
 }

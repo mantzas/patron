@@ -17,7 +17,7 @@ func TestFailureStrategy(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "success", args: args{fs: ExitStrategy}, wantErr: false},
+		{name: "success", args: args{fs: NackExitStrategy}, wantErr: false},
 		{name: "invalid strategy (lower)", args: args{fs: -1}, wantErr: true},
 		{name: "invalid strategy (higher)", args: args{fs: 3}, wantErr: true},
 	}
