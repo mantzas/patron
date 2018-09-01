@@ -9,7 +9,7 @@ import (
 	"github.com/mantzas/patron/sync"
 	tracehttp "github.com/mantzas/patron/trace/http"
 	"github.com/mantzas/patron/trace/kafka"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 )
 
 type httpComponent struct {

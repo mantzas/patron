@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 )
 
 // OptionFunc definition for configuring the consumer in a functional way.

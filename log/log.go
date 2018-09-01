@@ -1,7 +1,7 @@
 package log
 
 import (
-	"errors"
+	"github.com/mantzas/patron/errors"
 )
 
 // The Level type definition.

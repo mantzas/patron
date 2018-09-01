@@ -8,7 +8,7 @@ import (
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/streadway/amqp"
 )
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/stretchr/testify/assert"
 )
 

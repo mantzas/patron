@@ -9,7 +9,7 @@ import (
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/sync"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/stretchr/testify/assert"
 )
 

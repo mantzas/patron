@@ -14,7 +14,7 @@ import (
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/uber/jaeger-client-go"
 )
 
