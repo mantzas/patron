@@ -135,15 +135,7 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 
 // Close the connection and channel of the publisher.
 func (tc *TracedPublisher) Close(_ context.Context) error {
-	aggError := errors.NewAggregate()
-
-	aggError.Append(tc.ch.Close())
-	aggError.Append(tc.cn.Close())
-
-	if aggError.Count() > 0 {
-		return aggError
-	}
-	return nil
+	return errors.Aggregate(tc.ch.Close(), tc.cn.Close())
 }
 
 type amqpHeadersCarrier map[string]interface{}

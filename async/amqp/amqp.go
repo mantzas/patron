@@ -128,11 +128,9 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				)
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {
-					agr := errors.NewAggregate()
-					agr.Append(errors.Wrapf(err, "failed to determine encoding %s. Nack message", d.ContentType))
-					agr.Append(errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
+					err := errors.Aggregate(err, errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
 					trace.SpanError(sp)
-					chErr <- agr
+					chErr <- err
 					return
 				}
 
@@ -152,22 +150,16 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 
 // Close handles closing channel and connection of AMQP.
 func (c *Consumer) Close() error {
-	agr := errors.NewAggregate()
+	var errChan error
+	var errConn error
 
 	if c.ch != nil {
-		err := c.ch.Cancel(c.tag, true)
-		agr.Append(errors.Wrapf(err, "failed to cancel channel of consumer %s", c.tag))
+		errChan = errors.Wrapf(c.ch.Cancel(c.tag, true), "failed to cancel channel of consumer %s", c.tag)
 	}
-
 	if c.conn != nil {
-		err := c.conn.Close()
-		agr.Append(errors.Wrap(err, "failed to close connection"))
+		errConn = errors.Wrap(c.conn.Close(), "failed to close connection")
 	}
-
-	if agr.Count() > 0 {
-		return agr
-	}
-	return nil
+	return errors.Aggregate(errChan, errConn)
 }
 
 func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
