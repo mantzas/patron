@@ -26,7 +26,8 @@ func TestTracedClient_Do(t *testing.T) {
 	defer ts.Close()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
-	c := NewClient(1 * time.Second)
+	c, err := New()
+	assert.NoError(err)
 	req, err := http.NewRequest("GET", ts.URL, nil)
 	assert.NoError(err)
 	rsp, err := c.Do(context.Background(), req)
@@ -35,4 +36,31 @@ func TestTracedClient_Do(t *testing.T) {
 	sp := mtr.FinishedSpans()[0]
 	assert.NotNil(sp)
 	assert.Equal(trace.HTTPOpName("Client", "GET", ts.URL), sp.OperationName)
+}
+
+func TestNew(t *testing.T) {
+	assert := assert.New(t)
+	type args struct {
+		opt OptionFunc
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{name: "success", args: args{opt: Timeout(time.Second)}, wantErr: false},
+		{name: "failure, invalid timeout", args: args{opt: Timeout(0 * time.Second)}, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := New(tt.args.opt)
+			if tt.wantErr {
+				assert.Error(err)
+				assert.Nil(got)
+			} else {
+				assert.NoError(err)
+				assert.NotNil(got)
+			}
+		})
+	}
 }

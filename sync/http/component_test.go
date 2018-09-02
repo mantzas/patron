@@ -68,12 +68,16 @@ func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
 
 func Test_createHTTPServer(t *testing.T) {
 	assert := assert.New(t)
-	s := createHTTPServer(10000, nil)
+	cmp := Component{
+		httpPort:         10000,
+		httpReadTimeout:  5 * time.Second,
+		httpWriteTimeout: 10 * time.Second,
+	}
+	s := cmp.createHTTPServer()
 	assert.NotNil(s)
 	assert.Equal(":10000", s.Addr)
 	assert.Equal(5*time.Second, s.ReadTimeout)
-	assert.Equal(60*time.Second, s.WriteTimeout)
-	assert.Equal(120*time.Second, s.IdleTimeout)
+	assert.Equal(10*time.Second, s.WriteTimeout)
 }
 
 func TestCreateHandler(t *testing.T) {

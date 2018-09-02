@@ -43,7 +43,14 @@ func TestNewJSONMessage(t *testing.T) {
 
 func TestNewSyncProducer_Failure(t *testing.T) {
 	assert := assert.New(t)
-	got, err := NewAsyncProducer([]string{}, "")
+	got, err := NewAsyncProducer([]string{})
+	assert.Error(err)
+	assert.Nil(got)
+}
+
+func TestNewSyncProducer_Option_Failure(t *testing.T) {
+	assert := assert.New(t)
+	got, err := NewAsyncProducer([]string{"xxx"}, Version("xxxx"))
 	assert.Error(err)
 	assert.Nil(got)
 }
@@ -51,7 +58,7 @@ func TestNewSyncProducer_Failure(t *testing.T) {
 func TestNewSyncProducer_Success(t *testing.T) {
 	assert := assert.New(t)
 	seed := createKafkaBroker(t, false)
-	got, err := NewAsyncProducer([]string{seed.Addr()}, "")
+	got, err := NewAsyncProducer([]string{seed.Addr()})
 	assert.NoError(err)
 	assert.NotNil(got)
 }
@@ -61,7 +68,7 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	msg, err := NewJSONMessage("TOPIC", "TEST")
 	assert.NoError(err)
 	seed := createKafkaBroker(t, true)
-	ap, err := NewAsyncProducer([]string{seed.Addr()}, sarama.V0_8_2_0.String())
+	ap, err := NewAsyncProducer([]string{seed.Addr()}, Version(sarama.V0_8_2_0.String()))
 	assert.NoError(err)
 	assert.NotNil(ap)
 	err = trace.Setup("test", "1.0.0", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)

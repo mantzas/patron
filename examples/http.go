@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/sync"
 	tracehttp "github.com/mantzas/patron/trace/http"
 	"github.com/mantzas/patron/trace/kafka"
-	"github.com/mantzas/patron/errors"
 )
 
 type httpComponent struct {
@@ -19,7 +19,7 @@ type httpComponent struct {
 }
 
 func newHTTPComponent(kafkabroker, topic, url string) (*httpComponent, error) {
-	prd, err := kafka.NewAsyncProducer([]string{kafkaBroker}, "")
+	prd, err := kafka.NewAsyncProducer([]string{kafkaBroker})
 	if err != nil {
 		return nil, err
 	}
@@ -30,11 +30,15 @@ func (hc *httpComponent) first(ctx context.Context, req *sync.Request) (*sync.Re
 	aud := Audit{Name: "first HTTP component", Started: time.Now()}
 	secondRouteReq, err := http.NewRequest("GET", hc.url, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create requestfor www.google.com")
+		return nil, errors.Wrap(err, "failed to create request for www.google.com")
 	}
 	secondRouteReq.Header.Add("Content-Type", "application/json")
 	secondRouteReq.Header.Add("Accept", "application/json")
-	rsp, err := tracehttp.NewClient(5*time.Second).Do(ctx, secondRouteReq)
+	cl, err := tracehttp.New(tracehttp.Timeout(5 * time.Second))
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := cl.Do(ctx, secondRouteReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get www.google.com")
 	}
@@ -51,7 +55,11 @@ func (hc *httpComponent) second(ctx context.Context, req *sync.Request) (*sync.R
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create requestfor www.google.com")
 	}
-	rsp, err := tracehttp.NewClient(5*time.Second).Do(ctx, googleReq)
+	cl, err := tracehttp.New(tracehttp.Timeout(5 * time.Second))
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := cl.Do(ctx, googleReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get www.google.com")
 	}

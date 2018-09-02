@@ -12,7 +12,10 @@ import (
 )
 
 const (
-	port = 50000
+	httpPort         = 50000
+	httpReadTimeout  = 5 * time.Second
+	httpWriteTimeout = 10 * time.Second
+	httpIdleTimeout  = 120 * time.Second
 )
 
 var (
@@ -22,8 +25,10 @@ var (
 
 // Component implementation of HTTP.
 type Component struct {
-	hc   HealthCheckFunc
-	port int
+	hc               HealthCheckFunc
+	httpPort         int
+	httpReadTimeout  time.Duration
+	httpWriteTimeout time.Duration
 	sync.Mutex
 	routes   []Route
 	srv      *http.Server
@@ -33,7 +38,13 @@ type Component struct {
 
 // New returns a new component.
 func New(oo ...OptionFunc) (*Component, error) {
-	s := Component{hc: DefaultHealthCheck, port: port, routes: []Route{}, srv: nil}
+	s := Component{
+		hc:               DefaultHealthCheck,
+		httpPort:         httpPort,
+		httpReadTimeout:  httpReadTimeout,
+		httpWriteTimeout: httpWriteTimeout,
+		routes:           []Route{},
+	}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -60,15 +71,15 @@ func (s *Component) Run(ctx context.Context) error {
 			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
 		}
 	}
-	s.srv = createHTTPServer(s.port, createHandler(s.routes))
+	s.srv = s.createHTTPServer()
 	s.Unlock()
 
 	if s.certFile != "" && s.keyFile != "" {
-		log.Infof("HTTPS component listening on port %d", s.port)
+		log.Infof("HTTPS component listening on port %d", s.httpPort)
 		return s.srv.ListenAndServeTLS(s.certFile, s.keyFile)
 	}
 
-	log.Infof("HTTP component listening on port %d", s.port)
+	log.Infof("HTTP component listening on port %d", s.httpPort)
 	return s.srv.ListenAndServe()
 }
 
@@ -83,13 +94,13 @@ func (s *Component) Shutdown(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-func createHTTPServer(port int, sm http.Handler) *http.Server {
+func (s *Component) createHTTPServer() *http.Server {
 	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", port),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 60 * time.Second,
-		IdleTimeout:  120 * time.Second,
-		Handler:      sm,
+		Addr:         fmt.Sprintf(":%d", s.httpPort),
+		ReadTimeout:  s.httpReadTimeout,
+		WriteTimeout: s.httpWriteTimeout,
+		IdleTimeout:  httpIdleTimeout,
+		Handler:      createHandler(s.routes),
 	}
 }
 
