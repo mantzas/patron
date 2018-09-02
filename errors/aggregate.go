@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 )
@@ -41,14 +40,8 @@ func (a *Aggregate) Error() string {
 	defer a.Unlock()
 	b := strings.Builder{}
 	for _, err := range a.errors {
-		_, err1 := b.WriteString(err.Error())
-		if err1 != nil {
-			return fmt.Sprintf("failed to create aggregate error string: %v", err)
-		}
-		_, err1 = b.WriteRune('\n')
-		if err1 != nil {
-			return fmt.Sprintf("failed write newline when creating aggregate error string: %v", err)
-		}
+		b.WriteString(err.Error())
+		b.WriteRune('\n')
 	}
 	return b.String()
 }
