@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/mantzas/patron/encoding/json"
-	patronerrors "github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/mantzas/patron/errors"
 	"github.com/streadway/amqp"
 )
 
@@ -125,7 +124,7 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 
 // Close the connection and channel of the publisher.
 func (tc *TracedPublisher) Close(_ context.Context) error {
-	aggError := patronerrors.NewAggregate()
+	aggError := errors.NewAggregate()
 
 	aggError.Append(tc.ch.Close())
 	aggError.Append(tc.cn.Close())

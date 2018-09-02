@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/sync"
 	tracehttp "github.com/mantzas/patron/trace/http"
 	"github.com/mantzas/patron/trace/kafka"
-	"github.com/mantzas/patron/errors"
 )
 
 type httpComponent struct {
@@ -19,7 +19,7 @@ type httpComponent struct {
 }
 
 func newHTTPComponent(kafkabroker, topic, url string) (*httpComponent, error) {
-	prd, err := kafka.NewAsyncProducer([]string{kafkaBroker}, "")
+	prd, err := kafka.NewAsyncProducer([]string{kafkaBroker})
 	if err != nil {
 		return nil, err
 	}
