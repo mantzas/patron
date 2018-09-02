@@ -103,13 +103,7 @@ func (s *Service) Run() error {
 
 	select {
 	case err := <-errCh:
-		agr := errors.NewAggregate()
-		agr.Append(errors.Wrap(err, "component failed"))
-		agr.Append(errors.Wrap(s.Shutdown(), "failed to shutdown"))
-		if agr.Count() > 0 {
-			return agr
-		}
-		return nil
+		return errors.Aggregate(err, errors.Wrap(s.Shutdown(), "failed to shutdown"))
 	case <-s.ctx.Done():
 		log.Info("stop signal received")
 		return s.Shutdown()
@@ -129,21 +123,21 @@ func (s *Service) Shutdown() error {
 	log.Info("shutting down components")
 
 	wg := sync.WaitGroup{}
-	agr := errors.NewAggregate()
+	wg.Add(len(s.cps))
+	chErr := make(chan error, len(s.cps))
 	for _, cp := range s.cps {
-
-		wg.Add(1)
-		go func(c Component, ctx context.Context, w *sync.WaitGroup, agr *errors.Aggregate) {
-			defer w.Done()
-			agr.Append(c.Shutdown(ctx))
-		}(cp, ctx, &wg, agr)
+		go func(c Component, ctx context.Context) {
+			defer wg.Done()
+			chErr <- c.Shutdown(ctx)
+		}(cp, ctx)
 	}
-
 	wg.Wait()
-	if agr.Count() > 0 {
-		return agr
+	close(chErr)
+	var ee []error
+	for err := range chErr {
+		ee = append(ee, err)
 	}
-	return nil
+	return errors.Aggregate(ee...)
 }
 
 // SetupLogging set's up default logging.
