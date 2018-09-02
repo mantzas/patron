@@ -1,6 +1,8 @@
 package http
 
 import (
+	"time"
+
 	"github.com/mantzas/patron/errors"
 )
 
@@ -13,7 +15,16 @@ func Port(port int) OptionFunc {
 		if port <= 0 || port > 65535 {
 			return errors.New("invalid port")
 		}
-		s.port = port
+		s.httpPort = port
+		return nil
+	}
+}
+
+// Timeouts option for setting the timeouts of the HTTP component.
+func Timeouts(read, write time.Duration) OptionFunc {
+	return func(s *Component) error {
+		s.httpReadTimeout = read
+		s.httpWriteTimeout = write
 		return nil
 	}
 }

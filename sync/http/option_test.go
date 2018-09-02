@@ -2,6 +2,7 @@ package http
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +24,7 @@ func TestPort(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(err)
 			} else {
-				assert.Equal(tt.port, s.port)
+				assert.Equal(tt.port, s.httpPort)
 				assert.NoError(err)
 			}
 		})
@@ -108,4 +109,13 @@ func TestSetSecure(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTimeouts(t *testing.T) {
+	assert := assert.New(t)
+	c := Component{}
+	err := Timeouts(2*time.Second, 3*time.Second)(&c)
+	assert.NoError(err)
+	assert.Equal(2*time.Second, c.httpReadTimeout)
+	assert.Equal(3*time.Second, c.httpWriteTimeout)
 }
