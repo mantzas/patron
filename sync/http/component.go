@@ -95,21 +95,17 @@ func (s *Component) listenAndServe(srv *http.Server, ch chan<- error) {
 }
 
 func (s *Component) createHTTPServer() *http.Server {
+	log.Debugf("adding %d routes", len(s.routes))
+	router := httprouter.New()
+	for _, route := range s.routes {
+		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
+		log.Debugf("added route %s %s", route.Method, route.Pattern)
+	}
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.httpPort),
 		ReadTimeout:  s.httpReadTimeout,
 		WriteTimeout: s.httpWriteTimeout,
 		IdleTimeout:  httpIdleTimeout,
-		Handler:      createHandler(s.routes),
+		Handler:      router,
 	}
-}
-
-func createHandler(routes []Route) http.Handler {
-	log.Debugf("adding %d routes", len(routes))
-	router := httprouter.New()
-	for _, route := range routes {
-		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
-		log.Debugf("added route %s %s", route.Method, route.Pattern)
-	}
-	return router
 }

@@ -54,10 +54,8 @@ func (c *Component) Run(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				log.Info("closing consumer")
-				if c.cns == nil {
-					failCh <- nil
-				}
 				failCh <- c.cns.Close()
+				return
 			case msg := <-chMsg:
 				log.Debug("New message from consumer arrived")
 				go c.processMessage(msg, failCh)

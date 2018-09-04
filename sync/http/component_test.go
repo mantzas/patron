@@ -95,9 +95,3 @@ func Test_createHTTPServer(t *testing.T) {
 	assert.Equal(5*time.Second, s.ReadTimeout)
 	assert.Equal(10*time.Second, s.WriteTimeout)
 }
-
-func TestCreateHandler(t *testing.T) {
-	assert := assert.New(t)
-	h := createHandler([]Route{NewRoute("/", "GET", nil, false)})
-	assert.NotNil(h)
-}
