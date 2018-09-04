@@ -31,7 +31,6 @@ type Component struct {
 	httpWriteTimeout time.Duration
 	sync.Mutex
 	routes   []Route
-	srv      *http.Server
 	certFile string
 	keyFile  string
 }
@@ -71,45 +70,42 @@ func (s *Component) Run(ctx context.Context) error {
 			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
 		}
 	}
-	s.srv = s.createHTTPServer()
+	chFail := make(chan error)
+	srv := s.createHTTPServer()
+	go s.listenAndServe(srv, chFail)
 	s.Unlock()
 
+	select {
+	case <-ctx.Done():
+		log.Info("shutting down component")
+		return srv.Shutdown(ctx)
+	case err := <-chFail:
+		return err
+	}
+}
+
+func (s *Component) listenAndServe(srv *http.Server, ch chan<- error) {
 	if s.certFile != "" && s.keyFile != "" {
 		log.Infof("HTTPS component listening on port %d", s.httpPort)
-		return s.srv.ListenAndServeTLS(s.certFile, s.keyFile)
+		ch <- srv.ListenAndServeTLS(s.certFile, s.keyFile)
 	}
 
 	log.Infof("HTTP component listening on port %d", s.httpPort)
-	return s.srv.ListenAndServe()
-}
-
-// Shutdown the component.
-func (s *Component) Shutdown(ctx context.Context) error {
-	s.Lock()
-	defer s.Unlock()
-	log.Info("shutting down component")
-	if s.srv == nil {
-		return nil
-	}
-	return s.srv.Shutdown(ctx)
+	ch <- srv.ListenAndServe()
 }
 
 func (s *Component) createHTTPServer() *http.Server {
+	log.Debugf("adding %d routes", len(s.routes))
+	router := httprouter.New()
+	for _, route := range s.routes {
+		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
+		log.Debugf("added route %s %s", route.Method, route.Pattern)
+	}
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.httpPort),
 		ReadTimeout:  s.httpReadTimeout,
 		WriteTimeout: s.httpWriteTimeout,
 		IdleTimeout:  httpIdleTimeout,
-		Handler:      createHandler(s.routes),
+		Handler:      router,
 	}
-}
-
-func createHandler(routes []Route) http.Handler {
-	log.Debugf("adding %d routes", len(routes))
-	router := httprouter.New()
-	for _, route := range routes {
-		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
-		log.Debugf("added route %s %s", route.Method, route.Pattern)
-	}
-	return router
 }

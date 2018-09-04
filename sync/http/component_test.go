@@ -45,25 +45,41 @@ func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
 	rr := []Route{NewRoute("/", "GET", nil, true)}
 	s, err := New(Routes(rr))
 	assert.NoError(err)
+	done := make(chan bool)
+	ctx, cnl := context.WithCancel(context.Background())
 	go func() {
-		assert.Error(s.Run(context.Background()))
+		assert.NoError(s.Run(ctx))
+		done <- true
 	}()
 	time.Sleep(100 * time.Millisecond)
 	assert.Len(s.routes, 13)
-	assert.NoError(s.Shutdown(context.Background()))
+	cnl()
+	assert.True(<-done)
 }
 
 func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 	rr := []Route{NewRoute("/", "GET", nil, true)}
-	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.pem"))
+	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.key"))
 	assert.NoError(err)
+	done := make(chan bool)
+	ctx, cnl := context.WithCancel(context.Background())
 	go func() {
-		assert.Error(s.Run(context.Background()))
+		assert.NoError(s.Run(ctx))
+		done <- true
 	}()
 	time.Sleep(100 * time.Millisecond)
 	assert.Len(s.routes, 13)
-	assert.NoError(s.Shutdown(context.Background()))
+	cnl()
+	assert.True(<-done)
+}
+
+func TestComponent_ListenAndServeTLS_FailsInvalidCerts(t *testing.T) {
+	assert := assert.New(t)
+	rr := []Route{NewRoute("/", "GET", nil, true)}
+	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.pem"))
+	assert.NoError(err)
+	assert.Error(s.Run(context.Background()))
 }
 
 func Test_createHTTPServer(t *testing.T) {
@@ -78,10 +94,4 @@ func Test_createHTTPServer(t *testing.T) {
 	assert.Equal(":10000", s.Addr)
 	assert.Equal(5*time.Second, s.ReadTimeout)
 	assert.Equal(10*time.Second, s.WriteTimeout)
-}
-
-func TestCreateHandler(t *testing.T) {
-	assert := assert.New(t)
-	h := createHandler([]Route{NewRoute("/", "GET", nil, false)})
-	assert.NotNil(h)
 }

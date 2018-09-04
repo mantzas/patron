@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
@@ -234,7 +235,10 @@ func Test_extractParams(t *testing.T) {
 		fields = req.Fields
 		return nil, nil
 	}
-	h := createHandler([]Route{NewRoute("/users/:id/status", "GET", proc, false)})
-	h.ServeHTTP(httptest.NewRecorder(), req)
+
+	router := httprouter.New()
+	route := NewRoute("/users/:id/status", "GET", proc, false)
+	router.HandlerFunc(route.Method, route.Pattern, route.Handler)
+	router.ServeHTTP(httptest.NewRecorder(), req)
 	assert.Equal("1", fields["id"])
 }
