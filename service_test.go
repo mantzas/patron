@@ -43,29 +43,19 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	assert := assert.New(t)
 
 	tests := []struct {
-		name            string
-		cp              Component
-		wantRunErr      bool
-		wantShutdownErr bool
+		name       string
+		cp         Component
+		wantRunErr bool
 	}{
-		{"success", &testComponent{}, false, false},
-		{"failed to run", &testComponent{errorRunning: true, errorShuttingDown: false}, true, false},
-		{"failed to shutdown", &testComponent{errorRunning: false, errorShuttingDown: true}, false, true},
+		{"success", &testComponent{}, false},
+		{"failed to run", &testComponent{errorRunning: true}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := New("test", "", Components(tt.cp))
+			s, err := New("test", "", Components(tt.cp, tt.cp, tt.cp))
 			assert.NoError(err)
 			err = s.Run()
 			if tt.wantRunErr {
-				assert.Error(err)
-			} else if tt.wantShutdownErr {
-				assert.Error(err)
-			} else {
-				assert.NoError(err)
-			}
-			err = s.Shutdown()
-			if tt.wantShutdownErr {
 				assert.Error(err)
 			} else {
 				assert.NoError(err)
@@ -75,20 +65,12 @@ func TestServer_Run_Shutdown(t *testing.T) {
 }
 
 type testComponent struct {
-	errorRunning      bool
-	errorShuttingDown bool
+	errorRunning bool
 }
 
 func (ts testComponent) Run(ctx context.Context) error {
 	if ts.errorRunning {
 		return errors.New("failed to run component")
-	}
-	return nil
-}
-
-func (ts testComponent) Shutdown(ctx context.Context) error {
-	if ts.errorShuttingDown {
-		return errors.New("failed to shut down")
 	}
 	return nil
 }

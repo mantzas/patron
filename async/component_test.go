@@ -92,7 +92,7 @@ func TestRun_Process_Error_NackStrategy(t *testing.T) {
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr, FailureStrategy(NackStrategy))
 	assert.NoError(err)
-	ctx := context.Background()
+	ctx, cnl := context.WithCancel(context.Background())
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	ch := make(chan bool)
 	go func() {
@@ -100,9 +100,8 @@ func TestRun_Process_Error_NackStrategy(t *testing.T) {
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
-	err = cmp.Shutdown(ctx)
-	assert.NoError(err)
-	<-ch
+	cnl()
+	assert.True(<-ch)
 }
 
 func TestRun_Process_Error_AckStrategy(t *testing.T) {
@@ -114,7 +113,7 @@ func TestRun_Process_Error_AckStrategy(t *testing.T) {
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr, FailureStrategy(AckStrategy))
 	assert.NoError(err)
-	ctx := context.Background()
+	ctx, cnl := context.WithCancel(context.Background())
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	ch := make(chan bool)
 	go func() {
@@ -122,9 +121,8 @@ func TestRun_Process_Error_AckStrategy(t *testing.T) {
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
-	err = cmp.Shutdown(ctx)
-	assert.NoError(err)
-	<-ch
+	cnl()
+	assert.True(<-ch)
 }
 
 func TestRun_Process_Error_InvalidStrategy(t *testing.T) {
@@ -169,16 +167,15 @@ func TestRun_Process_Shutdown(t *testing.T) {
 	assert.NoError(err)
 	cnr.chMsg <- &mockMessage{ctx: context.Background()}
 	ch := make(chan bool)
-	ctx := context.Background()
+	ctx, cnl := context.WithCancel(context.Background())
 	go func() {
 		err1 := cmp.Run(ctx)
 		assert.NoError(err1)
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
-	err = cmp.Shutdown(ctx)
-	assert.NoError(err)
-	<-ch
+	cnl()
+	assert.True(<-ch)
 }
 
 type mockMessage struct {
