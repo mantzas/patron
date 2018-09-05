@@ -15,31 +15,28 @@ import (
 )
 
 func TestTracedClient_Do(t *testing.T) {
-	assert := assert.New(t)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		assert.Equal("true", r.Header.Get("Mockpfx-Ids-Sampled"))
-		assert.Equal("46", r.Header.Get("Mockpfx-Ids-Spanid"))
-		assert.Equal("43", r.Header.Get("Mockpfx-Ids-Traceid"))
+		assert.Equal(t, "true", r.Header.Get("Mockpfx-Ids-Sampled"))
+		assert.Equal(t, "46", r.Header.Get("Mockpfx-Ids-Spanid"))
+		assert.Equal(t, "43", r.Header.Get("Mockpfx-Ids-Traceid"))
 		fmt.Fprintln(w, "Hello, client")
 	}))
 	defer ts.Close()
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	c, err := New()
-	assert.NoError(err)
+	assert.NoError(t, err)
 	req, err := http.NewRequest("GET", ts.URL, nil)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	rsp, err := c.Do(context.Background(), req)
-	assert.NoError(err)
-	assert.NotNil(rsp)
+	assert.NoError(t, err)
+	assert.NotNil(t, rsp)
 	sp := mtr.FinishedSpans()[0]
-	assert.NotNil(sp)
-	assert.Equal(trace.HTTPOpName("Client", "GET", ts.URL), sp.OperationName)
+	assert.NotNil(t, sp)
+	assert.Equal(t, trace.HTTPOpName("Client", "GET", ts.URL), sp.OperationName)
 }
 
 func TestNew(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		opt OptionFunc
 	}
@@ -55,11 +52,11 @@ func TestNew(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.args.opt)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
+				assert.Error(t, err)
+				assert.Nil(t, got)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
 			}
 		})
 	}

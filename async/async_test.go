@@ -8,7 +8,6 @@ import (
 )
 
 func TestDetermineDecoder(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		contentType string
 	}
@@ -24,11 +23,11 @@ func TestDetermineDecoder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := DetermineDecoder(tt.args.contentType)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
+				assert.Error(t, err)
+				assert.Nil(t, got)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
 			}
 		})
 	}

@@ -10,7 +10,6 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	assert := assert.New(t)
 	route := http.NewRoute("/", "GET", nil, true)
 	type args struct {
 		name string
@@ -29,19 +28,17 @@ func TestNewServer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.args.name, "", tt.args.opt)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
+				assert.Error(t, err)
+				assert.Nil(t, got)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
 			}
 		})
 	}
 }
 
 func TestServer_Run_Shutdown(t *testing.T) {
-	assert := assert.New(t)
-
 	tests := []struct {
 		name       string
 		cp         Component
@@ -53,12 +50,12 @@ func TestServer_Run_Shutdown(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s, err := New("test", "", Components(tt.cp, tt.cp, tt.cp))
-			assert.NoError(err)
+			assert.NoError(t, err)
 			err = s.Run()
 			if tt.wantRunErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.NoError(err)
+				assert.NoError(t, err)
 			}
 		})
 	}

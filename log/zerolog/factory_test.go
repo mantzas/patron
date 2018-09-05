@@ -8,13 +8,11 @@ import (
 )
 
 func TestDefaultFactory(t *testing.T) {
-	assert := assert.New(t)
 	f := Create(log.InfoLevel)
-	assert.NotNil(f)
+	assert.NotNil(t, f)
 }
 
 func Test_getSource(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		name    string
 		file    string
@@ -25,14 +23,13 @@ func Test_getSource(t *testing.T) {
 		{name: "with parent folder", file: "/home/patron/main.go", wantSrc: "patron/main.go:10"},
 	}
 	for _, tt := range tests {
-		assert.Equal(tt.wantSrc, getSource(tt.file, 10))
+		assert.Equal(t, tt.wantSrc, getSource(tt.file, 10))
 	}
 }
 
 func Test_sourceFields(t *testing.T) {
-	assert := assert.New(t)
 	key, src, ok := sourceFields(1)
-	assert.True(ok)
-	assert.Equal("src", key)
-	assert.Equal("zerolog/factory_test.go:34", src)
+	assert.True(t, ok)
+	assert.Equal(t, "src", key)
+	assert.Equal(t, "zerolog/factory_test.go:31", src)
 }

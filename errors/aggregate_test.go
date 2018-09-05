@@ -7,8 +7,7 @@ import (
 )
 
 func TestAggregate(t *testing.T) {
-	assert := assert.New(t)
 	a := Aggregate(New("Error 1"), New("Error 2"), nil, New("Error 3"))
-	assert.Len(a, 3)
-	assert.Equal("Error 1\nError 2\nError 3\n", a.Error())
+	assert.Len(t, a, 3)
+	assert.Equal(t, "Error 1\nError 2\nError 3\n", a.Error())
 }

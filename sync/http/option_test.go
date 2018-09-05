@@ -8,7 +8,6 @@ import (
 )
 
 func TestPort(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		name    string
 		port    int
@@ -22,17 +21,16 @@ func TestPort(t *testing.T) {
 			s := Component{}
 			err := Port(tt.port)(&s)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.Equal(tt.port, s.httpPort)
-				assert.NoError(err)
+				assert.Equal(t, tt.port, s.httpPort)
+				assert.NoError(t, err)
 			}
 		})
 	}
 }
 
 func TestSetRoutes(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		name    string
 		rr      []Route
@@ -46,19 +44,18 @@ func TestSetRoutes(t *testing.T) {
 			s := Component{}
 			err := Routes(tt.rr)(&s)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.Len(s.routes, 1)
-				assert.Equal(tt.rr[0].Method, s.routes[0].Method)
-				assert.Equal(tt.rr[0].Pattern, s.routes[0].Pattern)
-				assert.NoError(err)
+				assert.Len(t, s.routes, 1)
+				assert.Equal(t, tt.rr[0].Method, s.routes[0].Method)
+				assert.Equal(t, tt.rr[0].Pattern, s.routes[0].Pattern)
+				assert.NoError(t, err)
 			}
 		})
 	}
 }
 
 func TestSetHealthCheck(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		name    string
 		hcf     HealthCheckFunc
@@ -72,18 +69,17 @@ func TestSetHealthCheck(t *testing.T) {
 			s := Component{}
 			err := HealthCheck(tt.hcf)(&s)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(s.hc)
+				assert.Error(t, err)
+				assert.Nil(t, s.hc)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(s.hc)
+				assert.NoError(t, err)
+				assert.NotNil(t, s.hc)
 			}
 		})
 	}
 }
 
 func TestSetSecure(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		name     string
 		certFile string
@@ -99,23 +95,22 @@ func TestSetSecure(t *testing.T) {
 			s := Component{}
 			err := Secure(tt.certFile, tt.keyFile)(&s)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Empty(s.certFile)
-				assert.Empty(s.keyFile)
+				assert.Error(t, err)
+				assert.Empty(t, s.certFile)
+				assert.Empty(t, s.keyFile)
 			} else {
-				assert.NoError(err)
-				assert.NotEmpty(s.certFile)
-				assert.NotEmpty(s.keyFile)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, s.certFile)
+				assert.NotEmpty(t, s.keyFile)
 			}
 		})
 	}
 }
 
 func TestTimeouts(t *testing.T) {
-	assert := assert.New(t)
 	c := Component{}
 	err := Timeouts(2*time.Second, 3*time.Second)(&c)
-	assert.NoError(err)
-	assert.Equal(2*time.Second, c.httpReadTimeout)
-	assert.Equal(3*time.Second, c.httpWriteTimeout)
+	assert.NoError(t, err)
+	assert.Equal(t, 2*time.Second, c.httpReadTimeout)
+	assert.Equal(t, 3*time.Second, c.httpWriteTimeout)
 }

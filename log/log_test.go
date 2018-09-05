@@ -7,7 +7,6 @@ import (
 )
 
 func TestSetup(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		name    string
 		f       FactoryFunc
@@ -20,9 +19,9 @@ func TestSetup(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Setup(tt.f, nil)
 			if tt.wantErr {
-				assert.Error(err, "expected error")
+				assert.Error(t, err, "expected error")
 			} else {
-				assert.NoError(err, "error not expected")
+				assert.NoError(t, err, "error not expected")
 			}
 		})
 	}
