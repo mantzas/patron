@@ -12,7 +12,10 @@ import (
 )
 
 const (
-	port = 50000
+	httpPort         = 50000
+	httpReadTimeout  = 5 * time.Second
+	httpWriteTimeout = 10 * time.Second
+	httpIdleTimeout  = 120 * time.Second
 )
 
 var (
@@ -22,18 +25,25 @@ var (
 
 // Component implementation of HTTP.
 type Component struct {
-	hc       HealthCheckFunc
-	port     int
-	m        sync.Mutex
+	hc               HealthCheckFunc
+	httpPort         int
+	httpReadTimeout  time.Duration
+	httpWriteTimeout time.Duration
+	sync.Mutex
 	routes   []Route
-	srv      *http.Server
 	certFile string
 	keyFile  string
 }
 
 // New returns a new component.
 func New(oo ...OptionFunc) (*Component, error) {
-	s := Component{hc: DefaultHealthCheck, port: port, routes: []Route{}, m: sync.Mutex{}, srv: nil}
+	s := Component{
+		hc:               DefaultHealthCheck,
+		httpPort:         httpPort,
+		httpReadTimeout:  httpReadTimeout,
+		httpWriteTimeout: httpWriteTimeout,
+		routes:           []Route{},
+	}
 
 	for _, o := range oo {
 		err := o(&s)
@@ -51,7 +61,7 @@ func New(oo ...OptionFunc) (*Component, error) {
 
 // Run starts the HTTP server.
 func (s *Component) Run(ctx context.Context) error {
-	s.m.Lock()
+	s.Lock()
 	log.Debug("applying tracing to routes")
 	for i := 0; i < len(s.routes); i++ {
 		if s.routes[i].Trace {
@@ -60,45 +70,42 @@ func (s *Component) Run(ctx context.Context) error {
 			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
 		}
 	}
-	s.srv = createHTTPServer(s.port, createHandler(s.routes))
-	s.m.Unlock()
+	chFail := make(chan error)
+	srv := s.createHTTPServer()
+	go s.listenAndServe(srv, chFail)
+	s.Unlock()
 
+	select {
+	case <-ctx.Done():
+		log.Info("shutting down component")
+		return srv.Shutdown(ctx)
+	case err := <-chFail:
+		return err
+	}
+}
+
+func (s *Component) listenAndServe(srv *http.Server, ch chan<- error) {
 	if s.certFile != "" && s.keyFile != "" {
-		log.Infof("HTTPS component listening on port %d", s.port)
-		return s.srv.ListenAndServeTLS(s.certFile, s.keyFile)
+		log.Infof("HTTPS component listening on port %d", s.httpPort)
+		ch <- srv.ListenAndServeTLS(s.certFile, s.keyFile)
 	}
 
-	log.Infof("HTTP component listening on port %d", s.port)
-	return s.srv.ListenAndServe()
+	log.Infof("HTTP component listening on port %d", s.httpPort)
+	ch <- srv.ListenAndServe()
 }
 
-// Shutdown the component.
-func (s *Component) Shutdown(ctx context.Context) error {
-	s.m.Lock()
-	defer s.m.Unlock()
-	log.Info("shutting down component")
-	if s.srv == nil {
-		return nil
-	}
-	return s.srv.Shutdown(ctx)
-}
-
-func createHTTPServer(port int, sm http.Handler) *http.Server {
-	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", port),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 60 * time.Second,
-		IdleTimeout:  120 * time.Second,
-		Handler:      sm,
-	}
-}
-
-func createHandler(routes []Route) http.Handler {
-	log.Debugf("adding %d routes", len(routes))
+func (s *Component) createHTTPServer() *http.Server {
+	log.Debugf("adding %d routes", len(s.routes))
 	router := httprouter.New()
-	for _, route := range routes {
+	for _, route := range s.routes {
 		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
 		log.Debugf("added route %s %s", route.Method, route.Pattern)
 	}
-	return router
+	return &http.Server{
+		Addr:         fmt.Sprintf(":%d", s.httpPort),
+		ReadTimeout:  s.httpReadTimeout,
+		WriteTimeout: s.httpWriteTimeout,
+		IdleTimeout:  httpIdleTimeout,
+		Handler:      router,
+	}
 }

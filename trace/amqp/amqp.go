@@ -2,13 +2,14 @@ package amqp
 
 import (
 	"context"
+	"net"
+	"time"
 
 	"github.com/mantzas/patron/encoding/json"
-	patronerrors "github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 )
 
@@ -29,7 +30,7 @@ func NewJSONMessage(d interface{}) (*Message, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal to JSON")
 	}
-	return &Message{contentType: json.ContentType, body: body}, nil
+	return &Message{contentType: json.Type, body: body}, nil
 }
 
 // Publisher interface of a RabbitMQ publisher.
@@ -38,8 +39,17 @@ type Publisher interface {
 	Close(ctx context.Context) error
 }
 
+var (
+	defaultCfg = amqp.Config{
+		Dial: func(network, addr string) (net.Conn, error) {
+			return net.DialTimeout(network, addr, 30*time.Second)
+		},
+	}
+)
+
 // TracedPublisher defines a RabbitMQ publisher with tracing instrumentation.
 type TracedPublisher struct {
+	cfg amqp.Config
 	cn  *amqp.Connection
 	ch  *amqp.Channel
 	exc string
@@ -49,7 +59,7 @@ type TracedPublisher struct {
 // NewPublisher creates a new publisher with the following defaults
 // - exchange type: fanout
 // - notifications are not handled at this point TBD.
-func NewPublisher(url, exc string) (*TracedPublisher, error) {
+func NewPublisher(url, exc string, oo ...OptionFunc) (*TracedPublisher, error) {
 
 	if url == "" {
 		return nil, errors.New("url is required")
@@ -60,11 +70,19 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 	}
 
 	p := TracedPublisher{
+		cfg: defaultCfg,
 		exc: exc,
 		tag: opentracing.Tag{Key: "exchange", Value: exc},
 	}
 
-	conn, err := amqp.Dial(url)
+	for _, o := range oo {
+		err := o(&p)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	conn, err := amqp.DialConfig(url, p.cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open RabbitMq connection")
 	}
@@ -76,15 +94,7 @@ func NewPublisher(url, exc string) (*TracedPublisher, error) {
 	}
 	p.ch = ch
 
-	err = ch.ExchangeDeclare(
-		exc,                 // name
-		amqp.ExchangeDirect, // type
-		true,                // durable
-		false,               // auto-deleted
-		false,               // internal
-		false,               // no-wait
-		nil,                 // arguments
-	)
+	err = ch.ExchangeDeclare(exc, amqp.ExchangeFanout, true, false, false, false, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to declare exchange")
 	}
@@ -125,15 +135,7 @@ func (tc *TracedPublisher) Publish(ctx context.Context, msg *Message) error {
 
 // Close the connection and channel of the publisher.
 func (tc *TracedPublisher) Close(_ context.Context) error {
-	aggError := patronerrors.New()
-
-	aggError.Append(tc.ch.Close())
-	aggError.Append(tc.cn.Close())
-
-	if aggError.Count() > 0 {
-		return aggError
-	}
-	return nil
+	return errors.Aggregate(tc.ch.Close(), tc.cn.Close())
 }
 
 type amqpHeadersCarrier map[string]interface{}

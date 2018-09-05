@@ -13,30 +13,28 @@ import (
 )
 
 func TestSetup_Tracer_Close(t *testing.T) {
-	assert := assert.New(t)
 	err := Setup("TEST", "1.0.0", "0.0.0.0:6831", "const", 1)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	err = Close()
-	assert.NoError(err)
+	assert.NoError(t, err)
 	version = "dev"
 }
 
 func TestStartFinishConsumerSpan(t *testing.T) {
-	assert := assert.New(t)
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	hdr := map[string]string{"key": "val"}
 	sp, ctx := ConsumerSpan(context.Background(), "123", AMQPConsumerComponent, hdr)
-	assert.NotNil(sp)
-	assert.NotNil(ctx)
-	assert.IsType(&mocktracer.MockSpan{}, sp)
+	assert.NotNil(t, sp)
+	assert.NotNil(t, ctx)
+	assert.IsType(t, &mocktracer.MockSpan{}, sp)
 	jsp := sp.(*mocktracer.MockSpan)
-	assert.NotNil(jsp)
-	assert.Equal("123", jsp.OperationName)
+	assert.NotNil(t, jsp)
+	assert.Equal(t, "123", jsp.OperationName)
 	SpanError(sp)
-	assert.NotNil(sp)
+	assert.NotNil(t, sp)
 	rawSpan := mtr.FinishedSpans()[0]
-	assert.Equal(map[string]interface{}{
+	assert.Equal(t, map[string]interface{}{
 		"span.kind": ext.SpanKindConsumerEnum,
 		"component": "amqp-consumer",
 		"error":     true,
@@ -45,24 +43,23 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 }
 
 func TestStartFinishChildSpan(t *testing.T) {
-	assert := assert.New(t)
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	sp, ctx := ConsumerSpan(context.Background(), "123", AMQPConsumerComponent, nil)
-	assert.NotNil(sp)
-	assert.NotNil(ctx)
+	assert.NotNil(t, sp)
+	assert.NotNil(t, ctx)
 	childSp, childCtx := ChildSpan(ctx, "123", "cmp", opentracing.Tag{Key: "key", Value: "value"})
-	assert.NotNil(childSp)
-	assert.NotNil(childCtx)
+	assert.NotNil(t, childSp)
+	assert.NotNil(t, childCtx)
 	childSp.LogKV("log event")
-	assert.IsType(&mocktracer.MockSpan{}, childSp)
+	assert.IsType(t, &mocktracer.MockSpan{}, childSp)
 	jsp := childSp.(*mocktracer.MockSpan)
-	assert.NotNil(jsp)
-	assert.Equal("123", jsp.OperationName)
+	assert.NotNil(t, jsp)
+	assert.Equal(t, "123", jsp.OperationName)
 	SpanError(childSp)
-	assert.NotNil(childSp)
+	assert.NotNil(t, childSp)
 	rawSpan := mtr.FinishedSpans()[0]
-	assert.Equal(map[string]interface{}{
+	assert.Equal(t, map[string]interface{}{
 		"component": "cmp",
 		"error":     true,
 		"key":       "value",
@@ -70,7 +67,7 @@ func TestStartFinishChildSpan(t *testing.T) {
 	}, rawSpan.Tags())
 	SpanSuccess(sp)
 	rawSpan = mtr.FinishedSpans()[1]
-	assert.Equal(map[string]interface{}{
+	assert.Equal(t, map[string]interface{}{
 		"component": "amqp-consumer",
 		"error":     false,
 		"version":   "dev",
@@ -79,22 +76,21 @@ func TestStartFinishChildSpan(t *testing.T) {
 }
 
 func TestHTTPStartFinishSpan(t *testing.T) {
-	assert := assert.New(t)
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
 	req, err := http.NewRequest("GET", "/", nil)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	sp, req := HTTPSpan("/", req)
-	assert.NotNil(sp)
-	assert.NotNil(req)
-	assert.IsType(&mocktracer.MockSpan{}, sp)
+	assert.NotNil(t, sp)
+	assert.NotNil(t, req)
+	assert.IsType(t, &mocktracer.MockSpan{}, sp)
 	jsp := sp.(*mocktracer.MockSpan)
-	assert.NotNil(jsp)
-	assert.Equal("Server HTTP GET /", jsp.OperationName)
+	assert.NotNil(t, jsp)
+	assert.Equal(t, "Server HTTP GET /", jsp.OperationName)
 	FinishHTTPSpan(jsp, 200)
-	assert.NotNil(jsp)
+	assert.NotNil(t, jsp)
 	rawSpan := mtr.FinishedSpans()[0]
-	assert.Equal(map[string]interface{}{
+	assert.Equal(t, map[string]interface{}{
 		"span.kind":        ext.SpanKindRPCServerEnum,
 		"component":        "http",
 		"http.method":      "GET",

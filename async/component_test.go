@@ -5,102 +5,169 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {
-	assert := assert.New(t)
 	proc := mockProcessor{}
 	type args struct {
 		p   ProcessorFunc
 		cns Consumer
+		opt OptionFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{name: "success", args: args{p: proc.Process, cns: &mockConsumer{}}, wantErr: false},
-		{name: "failed, missing processor func", args: args{p: nil, cns: &mockConsumer{}}, wantErr: true},
-		{name: "failed, missing consumer", args: args{p: proc.Process, cns: nil}, wantErr: true},
+		{
+			name:    "success",
+			args:    args{p: proc.Process, cns: &mockConsumer{}, opt: FailureStrategy(NackExitStrategy)},
+			wantErr: false,
+		},
+		{
+			name:    "failed, missing processor func",
+			args:    args{p: nil, cns: &mockConsumer{}, opt: FailureStrategy(NackExitStrategy)},
+			wantErr: true,
+		},
+		{
+			name:    "failed, missing consumer",
+			args:    args{p: proc.Process, cns: nil, opt: FailureStrategy(NackExitStrategy)},
+			wantErr: true,
+		},
+		{
+			name:    "failed, invalid fail strategy",
+			args:    args{p: proc.Process, cns: &mockConsumer{}, opt: FailureStrategy(3)},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.p, tt.args.cns)
+			got, err := New(tt.args.p, tt.args.cns, tt.args.opt)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
+				assert.Error(t, err)
+				assert.Nil(t, got)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
 			}
 		})
 	}
 }
 
 func TestRun_ReturnsError(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{consumeError: true}
 	proc := mockProcessor{}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx := context.Background()
 	err = cmp.Run(ctx)
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
-func TestRun_Process_Error(t *testing.T) {
-	assert := assert.New(t)
+func TestRun_Process_Error_NackExitStrategy(t *testing.T) {
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx := context.Background()
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	err = cmp.Run(ctx)
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
-func TestRun_ConsumeError(t *testing.T) {
-	assert := assert.New(t)
+func TestRun_Process_Error_NackStrategy(t *testing.T) {
+	cnr := mockConsumer{
+		chMsg: make(chan Message, 10),
+		chErr: make(chan error, 10),
+	}
+	proc := mockProcessor{retError: true}
+	cmp, err := New(proc.Process, &cnr, FailureStrategy(NackStrategy))
+	assert.NoError(t, err)
+	ctx, cnl := context.WithCancel(context.Background())
+	cnr.chMsg <- &mockMessage{ctx: ctx}
+	ch := make(chan bool)
+	go func() {
+		assert.NoError(t, cmp.Run(ctx))
+		ch <- true
+	}()
+	time.Sleep(10 * time.Millisecond)
+	cnl()
+	assert.True(t, <-ch)
+}
+
+func TestRun_Process_Error_AckStrategy(t *testing.T) {
+	cnr := mockConsumer{
+		chMsg: make(chan Message, 10),
+		chErr: make(chan error, 10),
+	}
+	proc := mockProcessor{retError: true}
+	cmp, err := New(proc.Process, &cnr, FailureStrategy(AckStrategy))
+	assert.NoError(t, err)
+	ctx, cnl := context.WithCancel(context.Background())
+	cnr.chMsg <- &mockMessage{ctx: ctx}
+	ch := make(chan bool)
+	go func() {
+		assert.NoError(t, cmp.Run(ctx))
+		ch <- true
+	}()
+	time.Sleep(10 * time.Millisecond)
+	cnl()
+	assert.True(t, <-ch)
+}
+
+func TestRun_Process_Error_InvalidStrategy(t *testing.T) {
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	cmp.failStrategy = 4
+	assert.NoError(t, err)
+	ctx := context.Background()
+	cnr.chMsg <- &mockMessage{ctx: ctx}
+	err = cmp.Run(ctx)
+	assert.Error(t, err)
+}
+
+func TestRun_ConsumeError(t *testing.T) {
+	cnr := mockConsumer{
+		chMsg: make(chan Message, 10),
+		chErr: make(chan error, 10),
+	}
+	proc := mockProcessor{retError: true}
+	cmp, err := New(proc.Process, &cnr)
+	assert.NoError(t, err)
 	ctx := context.Background()
 	cnr.chErr <- errors.New("CONSUMER ERROR")
 	err = cmp.Run(ctx)
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
 func TestRun_Process_Shutdown(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: false}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	cnr.chMsg <- &mockMessage{ctx: context.Background()}
 	ch := make(chan bool)
-	ctx := context.Background()
+	ctx, cnl := context.WithCancel(context.Background())
 	go func() {
 		err1 := cmp.Run(ctx)
-		assert.NoError(err1)
+		assert.NoError(t, err1)
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
-	err = cmp.Shutdown(ctx)
-	assert.NoError(err)
-	<-ch
+	cnl()
+	assert.True(t, <-ch)
 }
 
 type mockMessage struct {

@@ -9,27 +9,24 @@ import (
 )
 
 func TestNewRequest(t *testing.T) {
-	assert := assert.New(t)
 	req := NewRequest(nil, nil, nil)
-	assert.NotNil(req)
+	assert.NotNil(t, req)
 }
 
 func TestRequest_Decode(t *testing.T) {
-	assert := assert.New(t)
 	j, err := json.Encode("string")
-	assert.NoError(err)
+	assert.NoError(t, err)
 	b := bytes.NewBuffer(j)
 	req := NewRequest(nil, b, json.Decode)
-	assert.NotNil(req)
+	assert.NotNil(t, req)
 	var data string
 	err = req.Decode(&data)
-	assert.NoError(err)
-	assert.Equal("string", data)
+	assert.NoError(t, err)
+	assert.Equal(t, "string", data)
 }
 
 func TestNewResponse(t *testing.T) {
-	assert := assert.New(t)
 	rsp := NewResponse("test")
-	assert.NotNil(rsp)
-	assert.IsType("test", rsp.Payload)
+	assert.NotNil(t, rsp)
+	assert.IsType(t, "test", rsp.Payload)
 }

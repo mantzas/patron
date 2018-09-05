@@ -5,7 +5,7 @@ import (
 
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 )
 
 // ProcessorFunc definition of a async processor.
@@ -28,7 +28,7 @@ type Consumer interface {
 // DetermineDecoder determines the decoder based on the content type.
 func DetermineDecoder(contentType string) (encoding.DecodeRawFunc, error) {
 	switch contentType {
-	case json.ContentType, json.ContentTypeCharset:
+	case json.Type, json.TypeCharset:
 		return json.DecodeRaw, nil
 	}
 	return nil, errors.Errorf("accept header %s is unsupported", contentType)
