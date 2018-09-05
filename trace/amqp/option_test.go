@@ -8,7 +8,6 @@ import (
 )
 
 func TestTimeout(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		timeout time.Duration
 	}
@@ -25,9 +24,9 @@ func TestTimeout(t *testing.T) {
 			p := TracedPublisher{cfg: defaultCfg}
 			err := Timeout(tt.args.timeout)(&p)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.NoError(err)
+				assert.NoError(t, err)
 			}
 		})
 	}

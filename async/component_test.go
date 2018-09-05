@@ -10,7 +10,6 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	assert := assert.New(t)
 	proc := mockProcessor{}
 	type args struct {
 		p   ProcessorFunc
@@ -47,86 +46,81 @@ func TestNew(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.args.p, tt.args.cns, tt.args.opt)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
+				assert.Error(t, err)
+				assert.Nil(t, got)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
 			}
 		})
 	}
 }
 
 func TestRun_ReturnsError(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{consumeError: true}
 	proc := mockProcessor{}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx := context.Background()
 	err = cmp.Run(ctx)
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
 func TestRun_Process_Error_NackExitStrategy(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx := context.Background()
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	err = cmp.Run(ctx)
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
 func TestRun_Process_Error_NackStrategy(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr, FailureStrategy(NackStrategy))
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx, cnl := context.WithCancel(context.Background())
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	ch := make(chan bool)
 	go func() {
-		assert.NoError(cmp.Run(ctx))
+		assert.NoError(t, cmp.Run(ctx))
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
 	cnl()
-	assert.True(<-ch)
+	assert.True(t, <-ch)
 }
 
 func TestRun_Process_Error_AckStrategy(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr, FailureStrategy(AckStrategy))
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx, cnl := context.WithCancel(context.Background())
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	ch := make(chan bool)
 	go func() {
-		assert.NoError(cmp.Run(ctx))
+		assert.NoError(t, cmp.Run(ctx))
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
 	cnl()
-	assert.True(<-ch)
+	assert.True(t, <-ch)
 }
 
 func TestRun_Process_Error_InvalidStrategy(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
@@ -134,48 +128,46 @@ func TestRun_Process_Error_InvalidStrategy(t *testing.T) {
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr)
 	cmp.failStrategy = 4
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx := context.Background()
 	cnr.chMsg <- &mockMessage{ctx: ctx}
 	err = cmp.Run(ctx)
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
 func TestRun_ConsumeError(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	ctx := context.Background()
 	cnr.chErr <- errors.New("CONSUMER ERROR")
 	err = cmp.Run(ctx)
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
 func TestRun_Process_Shutdown(t *testing.T) {
-	assert := assert.New(t)
 	cnr := mockConsumer{
 		chMsg: make(chan Message, 10),
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: false}
 	cmp, err := New(proc.Process, &cnr)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	cnr.chMsg <- &mockMessage{ctx: context.Background()}
 	ch := make(chan bool)
 	ctx, cnl := context.WithCancel(context.Background())
 	go func() {
 		err1 := cmp.Run(ctx)
-		assert.NoError(err1)
+		assert.NoError(t, err1)
 		ch <- true
 	}()
 	time.Sleep(10 * time.Millisecond)
 	cnl()
-	assert.True(<-ch)
+	assert.True(t, <-ch)
 }
 
 type mockMessage struct {

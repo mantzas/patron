@@ -7,7 +7,6 @@ import (
 )
 
 func TestFailureStrategy(t *testing.T) {
-	assert := assert.New(t)
 	proc := mockProcessor{}
 	type args struct {
 		fs FailStrategy
@@ -24,12 +23,12 @@ func TestFailureStrategy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c, err := New(proc.Process, &mockConsumer{})
-			assert.NoError(err)
+			assert.NoError(t, err)
 			err = FailureStrategy(tt.args.fs)(c)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.NoError(err)
+				assert.NoError(t, err)
 			}
 		})
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func TestBuffer(t *testing.T) {
-	assert := assert.New(t)
+
 	type args struct {
 		buf int
 	}
@@ -25,24 +25,22 @@ func TestBuffer(t *testing.T) {
 			c := Consumer{}
 			err := Buffer(tt.args.buf)(&c)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.NoError(err)
+				assert.NoError(t, err)
 			}
 		})
 	}
 }
 
 func TestRequeue(t *testing.T) {
-	assert := assert.New(t)
 	c := Consumer{}
 	err := Requeue(false)(&c)
-	assert.NoError(err)
+	assert.NoError(t, err)
 }
 
 func TestTimeout(t *testing.T) {
-	assert := assert.New(t)
 	c := Consumer{}
 	err := Timeout(time.Second)(&c)
-	assert.NoError(err)
+	assert.NoError(t, err)
 }

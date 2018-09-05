@@ -16,13 +16,12 @@ import (
 )
 
 func Test_extractFields(t *testing.T) {
-	assert := assert.New(t)
 	r, err := http.NewRequest("GET", "/test?value1=1&value2=2", nil)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	f := extractFields(r)
-	assert.Len(f, 2)
-	assert.Equal("1", f["value1"])
-	assert.Equal("2", f["value2"])
+	assert.Len(t, f, 2)
+	assert.Equal(t, "1", f["value1"])
+	assert.Equal(t, "2", f["value2"])
 }
 
 func Test_determineEncoding(t *testing.T) {
@@ -45,18 +44,17 @@ func Test_determineEncoding(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
 			ct, got, got1, err := determineEncoding(tt.args.req)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
-				assert.Nil(got1)
-				assert.Empty(ct)
+				assert.Error(t, err)
+				assert.Nil(t, got)
+				assert.Nil(t, got1)
+				assert.Empty(t, ct)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
-				assert.NotNil(got1)
-				assert.Equal(json.TypeCharset, ct)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
+				assert.NotNil(t, got1)
+				assert.Equal(t, json.TypeCharset, ct)
 			}
 		})
 	}
@@ -75,11 +73,10 @@ func request(t *testing.T, contentType, accept string) *http.Request {
 }
 
 func Test_handleSuccess(t *testing.T) {
-	assert := assert.New(t)
 	get, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	post, err := http.NewRequest(http.MethodPost, "/", nil)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	jsonRsp := sync.NewResponse(struct {
 		Name    string
 		Address string
@@ -112,18 +109,17 @@ func Test_handleSuccess(t *testing.T) {
 
 			err := handleSuccess(rsp, tt.args.req, tt.args.rsp, tt.args.enc)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 
 			} else {
-				assert.NoError(err)
-				assert.Equal(tt.expectedStatus, rsp.Code)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedStatus, rsp.Code)
 			}
 		})
 	}
 }
 
 func Test_handleError(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		err error
 	}
@@ -143,7 +139,7 @@ func Test_handleError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rsp := httptest.NewRecorder()
 			handleError(rsp, tt.args.err)
-			assert.Equal(tt.expectedCode, rsp.Code)
+			assert.Equal(t, tt.expectedCode, rsp.Code)
 		})
 	}
 }
@@ -206,26 +202,22 @@ func Test_handler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
-
 			rsp := httptest.NewRecorder()
 			handler(tt.args.hnd).ServeHTTP(rsp, tt.args.req)
-			assert.Equal(tt.expectedCode, rsp.Code)
+			assert.Equal(t, tt.expectedCode, rsp.Code)
 		})
 	}
 }
 
 func Test_prepareResponse(t *testing.T) {
-	assert := assert.New(t)
 	rsp := httptest.NewRecorder()
 	prepareResponse(rsp, json.TypeCharset)
-	assert.Equal(json.TypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
+	assert.Equal(t, json.TypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
 }
 
 func Test_extractParams(t *testing.T) {
-	assert := assert.New(t)
 	req, err := http.NewRequest(http.MethodGet, "/users/1/status", nil)
-	assert.NoError(err)
+	assert.NoError(t, err)
 	req.Header.Set(encoding.ContentTypeHeader, json.Type)
 	req.Header.Set(encoding.AcceptHeader, json.Type)
 	var fields map[string]string
@@ -239,5 +231,5 @@ func Test_extractParams(t *testing.T) {
 	route := NewRoute("/users/:id/status", "GET", proc, false)
 	router.HandlerFunc(route.Method, route.Pattern, route.Handler)
 	router.ServeHTTP(httptest.NewRecorder(), req)
-	assert.Equal("1", fields["id"])
+	assert.Equal(t, "1", fields["id"])
 }

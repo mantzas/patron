@@ -9,7 +9,6 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		version string
 	}
@@ -28,19 +27,18 @@ func TestVersion(t *testing.T) {
 			ap := &AsyncProducer{cfg: cfg}
 			err := Version(tt.args.version)(ap)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.NoError(err)
+				assert.NoError(t, err)
 				v, err := sarama.ParseKafkaVersion(tt.args.version)
-				assert.NoError(err)
-				assert.Equal(v, ap.cfg.Version)
+				assert.NoError(t, err)
+				assert.Equal(t, v, ap.cfg.Version)
 			}
 		})
 	}
 }
 
 func TestTimeouts(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		dial time.Duration
 	}
@@ -58,10 +56,10 @@ func TestTimeouts(t *testing.T) {
 			ap := &AsyncProducer{cfg: cfg}
 			err := Timeouts(tt.args.dial)(ap)
 			if tt.wantErr {
-				assert.Error(err)
+				assert.Error(t, err)
 			} else {
-				assert.NoError(err)
-				assert.Equal(tt.args.dial, ap.cfg.Net.DialTimeout)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.args.dial, ap.cfg.Net.DialTimeout)
 			}
 		})
 	}

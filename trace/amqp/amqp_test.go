@@ -7,24 +7,21 @@ import (
 )
 
 func TestNewMessage(t *testing.T) {
-	assert := assert.New(t)
 	m := NewMessage("xxx", []byte("test"))
-	assert.Equal("xxx", m.contentType)
-	assert.Equal([]byte("test"), m.body)
+	assert.Equal(t, "xxx", m.contentType)
+	assert.Equal(t, []byte("test"), m.body)
 }
 
 func TestNewJSONMessage(t *testing.T) {
-	assert := assert.New(t)
 	m, err := NewJSONMessage("xxx")
-	assert.NoError(err)
-	assert.Equal("application/json", m.contentType)
-	assert.Equal([]byte(`"xxx"`), m.body)
+	assert.NoError(t, err)
+	assert.Equal(t, "application/json", m.contentType)
+	assert.Equal(t, []byte(`"xxx"`), m.body)
 	_, err = NewJSONMessage(make(chan bool))
-	assert.Error(err)
+	assert.Error(t, err)
 }
 
 func TestNewPublisher(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		url string
 		exc string
@@ -43,11 +40,11 @@ func TestNewPublisher(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewPublisher(tt.args.url, tt.args.exc, tt.args.opt)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
+				assert.Error(t, err)
+				assert.Nil(t, got)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
 			}
 		})
 	}
