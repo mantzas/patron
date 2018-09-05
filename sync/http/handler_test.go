@@ -172,12 +172,14 @@ func (th testHandler) Process(ctx context.Context, req *sync.Request) (*sync.Res
 }
 
 func Test_handler(t *testing.T) {
-	assert := assert.New(t)
-
+	require := require.New(t)
 	errReq, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	errReq.Header.Set(encoding.ContentTypeHeader, "xml")
+	require.NoError(err)
+
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	require.NoError(err)
+
 	req.Header.Set(encoding.ContentTypeHeader, json.Type)
 	req.Header.Set(encoding.AcceptHeader, json.Type)
 
@@ -215,6 +217,8 @@ func Test_handler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+
 			rsp := httptest.NewRecorder()
 			handler(tt.args.hnd).ServeHTTP(rsp, tt.args.req)
 			assert.Equal(tt.expectedCode, rsp.Code)
