@@ -12,6 +12,7 @@ import (
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/sync"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_extractFields(t *testing.T) {
@@ -25,25 +26,30 @@ func Test_extractFields(t *testing.T) {
 }
 
 func Test_determineEncoding(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
+
 	reqSuc, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	require.NoError(err)
 	reqSuc.Header.Set(encoding.ContentTypeHeader, json.Type)
 	reqSuc.Header.Set(encoding.AcceptHeader, json.TypeCharset)
 	reqMissingAccept, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	require.NoError(err)
+
 	reqMissingAccept.Header.Set(encoding.ContentTypeHeader, json.TypeCharset)
 	reqWrongAccept, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
-	reqWrongAccept.Header.Set(encoding.ContentTypeHeader, json.Type)
+	require.NoError(err)
+
+	reqWrongAccept.Header.Set(encoding.ContentTypeHeader, json.TypeCharset)
 	reqWrongAccept.Header.Set(encoding.AcceptHeader, "application/xml")
 	reqMissingContent, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
-	reqMissingContent.Header.Set(encoding.AcceptHeader, json.Type)
+	require.NoError(err)
+
+	reqMissingContent.Header.Set(encoding.AcceptHeader, json.TypeCharset)
 	reqWrongContent, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	require.NoError(err)
+
 	reqWrongContent.Header.Set(encoding.ContentTypeHeader, "application/xml")
-	reqWrongContent.Header.Set(encoding.AcceptHeader, json.Type)
+	reqWrongContent.Header.Set(encoding.AcceptHeader, json.TypeCharset)
 
 	type args struct {
 		req *http.Request
@@ -58,11 +64,12 @@ func Test_determineEncoding(t *testing.T) {
 		{"success", args{req: reqSuc}, json.Decode, json.Encode, false},
 		{"success, missing accept", args{req: reqMissingAccept}, json.Decode, json.Encode, false},
 		{"wrong accept", args{req: reqWrongAccept}, nil, nil, true},
-		{"missing content", args{req: reqMissingContent}, nil, nil, true},
+		{"missing content", args{req: reqMissingContent}, json.Decode, json.Encode, false},
 		{"wrong content", args{req: reqWrongContent}, nil, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
 			ct, got, got1, err := determineEncoding(tt.args.req)
 			if tt.wantErr {
 				assert.Error(err)
@@ -166,12 +173,14 @@ func (th testHandler) Process(ctx context.Context, req *sync.Request) (*sync.Res
 }
 
 func Test_handler(t *testing.T) {
-	assert := assert.New(t)
-
+	require := require.New(t)
 	errReq, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	errReq.Header.Set(encoding.ContentTypeHeader, "xml")
+	require.NoError(err)
+
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(err)
+	require.NoError(err)
+
 	req.Header.Set(encoding.ContentTypeHeader, json.Type)
 	req.Header.Set(encoding.AcceptHeader, json.Type)
 
@@ -209,6 +218,8 @@ func Test_handler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+
 			rsp := httptest.NewRecorder()
 			handler(tt.args.hnd).ServeHTTP(rsp, tt.args.req)
 			assert.Equal(tt.expectedCode, rsp.Code)

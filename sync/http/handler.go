@@ -42,12 +42,12 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 
 func determineEncoding(r *http.Request) (string, encoding.DecodeFunc, encoding.EncodeFunc, error) {
 
-	ct, dec, enc, err := determineDecoder(r.Header)
+	dec, err := determineDecoder(r.Header)
 	if err != nil {
 		return "", nil, nil, err
 	}
 
-	ct, enc, err = determineEncoder(r.Header, ct, enc)
+	ct, enc, err := determineEncoder(r.Header)
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -55,24 +55,24 @@ func determineEncoding(r *http.Request) (string, encoding.DecodeFunc, encoding.E
 	return ct, dec, enc, nil
 }
 
-func determineDecoder(hdr http.Header) (string, encoding.DecodeFunc, encoding.EncodeFunc, error) {
+func determineDecoder(hdr http.Header) (encoding.DecodeFunc, error) {
 	h, ok := hdr[encoding.ContentTypeHeader]
 	if !ok {
-		return "", nil, nil, errors.New("content type header is missing")
+		return json.Decode, nil
 	}
 
 	switch h[0] {
 	case json.Type, json.TypeCharset:
-		return h[0], json.Decode, json.Encode, nil
+		return json.Decode, nil
 	}
 
-	return "", nil, nil, errors.New("content type header not supported")
+	return nil, errors.New("content type header not supported")
 }
 
-func determineEncoder(hdr http.Header, ct string, enc encoding.EncodeFunc) (string, encoding.EncodeFunc, error) {
+func determineEncoder(hdr http.Header) (string, encoding.EncodeFunc, error) {
 	h, ok := hdr[encoding.AcceptHeader]
 	if !ok {
-		return ct, enc, nil
+		return json.TypeCharset, json.Encode, nil
 	}
 
 	switch h[0] {
