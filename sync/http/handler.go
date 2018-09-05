@@ -76,6 +76,8 @@ func determineEncoder(hdr http.Header) (string, encoding.EncodeFunc, error) {
 	}
 
 	switch h[0] {
+	case "*/*":
+		return json.TypeCharset, json.Encode, nil
 	case json.Type, json.TypeCharset:
 		return h[0], json.Encode, nil
 	}
