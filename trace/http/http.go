@@ -21,23 +21,13 @@ type TracedClient struct {
 	cl *http.Client
 }
 
-// New creates a new HTTP client.
-func New(oo ...OptionFunc) (*TracedClient, error) {
-	tc := &TracedClient{
+// NewClient creates a new HTTP client.
+func NewClient(timeout time.Duration) *TracedClient {
+	return &TracedClient{
 		cl: &http.Client{
-			Timeout:   60 * time.Second,
+			Timeout:   timeout,
 			Transport: &nethttp.Transport{},
-		},
-	}
-
-	for _, o := range oo {
-		err := o(tc)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return tc, nil
+		}}
 }
 
 // Do executes a HTTP request with integrated tracing and tracing propagation downstream.

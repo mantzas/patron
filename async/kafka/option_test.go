@@ -9,6 +9,7 @@ import (
 )
 
 func TestBuffer(t *testing.T) {
+	assert := assert.New(t)
 	type args struct {
 		buf int
 	}
@@ -25,27 +26,30 @@ func TestBuffer(t *testing.T) {
 			c := Consumer{}
 			err := Buffer(tt.args.buf)(&c)
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(err)
 			} else {
-				assert.NoError(t, err)
+				assert.NoError(err)
 			}
 		})
 	}
 }
 
 func TestStart(t *testing.T) {
+	assert := assert.New(t)
 	c := Consumer{}
 	err := Start(1000)(&c)
-	assert.NoError(t, err)
+	assert.NoError(err)
 }
 
 func TestTimeout(t *testing.T) {
+	assert := assert.New(t)
 	c := Consumer{cfg: sarama.NewConfig()}
 	err := Timeout(time.Second)(&c)
-	assert.NoError(t, err)
+	assert.NoError(err)
 }
 
 func TestVersion(t *testing.T) {
+	assert := assert.New(t)
 	type args struct {
 		version string
 	}
@@ -61,12 +65,12 @@ func TestVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c, err := New("test", "", "topic", []string{"test"})
-			assert.NoError(t, err)
+			assert.NoError(err)
 			err = Version(tt.args.version)(c)
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(err)
 			} else {
-				assert.NoError(t, err)
+				assert.NoError(err)
 			}
 		})
 	}

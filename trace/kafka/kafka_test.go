@@ -11,12 +11,14 @@ import (
 )
 
 func TestNewMessage(t *testing.T) {
+	assert := assert.New(t)
 	m := NewMessage("TOPIC", []byte("TEST"))
-	assert.Equal(t, "TOPIC", m.topic)
-	assert.Equal(t, []byte("TEST"), m.body)
+	assert.Equal("TOPIC", m.topic)
+	assert.Equal([]byte("TEST"), m.body)
 }
 
 func TestNewJSONMessage(t *testing.T) {
+	assert := assert.New(t)
 	tests := []struct {
 		name    string
 		data    interface{}
@@ -29,48 +31,45 @@ func TestNewJSONMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewJSONMessage("TOPIC", tt.data)
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, got)
+				assert.Error(err)
+				assert.Nil(got)
 			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
+				assert.NoError(err)
+				assert.NotNil(got)
 			}
 		})
 	}
 }
 
 func TestNewSyncProducer_Failure(t *testing.T) {
-	got, err := NewAsyncProducer([]string{})
-	assert.Error(t, err)
-	assert.Nil(t, got)
-}
-
-func TestNewSyncProducer_Option_Failure(t *testing.T) {
-	got, err := NewAsyncProducer([]string{"xxx"}, Version("xxxx"))
-	assert.Error(t, err)
-	assert.Nil(t, got)
+	assert := assert.New(t)
+	got, err := NewAsyncProducer([]string{}, "")
+	assert.Error(err)
+	assert.Nil(got)
 }
 
 func TestNewSyncProducer_Success(t *testing.T) {
+	assert := assert.New(t)
 	seed := createKafkaBroker(t, false)
-	got, err := NewAsyncProducer([]string{seed.Addr()})
-	assert.NoError(t, err)
-	assert.NotNil(t, got)
+	got, err := NewAsyncProducer([]string{seed.Addr()}, "")
+	assert.NoError(err)
+	assert.NotNil(got)
 }
 
 func TestAsyncProducer_SendMessage_Close(t *testing.T) {
+	assert := assert.New(t)
 	msg, err := NewJSONMessage("TOPIC", "TEST")
-	assert.NoError(t, err)
+	assert.NoError(err)
 	seed := createKafkaBroker(t, true)
-	ap, err := NewAsyncProducer([]string{seed.Addr()}, Version(sarama.V0_8_2_0.String()))
-	assert.NoError(t, err)
-	assert.NotNil(t, ap)
+	ap, err := NewAsyncProducer([]string{seed.Addr()}, sarama.V0_8_2_0.String())
+	assert.NoError(err)
+	assert.NotNil(ap)
 	err = trace.Setup("test", "1.0.0", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
-	assert.NoError(t, err)
+	assert.NoError(err)
 	_, ctx := trace.ChildSpan(context.Background(), "123", "cmp")
 	err = ap.Send(ctx, msg)
-	assert.NoError(t, err)
-	assert.Error(t, <-ap.Error())
+	assert.NoError(err)
+	assert.Error(<-ap.Error())
 	ap.Close()
 }
 

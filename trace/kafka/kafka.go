@@ -5,10 +5,10 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/pkg/errors"
 )
 
 // Message abstraction of a Kafka message.
@@ -41,32 +41,32 @@ type Producer interface {
 
 // AsyncProducer defines a async Kafka producer.
 type AsyncProducer struct {
-	cfg   *sarama.Config
 	prod  sarama.AsyncProducer
 	chErr chan error
 	tag   opentracing.Tag
 }
 
 // NewAsyncProducer creates a new async producer with default configuration.
-func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*AsyncProducer, error) {
-
-	cfg := sarama.NewConfig()
-	cfg.Version = sarama.V0_11_0_0
-
-	ap := AsyncProducer{cfg: cfg, chErr: make(chan error), tag: opentracing.Tag{Key: "type", Value: "async"}}
-
-	for _, o := range oo {
-		err := o(&ap)
+func NewAsyncProducer(brokers []string, version string) (*AsyncProducer, error) {
+	var v sarama.KafkaVersion
+	var err error
+	if version == "" {
+		v = sarama.V0_11_0_0
+	} else {
+		v, err = sarama.ParseKafkaVersion(version)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to parse kafka version")
 		}
 	}
 
-	prod, err := sarama.NewAsyncProducer(brokers, ap.cfg)
+	config := sarama.NewConfig()
+	config.Version = v
+
+	prod, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create sync producer")
 	}
-	ap.prod = prod
+	ap := AsyncProducer{prod: prod, chErr: make(chan error), tag: opentracing.Tag{Key: "type", Value: "async"}}
 	go ap.propagateError()
 	return &ap, nil
 }

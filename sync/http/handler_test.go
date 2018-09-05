@@ -6,27 +6,34 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/sync"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_extractFields(t *testing.T) {
+	assert := assert.New(t)
 	r, err := http.NewRequest("GET", "/test?value1=1&value2=2", nil)
-	assert.NoError(t, err)
+	assert.NoError(err)
 	f := extractFields(r)
-	assert.Len(t, f, 2)
-	assert.Equal(t, "1", f["value1"])
-	assert.Equal(t, "2", f["value2"])
+	assert.Len(f, 2)
+	assert.Equal("1", f["value1"])
+	assert.Equal("2", f["value2"])
 }
 
 func Test_determineEncoding(t *testing.T) {
+
+	assert := assert.New(t)
+	hdrContentJSON := http.Header{}
+	hdrContentJSON.Add(encoding.ContentTypeHeader, json.ContentTypeCharset)
+	hdrEmptyHeader := http.Header{}
+	hdrUnsupportedEncoding := http.Header{}
+	hdrUnsupportedEncoding.Add(encoding.ContentTypeHeader, "application/xml")
+
 	type args struct {
-		req *http.Request
+		hdr http.Header
 	}
 	tests := []struct {
 		name    string
@@ -35,48 +42,34 @@ func Test_determineEncoding(t *testing.T) {
 		encode  encoding.EncodeFunc
 		wantErr bool
 	}{
-		{"success", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, false},
-		{"success, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, false},
-		{"wrong accept", args{req: request(t, json.Type, "xxx")}, nil, nil, true},
-		{"missing content/accept, defaults to json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, false},
-		{"accept */*, defaults to json", args{req: request(t, json.TypeCharset, "*/*")}, json.Decode, json.Encode, false},
-		{"wrong content", args{req: request(t, "application/xml", json.TypeCharset)}, nil, nil, true},
+		{"content type json", args{hdr: hdrContentJSON}, json.Decode, json.Encode, false},
+		{"empty header", args{hdr: hdrEmptyHeader}, nil, nil, true},
+		{"unsupported encoding", args{hdr: hdrUnsupportedEncoding}, nil, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ct, got, got1, err := determineEncoding(tt.args.req)
+			ct, got, got1, err := determineEncoding(tt.args.hdr)
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, got)
-				assert.Nil(t, got1)
-				assert.Empty(t, ct)
+				assert.Error(err)
+				assert.Nil(got)
+				assert.Nil(got1)
+				assert.Empty(ct)
 			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.NotNil(t, got1)
-				assert.Equal(t, json.TypeCharset, ct)
+				assert.NoError(err)
+				assert.NotNil(got)
+				assert.NotNil(got1)
+				assert.Equal(json.ContentTypeCharset, ct)
 			}
 		})
 	}
 }
 
-func request(t *testing.T, contentType, accept string) *http.Request {
-	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(t, err)
-	if contentType != "" {
-		req.Header.Set(encoding.ContentTypeHeader, contentType)
-	}
-	if accept != "" {
-		req.Header.Set(encoding.AcceptHeader, accept)
-	}
-	return req
-}
-
 func Test_handleSuccess(t *testing.T) {
+	assert := assert.New(t)
 	get, err := http.NewRequest(http.MethodGet, "/", nil)
-	assert.NoError(t, err)
+	assert.NoError(err)
 	post, err := http.NewRequest(http.MethodPost, "/", nil)
-	assert.NoError(t, err)
+	assert.NoError(err)
 	jsonRsp := sync.NewResponse(struct {
 		Name    string
 		Address string
@@ -109,17 +102,18 @@ func Test_handleSuccess(t *testing.T) {
 
 			err := handleSuccess(rsp, tt.args.req, tt.args.rsp, tt.args.enc)
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(err)
 
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedStatus, rsp.Code)
+				assert.NoError(err)
+				assert.Equal(tt.expectedStatus, rsp.Code)
 			}
 		})
 	}
 }
 
 func Test_handleError(t *testing.T) {
+	assert := assert.New(t)
 	type args struct {
 		err error
 	}
@@ -139,7 +133,7 @@ func Test_handleError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rsp := httptest.NewRecorder()
 			handleError(rsp, tt.args.err)
-			assert.Equal(t, tt.expectedCode, rsp.Code)
+			assert.Equal(tt.expectedCode, rsp.Code)
 		})
 	}
 }
@@ -157,16 +151,13 @@ func (th testHandler) Process(ctx context.Context, req *sync.Request) (*sync.Res
 }
 
 func Test_handler(t *testing.T) {
-	require := require.New(t)
+	assert := assert.New(t)
+
 	errReq, err := http.NewRequest(http.MethodGet, "/", nil)
-	errReq.Header.Set(encoding.ContentTypeHeader, "xml")
-	require.NoError(err)
-
+	assert.NoError(err)
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(err)
-
-	req.Header.Set(encoding.ContentTypeHeader, json.Type)
-	req.Header.Set(encoding.AcceptHeader, json.Type)
+	assert.NoError(err)
+	req.Header.Set(encoding.ContentTypeHeader, json.ContentType)
 
 	// success handling
 	// failure handling
@@ -204,32 +195,30 @@ func Test_handler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rsp := httptest.NewRecorder()
 			handler(tt.args.hnd).ServeHTTP(rsp, tt.args.req)
-			assert.Equal(t, tt.expectedCode, rsp.Code)
+			assert.Equal(tt.expectedCode, rsp.Code)
 		})
 	}
 }
 
 func Test_prepareResponse(t *testing.T) {
+	assert := assert.New(t)
 	rsp := httptest.NewRecorder()
-	prepareResponse(rsp, json.TypeCharset)
-	assert.Equal(t, json.TypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
+	prepareResponse(rsp, json.ContentTypeCharset)
+	assert.Equal(json.ContentTypeCharset, rsp.Header().Get(encoding.ContentTypeHeader))
 }
 
 func Test_extractParams(t *testing.T) {
+	assert := assert.New(t)
 	req, err := http.NewRequest(http.MethodGet, "/users/1/status", nil)
-	assert.NoError(t, err)
-	req.Header.Set(encoding.ContentTypeHeader, json.Type)
-	req.Header.Set(encoding.AcceptHeader, json.Type)
+	assert.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
 	var fields map[string]string
 
 	proc := func(_ context.Context, req *sync.Request) (*sync.Response, error) {
 		fields = req.Fields
 		return nil, nil
 	}
-
-	router := httprouter.New()
-	route := NewRoute("/users/:id/status", "GET", proc, false)
-	router.HandlerFunc(route.Method, route.Pattern, route.Handler)
-	router.ServeHTTP(httptest.NewRecorder(), req)
-	assert.Equal(t, "1", fields["id"])
+	h := createHandler([]Route{NewRoute("/users/:id/status", "GET", proc, false)})
+	h.ServeHTTP(httptest.NewRecorder(), req)
+	assert.Equal("1", fields["id"])
 }

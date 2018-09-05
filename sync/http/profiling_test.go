@@ -10,6 +10,8 @@ import (
 )
 
 func Test_PprofHandlers(t *testing.T) {
+	assert := assert.New(t)
+
 	mux := http.NewServeMux()
 
 	for _, r := range profilingRoutes() {
@@ -38,8 +40,8 @@ func Test_PprofHandlers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resp, err := http.Get(fmt.Sprintf("%s/%s", server.URL, tt.path))
-			assert.NoError(t, err)
-			assert.Equal(t, tt.want, resp.StatusCode)
+			assert.NoError(err)
+			assert.Equal(tt.want, resp.StatusCode)
 		})
 	}
 }

@@ -9,6 +9,7 @@ import (
 )
 
 func Test_healthCheckRoute(t *testing.T) {
+	assert := assert.New(t)
 	tests := []struct {
 		name string
 		hcf  HealthCheckFunc
@@ -24,9 +25,9 @@ func Test_healthCheckRoute(t *testing.T) {
 			r := healthCheckRoute(tt.hcf)
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest("GET", "/health", nil)
-			assert.NoError(t, err)
+			assert.NoError(err)
 			r.Handler(resp, req)
-			assert.Equal(t, tt.want, resp.Code)
+			assert.Equal(tt.want, resp.Code)
 		})
 	}
 }

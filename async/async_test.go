@@ -8,6 +8,7 @@ import (
 )
 
 func TestDetermineDecoder(t *testing.T) {
+	assert := assert.New(t)
 	type args struct {
 		contentType string
 	}
@@ -16,18 +17,18 @@ func TestDetermineDecoder(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{contentType: json.Type}, false},
+		{"success", args{contentType: json.ContentType}, false},
 		{"failure", args{contentType: "XXX"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := DetermineDecoder(tt.args.contentType)
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, got)
+				assert.Error(err)
+				assert.Nil(got)
 			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
+				assert.NoError(err)
+				assert.NotNil(got)
 			}
 		})
 	}

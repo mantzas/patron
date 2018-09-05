@@ -2,21 +2,23 @@ package async
 
 import (
 	"context"
+	"sync"
 
-	"github.com/mantzas/patron/errors"
+	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/pkg/errors"
 )
 
 // Component implementation of a async component.
 type Component struct {
-	proc         ProcessorFunc
-	failStrategy FailStrategy
-	cns          Consumer
+	proc ProcessorFunc
+	sync.Mutex
+	cns Consumer
+	cnl context.CancelFunc
 }
 
-// New returns a new async component. The default behavior is to return a error of failure.
-// Use options to change the default behavior.
-func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
+// New returns a new async component.
+func New(p ProcessorFunc, cns Consumer) (*Component, error) {
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
@@ -25,24 +27,19 @@ func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 		return nil, errors.New("consumer is required")
 	}
 
-	c := &Component{
-		proc:         p,
-		cns:          cns,
-		failStrategy: NackExitStrategy,
-	}
-
-	for _, o := range oo {
-		err := o(c)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return c, nil
+	return &Component{
+		proc: p,
+		cns:  cns,
+	}, nil
 }
 
 // Run starts the consumer processing loop messages.
 func (c *Component) Run(ctx context.Context) error {
+	c.Lock()
+	ctx, cnl := context.WithCancel(ctx)
+	c.cnl = cnl
+	c.Unlock()
+
 	chMsg, chErr, err := c.cns.Consume(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to get consumer channels")
@@ -53,12 +50,24 @@ func (c *Component) Run(ctx context.Context) error {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Info("closing consumer")
-				failCh <- c.cns.Close()
+				log.Info("canceling consuming messages requested")
+				failCh <- nil
 				return
-			case msg := <-chMsg:
+			case m := <-chMsg:
 				log.Debug("New message from consumer arrived")
-				go c.processMessage(msg, failCh)
+				go func(msg Message) {
+					err = c.proc(msg)
+					if err != nil {
+						agr := agr_errors.New()
+						agr.Append(errors.Wrap(err, "failed to process message. Nack message"))
+						agr.Append(errors.Wrap(msg.Nack(), "failed to NACK message"))
+						failCh <- agr
+						return
+					}
+					if err := msg.Ack(); err != nil {
+						failCh <- err
+					}
+				}(m)
 			case errMsg := <-chErr:
 				failCh <- errors.Wrap(errMsg, "an error occurred during message consumption")
 				return
@@ -69,37 +78,15 @@ func (c *Component) Run(ctx context.Context) error {
 	return <-failCh
 }
 
-func (c *Component) processMessage(msg Message, ch chan error) {
-	err := c.proc(msg)
-	if err != nil {
-		err := c.executeFailureStrategy(msg, err)
-		if err != nil {
-			ch <- err
-		}
-		return
+// Shutdown gracefully the component by closing the consumer.
+func (c *Component) Shutdown(ctx context.Context) error {
+	c.Lock()
+	defer c.Unlock()
+	if c.cnl != nil {
+		c.cnl()
 	}
-	if err := msg.Ack(); err != nil {
-		ch <- err
+	if c.cns == nil {
+		return nil
 	}
-}
-
-func (c *Component) executeFailureStrategy(msg Message, err error) error {
-	log.Errorf("failed to process message, failure strategy executed: %v", err)
-	switch c.failStrategy {
-	case NackExitStrategy:
-		return errors.Aggregate(err, errors.Wrap(msg.Nack(), "failed to NACK message"))
-	case NackStrategy:
-		err := msg.Nack()
-		if err != nil {
-			return errors.Wrap(err, "nack failed when executing failure strategy")
-		}
-	case AckStrategy:
-		err := msg.Ack()
-		if err != nil {
-			return errors.Wrap(err, "ack failed when executing failure strategy")
-		}
-	default:
-		return errors.New("invalid failure strategy")
-	}
-	return nil
+	return c.cns.Close()
 }

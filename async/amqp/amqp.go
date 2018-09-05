@@ -9,10 +9,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
-	"github.com/mantzas/patron/errors"
+	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 )
 
@@ -128,9 +129,11 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				)
 				dec, err := async.DetermineDecoder(d.ContentType)
 				if err != nil {
-					err := errors.Aggregate(err, errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
+					agr := agr_errors.New()
+					agr.Append(errors.Wrapf(err, "failed to determine encoding %s. Nack message", d.ContentType))
+					agr.Append(errors.Wrap(d.Nack(false, c.requeue), "failed to NACK message"))
 					trace.SpanError(sp)
-					chErr <- err
+					chErr <- agr
 					return
 				}
 
@@ -150,16 +153,22 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 
 // Close handles closing channel and connection of AMQP.
 func (c *Consumer) Close() error {
-	var errChan error
-	var errConn error
+	agr := agr_errors.New()
 
 	if c.ch != nil {
-		errChan = errors.Wrapf(c.ch.Cancel(c.tag, true), "failed to cancel channel of consumer %s", c.tag)
+		err := c.ch.Cancel(c.tag, true)
+		agr.Append(errors.Wrapf(err, "failed to cancel channel of consumer %s", c.tag))
 	}
+
 	if c.conn != nil {
-		errConn = errors.Wrap(c.conn.Close(), "failed to close connection")
+		err := c.conn.Close()
+		agr.Append(errors.Wrap(err, "failed to close connection"))
 	}
-	return errors.Aggregate(errChan, errConn)
+
+	if agr.Count() > 0 {
+		return agr
+	}
+	return nil
 }
 
 func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
@@ -178,7 +187,7 @@ func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
 	c.tag = uuid.New().String()
 	log.Infof("consuming messages for tag %s", c.tag)
 
-	err = ch.ExchangeDeclare(c.exchange, amqp.ExchangeFanout, true, false, false, false, nil)
+	err = ch.ExchangeDeclare(c.exchange, amqp.ExchangeDirect, true, false, false, false, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to declare exchange")
 	}

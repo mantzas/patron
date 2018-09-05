@@ -8,14 +8,15 @@ import (
 )
 
 func TestEncodeDecode(t *testing.T) {
+	assert := assert.New(t)
 	j, err := Encode("string")
-	assert.NoError(t, err)
+	assert.NoError(err)
 	b := bytes.NewBuffer(j)
 	var data string
 	err = Decode(b, &data)
-	assert.NoError(t, err)
-	assert.Equal(t, "string", data)
+	assert.NoError(err)
+	assert.Equal("string", data)
 	err = DecodeRaw(j, &data)
-	assert.NoError(t, err)
-	assert.Equal(t, "string", data)
+	assert.NoError(err)
+	assert.Equal("string", data)
 }

@@ -9,11 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mantzas/patron/errors"
+	agr_errors "github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
+	"github.com/pkg/errors"
 	"github.com/uber/jaeger-client-go"
 )
 
@@ -24,15 +25,17 @@ const (
 // Component interface for implementing service components.
 type Component interface {
 	Run(ctx context.Context) error
+	Shutdown(ctx context.Context) error
 }
 
 // Service is responsible for managing and setting up everything.
 // The service will start by default a HTTP component in order to host management endpoint.
 type Service struct {
-	cps     []Component
-	routes  []http.Route
-	hcf     http.HealthCheckFunc
-	termSig chan os.Signal
+	cps    []Component
+	routes []http.Route
+	hcf    http.HealthCheckFunc
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // New creates a new named service and allows for customization through functional options.
@@ -46,7 +49,8 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 		version = "dev"
 	}
 
-	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, termSig: make(chan os.Signal, 1)}
+	ctx, cancel := context.WithCancel(context.Background())
+	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, ctx: ctx, cancel: cancel}
 
 	err := SetupLogging(name, version)
 	if err != nil {
@@ -76,47 +80,71 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 }
 
 func (s *Service) setupTermSignal() {
-	signal.Notify(s.termSig, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+		<-stop
+		log.Info("term signal received, cancelling")
+		s.cancel()
+	}()
 }
 
 // Run starts up all service components and monitors for errors.
 // If a component returns a error the service is responsible for shutting down
 // all components and terminate itself.
 func (s *Service) Run() error {
+
+	errCh := make(chan error)
+
+	for _, cp := range s.cps {
+		go func(c Component, ctx context.Context) {
+			errCh <- c.Run(ctx)
+		}(cp, s.ctx)
+	}
+
+	select {
+	case err := <-errCh:
+		agr := agr_errors.New()
+		agr.Append(errors.Wrap(err, "component failed"))
+		agr.Append(errors.Wrap(s.Shutdown(), "failed to shutdown"))
+		if agr.Count() > 0 {
+			return agr
+		}
+		return nil
+	case <-s.ctx.Done():
+		log.Info("stop signal received")
+		return s.Shutdown()
+	}
+}
+
+// Shutdown all components gracefully with a predefined timeout.
+func (s *Service) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
 	defer func() {
 		err := trace.Close()
 		if err != nil {
 			log.Errorf("failed to close trace %v", err)
 		}
 	}()
-	ctx, cnl := context.WithCancel(context.Background())
-	chErr := make(chan error, len(s.cps))
-	wg := sync.WaitGroup{}
-	wg.Add(len(s.cps))
-	for _, cp := range s.cps {
-		go func(c Component) {
-			defer wg.Done()
-			chErr <- c.Run(ctx)
-		}(cp)
-	}
+	log.Info("shutting down components")
 
-	var ee []error
-	select {
-	case sig := <-s.termSig:
-		log.Infof("signal %s received", sig.String())
-	case err := <-chErr:
-		log.Info("component error received")
-		ee = append(ee, err)
+	wg := sync.WaitGroup{}
+	agr := agr_errors.New()
+	for _, cp := range s.cps {
+
+		wg.Add(1)
+		go func(c Component, ctx context.Context, w *sync.WaitGroup, agr *agr_errors.Aggregate) {
+			defer w.Done()
+			agr.Append(c.Shutdown(ctx))
+		}(cp, ctx, &wg, agr)
 	}
-	cnl()
 
 	wg.Wait()
-	close(chErr)
-
-	for err := range chErr {
-		ee = append(ee, err)
+	if agr.Count() > 0 {
+		return agr
 	}
-	return errors.Aggregate(ee...)
+	return nil
 }
 
 // SetupLogging set's up default logging.
