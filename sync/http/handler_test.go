@@ -26,31 +26,6 @@ func Test_extractFields(t *testing.T) {
 }
 
 func Test_determineEncoding(t *testing.T) {
-	require := require.New(t)
-
-	reqSuc, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(err)
-	reqSuc.Header.Set(encoding.ContentTypeHeader, json.Type)
-	reqSuc.Header.Set(encoding.AcceptHeader, json.TypeCharset)
-	reqMissingAccept, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(err)
-
-	reqMissingAccept.Header.Set(encoding.ContentTypeHeader, json.TypeCharset)
-	reqWrongAccept, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(err)
-
-	reqWrongAccept.Header.Set(encoding.ContentTypeHeader, json.TypeCharset)
-	reqWrongAccept.Header.Set(encoding.AcceptHeader, "application/xml")
-	reqMissingContent, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(err)
-
-	reqMissingContent.Header.Set(encoding.AcceptHeader, json.TypeCharset)
-	reqWrongContent, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(err)
-
-	reqWrongContent.Header.Set(encoding.ContentTypeHeader, "application/xml")
-	reqWrongContent.Header.Set(encoding.AcceptHeader, json.TypeCharset)
-
 	type args struct {
 		req *http.Request
 	}
@@ -61,11 +36,12 @@ func Test_determineEncoding(t *testing.T) {
 		encode  encoding.EncodeFunc
 		wantErr bool
 	}{
-		{"success", args{req: reqSuc}, json.Decode, json.Encode, false},
-		{"success, missing accept", args{req: reqMissingAccept}, json.Decode, json.Encode, false},
-		{"wrong accept", args{req: reqWrongAccept}, nil, nil, true},
-		{"missing content", args{req: reqMissingContent}, json.Decode, json.Encode, false},
-		{"wrong content", args{req: reqWrongContent}, nil, nil, true},
+		{"success", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, false},
+		{"success, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, false},
+		{"wrong accept", args{req: request(t, json.Type, "xxx")}, nil, nil, true},
+		{"missing content/accept, defaults to json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, false},
+		{"accept */*, defaults to json", args{req: request(t, json.TypeCharset, "*/*")}, json.Decode, json.Encode, false},
+		{"wrong content", args{req: request(t, "application/xml", json.TypeCharset)}, nil, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -84,6 +60,18 @@ func Test_determineEncoding(t *testing.T) {
 			}
 		})
 	}
+}
+
+func request(t *testing.T, contentType, accept string) *http.Request {
+	req, err := http.NewRequest(http.MethodGet, "/", nil)
+	require.NoError(t, err)
+	if contentType != "" {
+		req.Header.Set(encoding.ContentTypeHeader, contentType)
+	}
+	if accept != "" {
+		req.Header.Set(encoding.AcceptHeader, accept)
+	}
+	return req
 }
 
 func Test_handleSuccess(t *testing.T) {
