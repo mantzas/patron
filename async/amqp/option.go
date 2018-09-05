@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/mantzas/patron/errors"
 	"github.com/streadway/amqp"
 )
 

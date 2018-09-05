@@ -1,11 +1,11 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +26,6 @@ func testPanicHandleInt(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestMiddleware(t *testing.T) {
-	assert := assert.New(t)
 	r, _ := http.NewRequest("POST", "/test", nil)
 
 	type args struct {
@@ -46,22 +45,21 @@ func TestMiddleware(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			DefaultMiddleware("path", tt.args.next)(tt.args.resp, r)
-			assert.Equal(tt.expectedCode, tt.args.resp.Code)
+			assert.Equal(t, tt.expectedCode, tt.args.resp.Code)
 		})
 	}
 }
 
 func TestResponseWriter(t *testing.T) {
-	assert := assert.New(t)
 	rc := httptest.NewRecorder()
 	rw := newResponseWriter(rc)
 
 	_, err := rw.Write([]byte("test"))
-	assert.NoError(err)
+	assert.NoError(t, err)
 	rw.WriteHeader(202)
 
-	assert.Equal(202, rw.status, "status expected 202 but got %d", rw.status)
-	assert.Len(rw.Header(), 1, "header count expected to be 1")
-	assert.True(rw.statusHeaderWritten, "expected to be true")
-	assert.Equal("test", rc.Body.String(), "body expected to be test but was %s", rc.Body.String())
+	assert.Equal(t, 202, rw.status, "status expected 202 but got %d", rw.status)
+	assert.Len(t, rw.Header(), 1, "header count expected to be 1")
+	assert.True(t, rw.statusHeaderWritten, "expected to be true")
+	assert.Equal(t, "test", rc.Body.String(), "body expected to be test but was %s", rc.Body.String())
 }

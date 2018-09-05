@@ -9,7 +9,6 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	assert := assert.New(t)
 	brokers := []string{"192.168.1.1"}
 	type args struct {
 		name    string
@@ -52,18 +51,17 @@ func TestNew(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.options...)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Nil(got)
+				assert.Error(t, err)
+				assert.Nil(t, got)
 			} else {
-				assert.NoError(err)
-				assert.NotNil(got)
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
 			}
 		})
 	}
 }
 
 func Test_determineContentType(t *testing.T) {
-	assert := assert.New(t)
 	type args struct {
 		hdr []*sarama.RecordHeader
 	}
@@ -86,27 +84,26 @@ func Test_determineContentType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := determineContentType(tt.args.hdr)
 			if tt.wantErr {
-				assert.Empty(got)
-				assert.Error(err)
+				assert.Empty(t, got)
+				assert.Error(t, err)
 			} else {
-				assert.NotNil(got)
-				assert.NoError(err)
+				assert.NotNil(t, got)
+				assert.NoError(t, err)
 			}
 		})
 	}
 }
 
 // func TestRun_Shutdown(t *testing.T) {
-// 	assert := assert.New(t)
 // 	br := createSeedBroker(t, false)
 // 	c, err := New("test", "1", "12", []string{br.Addr()}, "TOPIC", 0)
-// 	assert.NoError(err)
-// 	assert.NotNil(c)
+// 	assert.NoError(t,err)
+// 	assert.NotNil(t,c)
 // 	go func() {
 // 		c.Consume(context.Background())
 // 	}()
 // 	time.Sleep(100 * time.Millisecond)
-// 	assert.NoError(c.Close())
+// 	assert.NoError(t,c.Close())
 // }
 
 // func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
