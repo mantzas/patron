@@ -9,10 +9,10 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
-	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

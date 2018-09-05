@@ -8,6 +8,7 @@ import (
 )
 
 func TestRoutes(t *testing.T) {
+	assert := assert.New(t)
 	type args struct {
 		rr []http.Route
 	}
@@ -23,18 +24,19 @@ func TestRoutes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s, err := New("test", "1.0.0")
-			assert.NoError(t, err)
+			assert.NoError(err)
 			err = Routes(tt.args.rr)(s)
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(err)
 			} else {
-				assert.NoError(t, err)
+				assert.NoError(err)
 			}
 		})
 	}
 }
 
 func TestHealthCheck(t *testing.T) {
+	assert := assert.New(t)
 	type args struct {
 		hcf http.HealthCheckFunc
 	}
@@ -49,18 +51,19 @@ func TestHealthCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s, err := New("test", "1.0.0")
-			assert.NoError(t, err)
+			assert.NoError(err)
 			err = HealthCheck(tt.args.hcf)(s)
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(err)
 			} else {
-				assert.NoError(t, err)
+				assert.NoError(err)
 			}
 		})
 	}
 }
 
 func TestComponents(t *testing.T) {
+	assert := assert.New(t)
 	type args struct {
 		c Component
 	}
@@ -76,12 +79,12 @@ func TestComponents(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s, err := New("test", "1.0.0")
-			assert.NoError(t, err)
+			assert.NoError(err)
 			err = Components(tt.args.c)(s)
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(err)
 			} else {
-				assert.NoError(t, err)
+				assert.NoError(err)
 			}
 		})
 	}

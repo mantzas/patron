@@ -6,15 +6,15 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/sync"
+	"github.com/pkg/errors"
 )
 
 func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		ct, dec, enc, err := determineEncoding(r)
+		ct, dec, enc, err := determineEncoding(r.Header)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 			return
@@ -40,51 +40,6 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 	}
 }
 
-func determineEncoding(r *http.Request) (string, encoding.DecodeFunc, encoding.EncodeFunc, error) {
-
-	dec, err := determineDecoder(r.Header)
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	ct, enc, err := determineEncoder(r.Header)
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	return ct, dec, enc, nil
-}
-
-func determineDecoder(hdr http.Header) (encoding.DecodeFunc, error) {
-	h, ok := hdr[encoding.ContentTypeHeader]
-	if !ok {
-		return json.Decode, nil
-	}
-
-	switch h[0] {
-	case json.Type, json.TypeCharset:
-		return json.Decode, nil
-	}
-
-	return nil, errors.New("content type header not supported")
-}
-
-func determineEncoder(hdr http.Header) (string, encoding.EncodeFunc, error) {
-	h, ok := hdr[encoding.AcceptHeader]
-	if !ok {
-		return json.TypeCharset, json.Encode, nil
-	}
-
-	switch h[0] {
-	case "*/*":
-		return json.TypeCharset, json.Encode, nil
-	case json.Type, json.TypeCharset:
-		return h[0], json.Encode, nil
-	}
-
-	return "", nil, errors.New("accept header not supported")
-}
-
 func extractFields(r *http.Request) map[string]string {
 	f := make(map[string]string)
 
@@ -92,6 +47,29 @@ func extractFields(r *http.Request) map[string]string {
 		f[name] = values[0]
 	}
 	return f
+}
+
+func determineEncoding(hdr http.Header) (string, encoding.DecodeFunc, encoding.EncodeFunc, error) {
+
+	c, err := determineContentType(hdr)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	switch c {
+	case json.ContentType, json.ContentTypeCharset:
+		return c, json.Decode, json.Encode, nil
+	}
+	return "", nil, nil, errors.Errorf("accept header %s is unsupported", c)
+}
+
+func determineContentType(hdr http.Header) (string, error) {
+	h, ok := hdr[encoding.ContentTypeHeader]
+	if !ok {
+		return "", errors.New("accept and content type header is missing")
+
+	}
+	return h[0], nil
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.EncodeFunc) error {

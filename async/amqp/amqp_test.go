@@ -8,7 +8,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-
+	assert := assert.New(t)
 	type args struct {
 		url      string
 		queue    string
@@ -28,18 +28,19 @@ func TestNew(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.args.url, tt.args.queue, tt.args.exchange)
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, got)
+				assert.Error(err)
+				assert.Nil(got)
 			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
+				assert.NoError(err)
+				assert.NotNil(got)
 			}
 		})
 	}
 }
 
 func Test_mapHeader(t *testing.T) {
+	assert := assert.New(t)
 	hh := amqp.Table{"test1": 10, "test2": 0.11}
 	mm := map[string]string{"test1": "10", "test2": "0.11"}
-	assert.Equal(t, mm, mapHeader(hh))
+	assert.Equal(mm, mapHeader(hh))
 }
