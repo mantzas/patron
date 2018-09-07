@@ -13,8 +13,8 @@ import (
 )
 
 func Test_Route(t *testing.T) {
-	info.ServiceInfo.AddName("Name")
-	info.ServiceInfo.AddMetric("Name", "Description")
+	info.AddName("Name")
+	info.AddMetric("Name", "Description")
 	r := infoRoute()
 	mux := http.NewServeMux()
 	mux.HandleFunc(r.Pattern, r.Handler)

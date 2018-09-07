@@ -1,7 +1,14 @@
 package info
 
+import "github.com/mantzas/patron/encoding/json"
+
 // ServiceInfo holds the information of the service.
-var ServiceInfo = info{}
+var serviceInfo = info{}
+
+// Marshal returns the service info as a byte slice.
+func Marshal() ([]byte, error) {
+	return json.Encode(serviceInfo)
+}
 
 type metric struct {
 	Name        string `json:"name,omitempty"`
@@ -14,11 +21,11 @@ type info struct {
 }
 
 // AddName to the info.
-func (i *info) AddName(n string) {
-	i.Name = n
+func AddName(n string) {
+	serviceInfo.Name = n
 }
 
 // AddMetric to the info.
-func (i *info) AddMetric(n, d string) {
-	i.Metrics = append(i.Metrics, metric{Name: n, Description: d})
+func AddMetric(n, d string) {
+	serviceInfo.Metrics = append(serviceInfo.Metrics, metric{Name: n, Description: d})
 }

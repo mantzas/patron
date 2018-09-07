@@ -11,7 +11,7 @@ import (
 func infoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(encoding.ContentTypeHeader, json.TypeCharset)
 
-	body, err := json.Encode(info.ServiceInfo)
+	body, err := info.Marshal()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
