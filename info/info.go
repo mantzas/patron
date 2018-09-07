@@ -17,12 +17,18 @@ type metric struct {
 
 type info struct {
 	Name    string   `json:"name,omitempty"`
+	Version string   `json:"version,omitempty"`
 	Metrics []metric `json:"metrics,omitempty"`
 }
 
 // AddName to the info.
 func AddName(n string) {
 	serviceInfo.Name = n
+}
+
+// AddVersion to the info.
+func AddVersion(v string) {
+	serviceInfo.Version = v
 }
 
 // AddMetric to the info.

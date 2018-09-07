@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
@@ -45,6 +46,8 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	if version == "" {
 		version = "dev"
 	}
+	info.AddName(name)
+	info.AddVersion(version)
 
 	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, termSig: make(chan os.Signal, 1)}
 
