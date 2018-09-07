@@ -55,6 +55,7 @@ func New(oo ...OptionFunc) (*Component, error) {
 	s.routes = append(s.routes, healthCheckRoute(s.hc))
 	s.routes = append(s.routes, profilingRoutes()...)
 	s.routes = append(s.routes, metricRoute())
+	s.routes = append(s.routes, infoRoute())
 
 	return &s, nil
 }

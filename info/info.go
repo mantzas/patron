@@ -1,26 +1,24 @@
 package info
 
-// ServiceInfo holds the information of a
-var ServiceInfo = Info{}
+// ServiceInfo holds the information of the service.
+var ServiceInfo = info{}
 
-// Metric describes a metric of the system.
-type Metric struct {
+type metric struct {
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
-// Info contains all information about the service.
-type Info struct {
+type info struct {
 	Name    string   `json:"name,omitempty"`
-	Metrics []Metric `json:"metrics,omitempty"`
+	Metrics []metric `json:"metrics,omitempty"`
 }
 
 // AddName to the info.
-func (i *Info) AddName(n string) {
+func (i *info) AddName(n string) {
 	i.Name = n
 }
 
 // AddMetric to the info.
-func (i *Info) AddMetric(m Metric) {
-	i.Metrics = append(i.Metrics, m)
+func (i *info) AddMetric(n, d string) {
+	i.Metrics = append(i.Metrics, metric{Name: n, Description: d})
 }
