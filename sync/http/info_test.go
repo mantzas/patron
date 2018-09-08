@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mantzas/patron/encoding"
@@ -26,7 +27,8 @@ func Test_Route(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, json.TypeCharset, resp.Header.Get(encoding.ContentTypeHeader))
+
 	body, err := ioutil.ReadAll(resp.Body)
 	assert.NoError(t, err)
-	assert.Equal(t, `{"name":"Name","metrics":[{"name":"Name","description":"Description"}]}`, string(body))
+	assert.True(t, strings.HasPrefix(string(body), `{"name":"Name","metrics":[{"name":"Name","description":"`))
 }
