@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/mantzas/patron/errors"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/rpcmetrics"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
@@ -37,20 +37,20 @@ var (
 )
 
 // Setup tracing by providing all necessary parameters.
-func Setup(name, ver, agentAddress, samplerType string, samplerParam float64) error {
+func Setup(name, ver, agent, typ string, prm float64) error {
 	if ver != "" {
 		version = ver
 	}
 	cfg := config.Configuration{
 		ServiceName: name,
 		Sampler: &config.SamplerConfig{
-			Type:  samplerType,
-			Param: samplerParam,
+			Type:  typ,
+			Param: prm,
 		},
 		Reporter: &config.ReporterConfig{
 			LogSpans:            false,
 			BufferFlushInterval: 1 * time.Second,
-			LocalAgentHostPort:  agentAddress,
+			LocalAgentHostPort:  agent,
 		},
 	}
 	time.Sleep(100 * time.Millisecond)

@@ -10,42 +10,47 @@ import (
 )
 
 // ServiceInfo holds the information of the service.
-var serviceInfo = info{}
+var serviceInfo = info{
+	Configs: make(map[string]string),
+	Metrics: make(map[string]string),
+}
 
 // Marshal returns the service info as a byte slice.
 func Marshal() ([]byte, error) {
 	return json.Encode(serviceInfo)
 }
 
-type metric struct {
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-}
-
 type info struct {
-	Name    string   `json:"name,omitempty"`
-	Version string   `json:"version,omitempty"`
-	Metrics []metric `json:"metrics,omitempty"`
-	Doc     string   `json:"doc,omitempty"`
+	Name    string            `json:"name,omitempty"`
+	Version string            `json:"version,omitempty"`
+	Host    string            `json:"host,omitempty"`
+	Metrics map[string]string `json:"metrics,omitempty"`
+	Configs map[string]string `json:"configs,omitempty"`
+	Doc     string            `json:"doc,omitempty"`
 }
 
-// AddName to the info.
-func AddName(n string) {
+// UpdateName to the info.
+func UpdateName(n string) {
 	serviceInfo.Name = n
 }
 
-// AddVersion to the info.
-func AddVersion(v string) {
+// UpdateVersion to the info.
+func UpdateVersion(v string) {
 	serviceInfo.Version = v
+}
+
+// UpdateHost to the info.
+func UpdateHost(h string) {
+	serviceInfo.Host = h
 }
 
 // AddMetric to the info.
 func AddMetric(n, d string) {
-	serviceInfo.Metrics = append(serviceInfo.Metrics, metric{Name: n, Description: d})
+	serviceInfo.Metrics[n] = d
 }
 
-// AddDoc adds documentation from a markdown file.
-func AddDoc(file string) error {
+// ImportDoc adds documentation from a markdown file.
+func ImportDoc(file string) error {
 	if file == "" {
 		serviceInfo.Doc = ""
 		return errors.New("no file provided")
@@ -61,4 +66,9 @@ func AddDoc(file string) error {
 	}
 	serviceInfo.Doc = string(blackfriday.Run(cnt, blackfriday.WithExtensions(blackfriday.CommonExtensions)))
 	return nil
+}
+
+// UpsertConfig to the info.
+func UpsertConfig(n, v string) {
+	serviceInfo.Configs[n] = v
 }

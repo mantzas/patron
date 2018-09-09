@@ -8,23 +8,27 @@ import (
 )
 
 func TestInfo(t *testing.T) {
-	AddName("Name")
-	AddVersion("1.2.3")
+	UpdateName("Name")
+	UpdateVersion("1.2.3")
+	UpdateHost("Host")
 	AddMetric("Name", "Description")
-	err := AddDoc("testdata/test.md")
+	UpsertConfig("Config", "Value")
+	err := ImportDoc("testdata/test.md")
 	assert.NoError(t, err)
 	exp := info{
 		Name:    "Name",
 		Version: "1.2.3",
-		Metrics: []metric{metric{Name: "Name", Description: "Description"}},
+		Host:    "Host",
+		Metrics: map[string]string{"Name": "Description"},
 		Doc:     "<h1>Markdown: Syntax</h1>\n\n<p>This is the first paragraph.</p>\n\n<h2>Overview</h2>\n\n<p>This is the second paragraph.</p>\n",
+		Configs: map[string]string{"Config": "Value"},
 	}
 	assert.Equal(t, exp, serviceInfo)
 	expected, err := json.Marshal(exp)
 	assert.NoError(t, err)
 	got, err := Marshal()
 	assert.NoError(t, err)
-	assert.Equal(t, expected, got)
+	assert.Equal(t, string(expected), string(got))
 }
 
 func TestAddDoc(t *testing.T) {
@@ -42,7 +46,7 @@ func TestAddDoc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := AddDoc(tt.args.file)
+			err := ImportDoc(tt.args.file)
 			if tt.wantError {
 				assert.NoError(t, err)
 				assert.NotEmpty(t, serviceInfo.Doc)
