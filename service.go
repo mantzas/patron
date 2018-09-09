@@ -136,7 +136,7 @@ func SetupLogging(name, version string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to get hostname")
 	}
-	info.UpsertConfig("host", hostname)
+	info.UpdateHost(hostname)
 
 	f := map[string]interface{}{
 		"srv":  name,

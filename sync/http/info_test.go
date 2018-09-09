@@ -14,7 +14,7 @@ import (
 
 func Test_Route(t *testing.T) {
 	info.UpdateName("Name")
-	info.AddMetric("Name", "Description")
+	info.AddMetric("Name", "Description", "Counter")
 	r := infoRoute()
 	mux := http.NewServeMux()
 	mux.HandleFunc(r.Pattern, r.Handler)

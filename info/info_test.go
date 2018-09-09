@@ -11,7 +11,7 @@ func TestInfo(t *testing.T) {
 	UpdateName("Name")
 	UpdateVersion("1.2.3")
 	UpdateHost("Host")
-	AddMetric("Name", "Description")
+	AddMetric("Name", "Description", "Counter")
 	UpsertConfig("Config", "Value")
 	err := ImportDoc("testdata/test.md")
 	assert.NoError(t, err)
@@ -19,7 +19,7 @@ func TestInfo(t *testing.T) {
 		Name:    "Name",
 		Version: "1.2.3",
 		Host:    "Host",
-		Metrics: map[string]string{"Name": "Description"},
+		Metrics: map[string]string{"Name": "[Counter] Description"},
 		Doc:     "<h1>Markdown: Syntax</h1>\n\n<p>This is the first paragraph.</p>\n\n<h2>Overview</h2>\n\n<p>This is the second paragraph.</p>\n",
 		Configs: map[string]string{"Config": "Value"},
 	}

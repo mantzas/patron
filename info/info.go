@@ -1,6 +1,7 @@
 package info
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -24,8 +25,8 @@ type info struct {
 	Name    string            `json:"name,omitempty"`
 	Version string            `json:"version,omitempty"`
 	Host    string            `json:"host,omitempty"`
-	Metrics map[string]string `json:"metrics,omitempty"`
 	Configs map[string]string `json:"configs,omitempty"`
+	Metrics map[string]string `json:"metrics,omitempty"`
 	Doc     string            `json:"doc,omitempty"`
 }
 
@@ -45,8 +46,8 @@ func UpdateHost(h string) {
 }
 
 // AddMetric to the info.
-func AddMetric(n, d string) {
-	serviceInfo.Metrics[n] = d
+func AddMetric(n, d, typ string) {
+	serviceInfo.Metrics[n] = fmt.Sprintf("[%s] %s", typ, d)
 }
 
 // ImportDoc adds documentation from a markdown file.
