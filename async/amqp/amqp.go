@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -212,11 +214,19 @@ func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
 
 func (c *Consumer) createInfo() {
 	c.info["type"] = "amqp-consumer"
-	c.info["url"] = c.url
 	c.info["queue"] = c.queue
 	c.info["exchange"] = c.exchange
 	c.info["requeue"] = c.requeue
 	c.info["buffer"] = c.buffer
+
+	var re = regexp.MustCompile(`(?m)amqp:\/\/\w*:\w*@\w*:\d*\/`)
+	match := re.FindAllString(c.url, -1)
+	if len(match) > 0 {
+		lst := strings.LastIndex(c.url, "@")
+		c.info["url"] = "amqp://xxx:xxx" + c.url[lst:]
+		return
+	}
+	c.info["url"] = c.url
 }
 
 func mapHeader(hh amqp.Table) map[string]string {
