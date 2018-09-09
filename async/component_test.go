@@ -170,6 +170,22 @@ func TestRun_Process_Shutdown(t *testing.T) {
 	assert.True(t, <-ch)
 }
 
+func TestInfo(t *testing.T) {
+	cnr := mockConsumer{
+		chMsg: make(chan Message, 10),
+		chErr: make(chan error, 10),
+	}
+	proc := mockProcessor{retError: false}
+	cmp, err := New(proc.Process, &cnr, FailureStrategy(AckStrategy))
+	assert.NoError(t, err)
+	var cnsInfo map[string]interface{}
+	expected := make(map[string]interface{})
+	expected["type"] = "async"
+	expected["fail-strategy"] = AckStrategy
+	expected["consumer"] = cnsInfo
+	assert.Equal(t, expected, cmp.info)
+}
+
 type mockMessage struct {
 	ctx context.Context
 }
@@ -218,5 +234,9 @@ func (mc *mockConsumer) Consume(context.Context) (<-chan Message, <-chan error, 
 }
 
 func (mc *mockConsumer) Close() error {
+	return nil
+}
+
+func (mc *mockConsumer) Info() map[string]interface{} {
 	return nil
 }

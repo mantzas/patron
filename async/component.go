@@ -12,6 +12,7 @@ type Component struct {
 	proc         ProcessorFunc
 	failStrategy FailStrategy
 	cns          Consumer
+	info         map[string]interface{}
 }
 
 // New returns a new async component. The default behavior is to return a error of failure.
@@ -29,6 +30,7 @@ func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 		proc:         p,
 		cns:          cns,
 		failStrategy: NackExitStrategy,
+		info:         make(map[string]interface{}),
 	}
 
 	for _, o := range oo {
@@ -37,8 +39,13 @@ func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 			return nil, err
 		}
 	}
-
+	c.createInfo()
 	return c, nil
+}
+
+// Info return information of the component.
+func (c *Component) Info() map[string]interface{} {
+	return c.info
 }
 
 // Run starts the consumer processing loop messages.
@@ -102,4 +109,10 @@ func (c *Component) executeFailureStrategy(msg Message, err error) error {
 		return errors.New("invalid failure strategy")
 	}
 	return nil
+}
+
+func (c *Component) createInfo() {
+	c.info["type"] = "async"
+	c.info["fail-strategy"] = c.failStrategy
+	c.info["consumer"] = c.cns.Info()
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/async"
@@ -63,6 +64,7 @@ type Consumer struct {
 	contentType string
 	cnl         context.CancelFunc
 	ms          sarama.Consumer
+	info        map[string]interface{}
 }
 
 // New creates a ew Kafka consumer with defaults. To override those default you should provide a option.
@@ -97,6 +99,7 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 		contentType: ct,
 		buffer:      1000,
 		start:       OffsetNewest,
+		info:        make(map[string]interface{}),
 	}
 
 	for _, o := range oo {
@@ -110,7 +113,13 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 	if err != nil {
 		return nil, err
 	}
+	c.createInfo()
 	return c, nil
+}
+
+// Info return the information of the consumer.
+func (c *Consumer) Info() map[string]interface{} {
+	return c.info
 }
 
 // Consume starts consuming messages from a Kafka topic.
@@ -212,6 +221,15 @@ func (c *Consumer) consumers() ([]sarama.PartitionConsumer, error) {
 	}
 
 	return pcs, nil
+}
+
+func (c *Consumer) createInfo() {
+	c.info["type"] = "kafka-consumer"
+	c.info["brokers"] = strings.Join(c.brokers, ",")
+	c.info["topic"] = c.topic
+	c.info["buffer"] = c.buffer
+	c.info["default-content-type"] = c.contentType
+	c.info["start"] = c.start
 }
 
 func determineContentType(hdr []*sarama.RecordHeader) (string, error) {

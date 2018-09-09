@@ -49,7 +49,7 @@ func Components(cc ...Component) OptionFunc {
 // Docs option for adding additional documentation to the service info response.
 func Docs(file string) OptionFunc {
 	return func(s *Service) error {
-		err := info.AddDoc(file)
+		err := info.ImportDoc(file)
 		if err != nil {
 			return err
 		}

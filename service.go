@@ -27,6 +27,7 @@ var logSetupOnce sync.Once
 // Component interface for implementing service components.
 type Component interface {
 	Run(ctx context.Context) error
+	Info() map[string]interface{}
 }
 
 // Service is responsible for managing and setting up everything.
@@ -48,8 +49,8 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	if version == "" {
 		version = "dev"
 	}
-	info.AddName(name)
-	info.AddVersion(version)
+	info.UpdateName(name)
+	info.UpdateVersion(version)
 
 	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, termSig: make(chan os.Signal, 1)}
 
@@ -76,12 +77,19 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	}
 
 	s.cps = append(s.cps, httpCp)
+	s.setupInfo()
 	s.setupTermSignal()
 	return &s, nil
 }
 
 func (s *Service) setupTermSignal() {
 	signal.Notify(s.termSig, os.Interrupt, syscall.SIGTERM)
+}
+
+func (s *Service) setupInfo() {
+	for _, c := range s.cps {
+		info.AppendComponent(c.Info())
+	}
 }
 
 // Run starts up all service components and monitors for errors.
@@ -131,10 +139,12 @@ func SetupLogging(name, version string) error {
 		lvl = string(log.InfoLevel)
 	}
 
+	info.UpsertConfig("log_level", lvl)
 	hostname, err := os.Hostname()
 	if err != nil {
 		return errors.Wrap(err, "failed to get hostname")
 	}
+	info.UpdateHost(hostname)
 
 	f := map[string]interface{}{
 		"srv":  name,
@@ -153,40 +163,41 @@ func (s *Service) setupDefaultTracing(name, version string) error {
 	if !ok {
 		agent = "0.0.0.0:6831"
 	}
+	info.UpsertConfig("jaeger-agent", agent)
 	tp, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_TYPE")
 	if !ok {
 		tp = jaeger.SamplerTypeProbabilistic
 	}
-	var prmVal float64
+	info.UpsertConfig("jaeger-agent-sampler-type", tp)
+	var prmVal = 0.1
+	var prm = "0.1"
 	var err error
 
-	prm, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM")
-	if !ok {
-		prmVal = 0.1
-	} else {
+	prm, ok = os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM")
+	if ok {
 		prmVal, err = strconv.ParseFloat(prm, 64)
 		if err != nil {
 			return errors.Wrap(err, "env var for jaeger sampler param is not valid")
 		}
 	}
+
+	info.UpsertConfig("jaeger-agent-sampler-param", prm)
 	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
 	return trace.Setup(name, version, agent, tp, prmVal)
 }
 
 func (s *Service) createHTTPComponent() (Component, error) {
 	var err error
-	var portVal int64
+	var portVal = int64(50000)
 	port, ok := os.LookupEnv("PATRON_HTTP_DEFAULT_PORT")
-	if !ok {
-		portVal = 50000
-	} else {
+	if ok {
 		portVal, err = strconv.ParseInt(port, 10, 64)
 		if err != nil {
 			return nil, errors.Wrap(err, "env var for HTTP default port is not valid")
 		}
 	}
-
-	log.Infof("creating default HTTP component at port %s", strconv.FormatInt(portVal, 10))
+	port = strconv.FormatInt(portVal, 10)
+	log.Infof("creating default HTTP component at port %s", port)
 
 	options := []http.OptionFunc{
 		http.Port(int(portVal)),

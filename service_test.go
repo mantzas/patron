@@ -71,3 +71,7 @@ func (ts testComponent) Run(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (ts testComponent) Info() map[string]interface{} {
+	return map[string]interface{}{"type": "mock"}
+}
