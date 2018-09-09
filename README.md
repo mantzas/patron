@@ -22,6 +22,10 @@ The entry point of the framework is the `Service`. The `Service` uses `Component
 The `Service` has the role of glueing all of the above together, which are:
 
 - setting up logging
+- setting up default HTTP component with the following endpoints configured:
+  - profiling via pprof
+  - health check
+  - info endpoint for returning information about the service
 - setting up termination by os signal
 - starting and stopping components
 - handling component errors

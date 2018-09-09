@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
@@ -20,6 +21,8 @@ import (
 const (
 	shutdownTimeout = 5 * time.Second
 )
+
+var logSetupOnce sync.Once
 
 // Component interface for implementing service components.
 type Component interface {
@@ -45,6 +48,8 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	if version == "" {
 		version = "dev"
 	}
+	info.AddName(name)
+	info.AddVersion(version)
 
 	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, termSig: make(chan os.Signal, 1)}
 
@@ -136,13 +141,11 @@ func SetupLogging(name, version string) error {
 		"ver":  version,
 		"host": hostname,
 	}
+	logSetupOnce.Do(func() {
+		err = log.Setup(zerolog.Create(log.Level(lvl)), f)
+	})
 
-	err = log.Setup(zerolog.Create(log.Level(lvl)), f)
-	if err != nil {
-		return errors.Wrap(err, "failed to setup logging")
-	}
-
-	return nil
+	return err
 }
 
 func (s *Service) setupDefaultTracing(name, version string) error {
