@@ -22,6 +22,8 @@ const (
 	shutdownTimeout = 5 * time.Second
 )
 
+var logSetupOnce sync.Once
+
 // Component interface for implementing service components.
 type Component interface {
 	Run(ctx context.Context) error
@@ -124,7 +126,6 @@ func (s *Service) Run() error {
 
 // SetupLogging set's up default logging.
 func SetupLogging(name, version string) error {
-	mu := sync.Mutex{}
 	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
 	if !ok {
 		lvl = string(log.InfoLevel)
@@ -140,13 +141,11 @@ func SetupLogging(name, version string) error {
 		"ver":  version,
 		"host": hostname,
 	}
+	logSetupOnce.Do(func() {
+		err = log.Setup(zerolog.Create(log.Level(lvl)), f)
+	})
 
-	err = log.Setup(zerolog.Create(log.Level(lvl)), f)
-	if err != nil {
-		return errors.Wrap(err, "failed to setup logging")
-	}
-
-	return nil
+	return err
 }
 
 func (s *Service) setupDefaultTracing(name, version string) error {
