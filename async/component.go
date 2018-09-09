@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 )
 
@@ -12,6 +13,7 @@ type Component struct {
 	proc         ProcessorFunc
 	failStrategy FailStrategy
 	cns          Consumer
+	info         info.Component
 }
 
 // New returns a new async component. The default behavior is to return a error of failure.

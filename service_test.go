@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/stretchr/testify/assert"
 )
@@ -70,4 +71,8 @@ func (ts testComponent) Run(ctx context.Context) error {
 		return errors.New("failed to run component")
 	}
 	return nil
+}
+
+func (ts testComponent) Info() info.Component {
+	return info.Component{Type: "Test"}
 }

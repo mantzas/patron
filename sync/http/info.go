@@ -19,7 +19,7 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, m := range mm {
-		info.AddMetric(m.GetName(), m.GetHelp(), m.GetType().String())
+		info.UpsertMetric(m.GetName(), m.GetHelp(), m.GetType().String())
 	}
 
 	body, err := info.Marshal()

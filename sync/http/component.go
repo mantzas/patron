@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 )
 
@@ -29,6 +31,7 @@ type Component struct {
 	httpPort         int
 	httpReadTimeout  time.Duration
 	httpWriteTimeout time.Duration
+	info             info.Component
 	sync.Mutex
 	routes   []Route
 	certFile string
@@ -37,7 +40,7 @@ type Component struct {
 
 // New returns a new component.
 func New(oo ...OptionFunc) (*Component, error) {
-	s := Component{
+	c := Component{
 		hc:               DefaultHealthCheck,
 		httpPort:         httpPort,
 		httpReadTimeout:  httpReadTimeout,
@@ -46,35 +49,41 @@ func New(oo ...OptionFunc) (*Component, error) {
 	}
 
 	for _, o := range oo {
-		err := o(&s)
+		err := o(&c)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	s.routes = append(s.routes, healthCheckRoute(s.hc))
-	s.routes = append(s.routes, profilingRoutes()...)
-	s.routes = append(s.routes, metricRoute())
-	s.routes = append(s.routes, infoRoute())
+	c.routes = append(c.routes, healthCheckRoute(c.hc))
+	c.routes = append(c.routes, profilingRoutes()...)
+	c.routes = append(c.routes, metricRoute())
+	c.routes = append(c.routes, infoRoute())
 
-	return &s, nil
+	c.createInfo()
+	return &c, nil
+}
+
+// Info return information of the component.
+func (c *Component) Info() info.Component {
+	return c.info
 }
 
 // Run starts the HTTP server.
-func (s *Component) Run(ctx context.Context) error {
-	s.Lock()
+func (c *Component) Run(ctx context.Context) error {
+	c.Lock()
 	log.Debug("applying tracing to routes")
-	for i := 0; i < len(s.routes); i++ {
-		if s.routes[i].Trace {
-			s.routes[i].Handler = DefaultMiddleware(s.routes[i].Pattern, s.routes[i].Handler)
+	for i := 0; i < len(c.routes); i++ {
+		if c.routes[i].Trace {
+			c.routes[i].Handler = DefaultMiddleware(c.routes[i].Pattern, c.routes[i].Handler)
 		} else {
-			s.routes[i].Handler = RecoveryMiddleware(s.routes[i].Handler)
+			c.routes[i].Handler = RecoveryMiddleware(c.routes[i].Handler)
 		}
 	}
 	chFail := make(chan error)
-	srv := s.createHTTPServer()
-	go s.listenAndServe(srv, chFail)
-	s.Unlock()
+	srv := c.createHTTPServer()
+	go c.listenAndServe(srv, chFail)
+	c.Unlock()
 
 	select {
 	case <-ctx.Done():
@@ -85,28 +94,41 @@ func (s *Component) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Component) listenAndServe(srv *http.Server, ch chan<- error) {
-	if s.certFile != "" && s.keyFile != "" {
-		log.Infof("HTTPS component listening on port %d", s.httpPort)
-		ch <- srv.ListenAndServeTLS(s.certFile, s.keyFile)
+func (c *Component) listenAndServe(srv *http.Server, ch chan<- error) {
+	if c.certFile != "" && c.keyFile != "" {
+		log.Infof("HTTPS component listening on port %d", c.httpPort)
+		ch <- srv.ListenAndServeTLS(c.certFile, c.keyFile)
 	}
 
-	log.Infof("HTTP component listening on port %d", s.httpPort)
+	log.Infof("HTTP component listening on port %d", c.httpPort)
 	ch <- srv.ListenAndServe()
 }
 
-func (s *Component) createHTTPServer() *http.Server {
-	log.Debugf("adding %d routes", len(s.routes))
+func (c *Component) createHTTPServer() *http.Server {
+	log.Debugf("adding %d routes", len(c.routes))
 	router := httprouter.New()
-	for _, route := range s.routes {
+	for _, route := range c.routes {
 		router.HandlerFunc(route.Method, route.Pattern, route.Handler)
 		log.Debugf("added route %s %s", route.Method, route.Pattern)
 	}
 	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", s.httpPort),
-		ReadTimeout:  s.httpReadTimeout,
-		WriteTimeout: s.httpWriteTimeout,
+		Addr:         fmt.Sprintf(":%d", c.httpPort),
+		ReadTimeout:  c.httpReadTimeout,
+		WriteTimeout: c.httpWriteTimeout,
 		IdleTimeout:  httpIdleTimeout,
 		Handler:      router,
+	}
+}
+
+func (c *Component) createInfo() {
+	c.info = info.Component{Type: "http"}
+	c.info.UpsertConfig("port", strconv.FormatInt(int64(c.httpPort), 64))
+	c.info.UpsertConfig("read-timeout", c.httpReadTimeout.String())
+	c.info.UpsertConfig("write-timeout", c.httpWriteTimeout.String())
+	c.info.UpsertConfig("idle-timeout", httpIdleTimeout.String())
+	if c.keyFile != "" && c.certFile != "" {
+		c.info.Type = "https"
+		c.info.UpsertConfig("key-file", c.keyFile)
+		c.info.UpsertConfig("cert-file", c.certFile)
 	}
 }

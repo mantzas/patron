@@ -27,6 +27,7 @@ var logSetupOnce sync.Once
 // Component interface for implementing service components.
 type Component interface {
 	Run(ctx context.Context) error
+	Info() info.Component
 }
 
 // Service is responsible for managing and setting up everything.
@@ -101,6 +102,7 @@ func (s *Service) Run() error {
 	for _, cp := range s.cps {
 		go func(c Component) {
 			defer wg.Done()
+			info.AppendComponent(c.Info())
 			chErr <- c.Run(ctx)
 		}(cp)
 	}

@@ -11,7 +11,7 @@ func TestInfo(t *testing.T) {
 	UpdateName("Name")
 	UpdateVersion("1.2.3")
 	UpdateHost("Host")
-	AddMetric("Name", "Description", "Counter")
+	UpsertMetric("Name", "Description", "Counter")
 	UpsertConfig("Config", "Value")
 	err := ImportDoc("testdata/test.md")
 	assert.NoError(t, err)
