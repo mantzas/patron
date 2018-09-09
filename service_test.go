@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/stretchr/testify/assert"
 )
@@ -73,6 +72,6 @@ func (ts testComponent) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ts testComponent) Info() info.Component {
-	return info.Component{Type: "Test"}
+func (ts testComponent) Info() map[string]interface{} {
+	return map[string]interface{}{"type": "mock"}
 }

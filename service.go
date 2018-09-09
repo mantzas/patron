@@ -27,7 +27,7 @@ var logSetupOnce sync.Once
 // Component interface for implementing service components.
 type Component interface {
 	Run(ctx context.Context) error
-	Info() info.Component
+	Info() map[string]interface{}
 }
 
 // Service is responsible for managing and setting up everything.
@@ -77,12 +77,19 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	}
 
 	s.cps = append(s.cps, httpCp)
+	s.setupInfo()
 	s.setupTermSignal()
 	return &s, nil
 }
 
 func (s *Service) setupTermSignal() {
 	signal.Notify(s.termSig, os.Interrupt, syscall.SIGTERM)
+}
+
+func (s *Service) setupInfo() {
+	for _, c := range s.cps {
+		info.AppendComponent(c.Info())
+	}
 }
 
 // Run starts up all service components and monitors for errors.
@@ -102,7 +109,6 @@ func (s *Service) Run() error {
 	for _, cp := range s.cps {
 		go func(c Component) {
 			defer wg.Done()
-			info.AppendComponent(c.Info())
 			chErr <- c.Run(ctx)
 		}(cp)
 	}
@@ -191,7 +197,6 @@ func (s *Service) createHTTPComponent() (Component, error) {
 		}
 	}
 	port = strconv.FormatInt(portVal, 10)
-	info.UpsertConfig("default-http-port", port)
 	log.Infof("creating default HTTP component at port %s", port)
 
 	options := []http.OptionFunc{

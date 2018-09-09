@@ -94,6 +94,19 @@ func Test_determineContentType(t *testing.T) {
 	}
 }
 
+func TestConsumer_Info(t *testing.T) {
+	c, err := New("name", "application/json", "topic", []string{"1", "2"})
+	assert.NoError(t, err)
+	expected := make(map[string]interface{})
+	expected["type"] = "kafka-consumer"
+	expected["brokers"] = "1,2"
+	expected["topic"] = "topic"
+	expected["buffer"] = 1000
+	expected["default-content-type"] = "application/json"
+	expected["start"] = OffsetNewest
+	assert.Equal(t, expected, c.Info())
+}
+
 // func TestRun_Shutdown(t *testing.T) {
 // 	br := createSeedBroker(t, false)
 // 	c, err := New("test", "1", "12", []string{br.Addr()}, "TOPIC", 0)

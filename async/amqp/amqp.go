@@ -64,6 +64,7 @@ type Consumer struct {
 	cfg      amqp.Config
 	ch       *amqp.Channel
 	conn     *amqp.Connection
+	info     map[string]interface{}
 }
 
 // New creates a new AMQP consumer with some defaults. Use option to change.
@@ -89,6 +90,7 @@ func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 		cfg:      defaultCfg,
 		buffer:   1000,
 		traceTag: opentracing.Tag{Key: "queue", Value: queue},
+		info:     make(map[string]interface{}),
 	}
 
 	for _, o := range oo {
@@ -98,7 +100,14 @@ func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 		}
 	}
 
+	c.createInfo()
+
 	return c, nil
+}
+
+// Info return the information of the consumer.
+func (c *Consumer) Info() map[string]interface{} {
+	return c.info
 }
 
 // Consume starts of consuming a AMQP queue.
@@ -199,6 +208,15 @@ func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
 	}
 
 	return deliveries, nil
+}
+
+func (c *Consumer) createInfo() {
+	c.info["type"] = "amqp-consumer"
+	c.info["url"] = c.url
+	c.info["queue"] = c.queue
+	c.info["exchange"] = c.exchange
+	c.info["requeue"] = c.requeue
+	c.info["buffer"] = c.buffer
 }
 
 func mapHeader(hh amqp.Table) map[string]string {

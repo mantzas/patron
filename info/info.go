@@ -4,69 +4,71 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
-// Component information.
-type Component struct {
-	Type    string            `json:"type,omitempty"`
-	Configs map[string]string `json:"configs,omitempty"`
-}
-
-// UpsertConfig upsert's the configuration info to the component info.
-func (c *Component) UpsertConfig(name, value string) {
-	if c.Configs == nil {
-		c.Configs = make(map[string]string)
-	}
-	c.Configs[name] = value
-}
-
 type info struct {
-	Name       string            `json:"name,omitempty"`
-	Version    string            `json:"version,omitempty"`
-	Host       string            `json:"host,omitempty"`
-	Configs    map[string]string `json:"configs,omitempty"`
-	Components []Component       `json:"components,omitempty"`
-	Metrics    map[string]string `json:"metrics,omitempty"`
-	Doc        string            `json:"doc,omitempty"`
+	Name       string                   `json:"name,omitempty"`
+	Version    string                   `json:"version,omitempty"`
+	Host       string                   `json:"host,omitempty"`
+	Configs    map[string]interface{}   `json:"configs,omitempty"`
+	Components []map[string]interface{} `json:"components,omitempty"`
+	Metrics    map[string]string        `json:"metrics,omitempty"`
+	Doc        string                   `json:"doc,omitempty"`
 }
 
-// ServiceInfo holds the information of the service.
-var serviceInfo = info{
-	Configs: make(map[string]string),
-	Metrics: make(map[string]string),
-}
+var (
+	// ServiceInfo holds the information of the service.
+	serviceInfo = info{
+		Configs: make(map[string]interface{}),
+		Metrics: make(map[string]string),
+	}
+	mu = sync.Mutex{}
+)
 
 // Marshal returns the service info as a byte slice.
 func Marshal() ([]byte, error) {
+	mu.Lock()
+	defer mu.Unlock()
 	return json.Encode(serviceInfo)
 }
 
 // UpdateName to the info.
 func UpdateName(n string) {
+	mu.Lock()
+	defer mu.Unlock()
 	serviceInfo.Name = n
 }
 
 // UpdateVersion to the info.
 func UpdateVersion(v string) {
+	mu.Lock()
+	defer mu.Unlock()
 	serviceInfo.Version = v
 }
 
 // UpdateHost to the info.
 func UpdateHost(h string) {
+	mu.Lock()
+	defer mu.Unlock()
 	serviceInfo.Host = h
 }
 
 // UpsertMetric to the info.
 func UpsertMetric(n, d, typ string) {
+	mu.Lock()
+	defer mu.Unlock()
 	serviceInfo.Metrics[n] = fmt.Sprintf("[%s] %s", typ, d)
 }
 
 // ImportDoc adds documentation from a markdown file.
 func ImportDoc(file string) error {
+	mu.Lock()
+	defer mu.Unlock()
 	if file == "" {
 		serviceInfo.Doc = ""
 		return errors.New("no file provided")
@@ -85,11 +87,15 @@ func ImportDoc(file string) error {
 }
 
 // UpsertConfig to the info.
-func UpsertConfig(n, v string) {
+func UpsertConfig(n string, v interface{}) {
+	mu.Lock()
+	defer mu.Unlock()
 	serviceInfo.Configs[n] = v
 }
 
 // AppendComponent to the info.
-func AppendComponent(cmp Component) {
-	serviceInfo.Components = append(serviceInfo.Components, cmp)
+func AppendComponent(i map[string]interface{}) {
+	mu.Lock()
+	defer mu.Unlock()
+	serviceInfo.Components = append(serviceInfo.Components, i)
 }

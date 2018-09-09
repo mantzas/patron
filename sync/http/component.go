@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 )
 
@@ -31,7 +29,7 @@ type Component struct {
 	httpPort         int
 	httpReadTimeout  time.Duration
 	httpWriteTimeout time.Duration
-	info             info.Component
+	info             map[string]interface{}
 	sync.Mutex
 	routes   []Route
 	certFile string
@@ -46,6 +44,7 @@ func New(oo ...OptionFunc) (*Component, error) {
 		httpReadTimeout:  httpReadTimeout,
 		httpWriteTimeout: httpWriteTimeout,
 		routes:           []Route{},
+		info:             make(map[string]interface{}),
 	}
 
 	for _, o := range oo {
@@ -65,7 +64,7 @@ func New(oo ...OptionFunc) (*Component, error) {
 }
 
 // Info return information of the component.
-func (c *Component) Info() info.Component {
+func (c *Component) Info() map[string]interface{} {
 	return c.info
 }
 
@@ -121,14 +120,14 @@ func (c *Component) createHTTPServer() *http.Server {
 }
 
 func (c *Component) createInfo() {
-	c.info = info.Component{Type: "http"}
-	c.info.UpsertConfig("port", strconv.FormatInt(int64(c.httpPort), 64))
-	c.info.UpsertConfig("read-timeout", c.httpReadTimeout.String())
-	c.info.UpsertConfig("write-timeout", c.httpWriteTimeout.String())
-	c.info.UpsertConfig("idle-timeout", httpIdleTimeout.String())
+	c.info["type"] = "http"
+	c.info["port"] = c.httpPort
+	c.info["read-timeout"] = c.httpReadTimeout.String()
+	c.info["write-timeout"] = c.httpWriteTimeout.String()
+	c.info["idle-timeout"] = httpIdleTimeout.String()
 	if c.keyFile != "" && c.certFile != "" {
-		c.info.Type = "https"
-		c.info.UpsertConfig("key-file", c.keyFile)
-		c.info.UpsertConfig("cert-file", c.certFile)
+		c.info["type"] = "https"
+		c.info["key-file"] = c.keyFile
+		c.info["cert-file"] = c.certFile
 	}
 }
