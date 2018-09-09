@@ -11,7 +11,8 @@ func TestInfo(t *testing.T) {
 	AddName("Name")
 	AddVersion("1.2.3")
 	AddMetric("Name", "Description")
-	AddDoc("testdata/test.md")
+	err := AddDoc("testdata/test.md")
+	assert.NoError(t, err)
 	exp := info{
 		Name:    "Name",
 		Version: "1.2.3",
@@ -31,23 +32,24 @@ func TestAddDoc(t *testing.T) {
 		file string
 	}
 	tests := []struct {
-		name  string
-		args  args
-		empty bool
+		name      string
+		args      args
+		wantError bool
 	}{
-		{name: "no file", args: args{file: ""}, empty: true},
-		{name: "file not exists", args: args{file: "file_not_exists.md"}, empty: true},
-		{name: "success", args: args{file: "testdata/test.md"}, empty: false},
+		{name: "no file", args: args{file: ""}, wantError: false},
+		{name: "file not exists", args: args{file: "file_not_exists.md"}, wantError: false},
+		{name: "success", args: args{file: "testdata/test.md"}, wantError: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			AddDoc(tt.args.file)
-			if tt.empty {
-				assert.Empty(t, serviceInfo.Doc)
-			} else {
+			err := AddDoc(tt.args.file)
+			if tt.wantError {
+				assert.NoError(t, err)
 				assert.NotEmpty(t, serviceInfo.Doc)
+			} else {
+				assert.Error(t, err)
+				assert.Empty(t, serviceInfo.Doc)
 			}
-
 		})
 	}
 }

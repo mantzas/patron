@@ -81,7 +81,13 @@ func main() {
 		http.NewGetRoute("/second", httpCmp.second, true),
 	}
 
-	srv, err := patron.New(name, version, patron.Routes(routes), patron.Components(kafkaCmp.cmp, amqpCmp.cmp))
+	srv, err := patron.New(
+		name,
+		version,
+		patron.Docs("README.md"),
+		patron.Routes(routes),
+		patron.Components(kafkaCmp.cmp, amqpCmp.cmp),
+	)
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
 	}

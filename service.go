@@ -124,6 +124,7 @@ func (s *Service) Run() error {
 
 // SetupLogging set's up default logging.
 func SetupLogging(name, version string) error {
+	mu := sync.Mutex{}
 	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
 	if !ok {
 		lvl = string(log.InfoLevel)

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/errors"
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
@@ -45,22 +45,20 @@ func AddMetric(n, d string) {
 }
 
 // AddDoc adds documentation from a markdown file.
-func AddDoc(file string) {
+func AddDoc(file string) error {
 	if file == "" {
-		log.Warn("no file provided")
 		serviceInfo.Doc = ""
-		return
+		return errors.New("no file provided")
 	}
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		log.Warnf("file %s does not exist", file)
 		serviceInfo.Doc = ""
-		return
+		return errors.Errorf("file %s does not exist", file)
 	}
 	cnt, err := ioutil.ReadFile(file)
 	if err != nil {
-		log.Warnf("failed to read file %s", file)
 		serviceInfo.Doc = ""
-		return
+		return errors.Errorf("failed to read file %s", file)
 	}
 	serviceInfo.Doc = string(blackfriday.Run(cnt, blackfriday.WithExtensions(blackfriday.CommonExtensions)))
+	return nil
 }

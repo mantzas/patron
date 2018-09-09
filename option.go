@@ -1,9 +1,10 @@
 package patron
 
 import (
+	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync/http"
-	"github.com/mantzas/patron/errors"
 )
 
 // OptionFunc definition for configuring the service in a functional way.
@@ -41,6 +42,18 @@ func Components(cc ...Component) OptionFunc {
 		}
 		s.cps = append(s.cps, cc...)
 		log.Info("component options are set")
+		return nil
+	}
+}
+
+// Docs option for adding additional documentation to the service info response.
+func Docs(file string) OptionFunc {
+	return func(s *Service) error {
+		err := info.AddDoc(file)
+		if err != nil {
+			return err
+		}
+		log.Info("documentation is set")
 		return nil
 	}
 }
