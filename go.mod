@@ -26,6 +26,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20180601124529-94663424ae5a // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20180406234716-d932a24a8ccb // indirect
 	github.com/rs/zerolog v1.5.0
+	github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95 // indirect
 	github.com/streadway/amqp v0.0.0-20180315184602-8e4aba63da9f
 	github.com/stretchr/testify v1.2.1
 	github.com/uber-go/atomic v1.3.2 // indirect
@@ -34,4 +35,5 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
+	gopkg.in/russross/blackfriday.v2 v2.0.0
 )
