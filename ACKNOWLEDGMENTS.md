@@ -2,13 +2,13 @@
 
 The framework makes primarily use of the following OSS projects:
 
-* https://github.com/russross/blackfriday (BSD 2-Clause "Simplified" License)
-* https://github.com/Shopify/sarama (MIT License)
-* https://github.com/julienschmidt/httprouter (https://github.com/julienschmidt/httprouter/blob/master/LICENSE)
-* https://github.com/opentracing/opentracing-go (Apache License 2.0)
-* https://github.com/pkg/errors (BSD 2-Clause "Simplified" License)
-* https://github.com/prometheus/client_golang (Apache License 2.0)
-* https://github.com/rs/zerolog (MIT License)
-* https://github.com/streadway/amqp (BSD 2-Clause "Simplified" License)
-* https://github.com/stretchr/testify (https://github.com/stretchr/testify/blob/master/LICENSE)
-* https://github.com/uber/jaeger-client-go (Apache License 2.0)
+* [blackfriday](https://github.com/russross/blackfriday)
+* [sarama](https://github.com/Shopify/sarama)
+* [httprouter](https://github.com/julienschmidt/httprouter)
+* [opentracing-go](https://github.com/opentracing/opentracing-go)
+* [errors](https://github.com/pkg/errors)
+* [client_golang](https://github.com/prometheus/client_golang)
+* [zerolog](https://github.com/rs/zerolog)
+* [amqp](https://github.com/streadway/amqp)
+* [testify](https://github.com/stretchr/testify)
+* [jaeger-client-go](https://github.com/uber/jaeger-client-go)
