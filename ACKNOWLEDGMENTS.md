@@ -2,17 +2,13 @@
 
 The framework makes primarily use of the following OSS projects:
 
-* https://github.com/russross/blackfriday
-
-
-A full list of all contained components and licenses you can find in the disclosure files in the release zip file (see github release page).
-
-## Assets overview
-The following table gives an overview about the in this project used design assets:
-
-| Resource        | Description |License   |Origin    |
-| --------------- |-------------|----------|----------|
-| /developer-ui-frontend/src/images/addIcon.svg | Add Icon | [Apache License 2.0][1] | [Material.io][2]
-
-[1]: https://github.com/google/material-design-icons/blob/master/LICENSE
-[2]: https://material.io/icons/
+* https://github.com/russross/blackfriday (BSD 2-Clause "Simplified" License)
+* https://github.com/Shopify/sarama (MIT License)
+* https://github.com/julienschmidt/httprouter (https://github.com/julienschmidt/httprouter/blob/master/LICENSE)
+* https://github.com/opentracing/opentracing-go (Apache License 2.0)
+* https://github.com/pkg/errors (BSD 2-Clause "Simplified" License)
+* https://github.com/prometheus/client_golang (Apache License 2.0)
+* https://github.com/rs/zerolog (MIT License)
+* https://github.com/streadway/amqp (BSD 2-Clause "Simplified" License)
+* https://github.com/stretchr/testify (https://github.com/stretchr/testify/blob/master/LICENSE)
+* https://github.com/uber/jaeger-client-go (Apache License 2.0)
