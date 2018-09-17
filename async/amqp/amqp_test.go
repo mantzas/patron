@@ -13,20 +13,22 @@ func TestNew(t *testing.T) {
 		url      string
 		queue    string
 		exchange string
+		opt      OptionFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{url: "url", queue: "queue", exchange: "exchange"}, false},
-		{"fail, invalid url", args{url: "", queue: "queue", exchange: "exchange"}, true},
-		{"fail, invalid queue name", args{url: "url", queue: "", exchange: "exchange"}, true},
-		{"fail, invalid queue name", args{url: "url", queue: "queue", exchange: ""}, true},
+		{"success", args{url: "amqp://guest:guest@localhost:5672/", queue: "queue", exchange: "exchange", opt: Buffer(100)}, false},
+		{"fail, invalid url", args{url: "", queue: "queue", exchange: "exchange", opt: Buffer(100)}, true},
+		{"fail, invalid queue name", args{url: "url", queue: "", exchange: "exchange", opt: Buffer(100)}, true},
+		{"fail, invalid exchange name", args{url: "url", queue: "queue", exchange: "", opt: Buffer(100)}, true},
+		{"fail, invalid opt", args{url: "url", queue: "queue", exchange: "exchange", opt: Buffer(-100)}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.url, tt.args.queue, tt.args.exchange)
+			got, err := New(tt.args.url, tt.args.queue, tt.args.exchange, tt.args.opt)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)

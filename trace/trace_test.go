@@ -45,10 +45,11 @@ func TestStartFinishConsumerSpan(t *testing.T) {
 func TestStartFinishChildSpan(t *testing.T) {
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
-	sp, ctx := ConsumerSpan(context.Background(), "123", AMQPConsumerComponent, nil)
+	tag := opentracing.Tag{Key: "key", Value: "value"}
+	sp, ctx := ConsumerSpan(context.Background(), "123", AMQPConsumerComponent, nil, tag)
 	assert.NotNil(t, sp)
 	assert.NotNil(t, ctx)
-	childSp, childCtx := ChildSpan(ctx, "123", "cmp", opentracing.Tag{Key: "key", Value: "value"})
+	childSp, childCtx := ChildSpan(ctx, "123", "cmp", tag)
 	assert.NotNil(t, childSp)
 	assert.NotNil(t, childCtx)
 	childSp.LogKV("log event")
@@ -71,6 +72,7 @@ func TestStartFinishChildSpan(t *testing.T) {
 		"component": "amqp-consumer",
 		"error":     false,
 		"version":   "dev",
+		"key":       "value",
 		"span.kind": ext.SpanKindConsumerEnum,
 	}, rawSpan.Tags())
 }
@@ -98,4 +100,32 @@ func TestHTTPStartFinishSpan(t *testing.T) {
 		"http.url":         "/",
 		"version":          "dev",
 	}, rawSpan.Tags())
+}
+
+func TestSQLStartFinishSpan(t *testing.T) {
+	mtr := mocktracer.New()
+	opentracing.SetGlobalTracer(mtr)
+	tag := opentracing.Tag{Key: "key", Value: "value"}
+	sp, req := SQLSpan(context.Background(), "name", "sql", "rdbms", "instance", "sa", "ssf", tag)
+	assert.NotNil(t, sp)
+	assert.NotNil(t, req)
+	assert.IsType(t, &mocktracer.MockSpan{}, sp)
+	jsp := sp.(*mocktracer.MockSpan)
+	assert.NotNil(t, jsp)
+	SpanSuccess(sp)
+	rawSpan := mtr.FinishedSpans()[0]
+	assert.Equal(t, map[string]interface{}{
+		"component":    "sql",
+		"version":      "dev",
+		"db.instance":  "instance",
+		"db.statement": "ssf",
+		"db.type":      "rdbms",
+		"db.user":      "sa",
+		"error":        false,
+		"key":          "value",
+	}, rawSpan.Tags())
+}
+
+func TestComponentOpName(t *testing.T) {
+	assert.Equal(t, "cmp target", ComponentOpName("cmp", "target"))
 }

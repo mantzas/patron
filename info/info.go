@@ -3,7 +3,6 @@ package info
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"sync"
 
 	"github.com/mantzas/patron/encoding/json"
@@ -72,10 +71,6 @@ func ImportDoc(file string) error {
 	if file == "" {
 		serviceInfo.Doc = ""
 		return errors.New("no file provided")
-	}
-	if _, err := os.Stat(file); os.IsNotExist(err) {
-		serviceInfo.Doc = ""
-		return errors.Errorf("file %s does not exist", file)
 	}
 	cnt, err := ioutil.ReadFile(file)
 	if err != nil {
