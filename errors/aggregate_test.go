@@ -11,3 +11,7 @@ func TestAggregate(t *testing.T) {
 	assert.Len(t, a, 3)
 	assert.Equal(t, "Error 1\nError 2\nError 3\n", a.Error())
 }
+
+func TestAggregate_ReturnsNil(t *testing.T) {
+	assert.Nil(t, Aggregate(nil, nil, nil))
+}

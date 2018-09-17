@@ -11,9 +11,6 @@ type aggregate []error
 func (a aggregate) Error() string {
 	b := strings.Builder{}
 	for _, err := range a {
-		if err == nil {
-			continue
-		}
 		b.WriteString(err.Error())
 		b.WriteRune('\n')
 	}
