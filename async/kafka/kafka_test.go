@@ -1,10 +1,15 @@
 package kafka
 
 import (
+	"context"
 	"testing"
+
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/mocktracer"
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/encoding"
+	"github.com/mantzas/patron/encoding/json"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,6 +64,7 @@ func TestNew(t *testing.T) {
 			}
 		})
 	}
+
 }
 
 func Test_determineContentType(t *testing.T) {
@@ -105,6 +111,37 @@ func TestConsumer_Info(t *testing.T) {
 	expected["default-content-type"] = "application/json"
 	expected["start"] = OffsetNewest
 	assert.Equal(t, expected, c.Info())
+}
+
+func Test_message(t *testing.T) {
+	mtr := mocktracer.New()
+	opentracing.SetGlobalTracer(mtr)
+	sp := opentracing.StartSpan("test")
+	ctx := context.Background()
+	msg := message{
+		ctx:  ctx,
+		dec:  json.DecodeRaw,
+		span: sp,
+		val:  []byte(`{"key":"value"}`),
+	}
+
+	assert.NotNil(t, msg.Context())
+	assert.NoError(t, msg.Ack())
+	assert.NoError(t, msg.Nack())
+	m := make(map[string]string, 0)
+	assert.NoError(t, msg.Decode(&m))
+	assert.Equal(t, "value", m["key"])
+}
+
+func TestMapHeader(t *testing.T) {
+	hh := []*sarama.RecordHeader{
+		&sarama.RecordHeader{
+			Key:   []byte("key"),
+			Value: []byte("value"),
+		},
+	}
+	hdr := mapHeader(hh)
+	assert.Equal(t, "value", hdr["key"])
 }
 
 // func TestRun_Shutdown(t *testing.T) {
