@@ -13,15 +13,19 @@ func TestInfo(t *testing.T) {
 	UpdateHost("Host")
 	UpsertMetric("Name", "Description", "Counter")
 	UpsertConfig("Config", "Value")
-	err := ImportDoc("testdata/test.md")
+	err := ImportDoc("")
+	assert.Error(t, err)
+	err = ImportDoc("testdata/test.md")
 	assert.NoError(t, err)
+	AppendComponent(map[string]interface{}{"test": "123"})
 	exp := info{
-		Name:    "Name",
-		Version: "1.2.3",
-		Host:    "Host",
-		Metrics: map[string]string{"Name": "[Counter] Description"},
-		Doc:     "<h1>Markdown: Syntax</h1>\n\n<p>This is the first paragraph.</p>\n\n<h2>Overview</h2>\n\n<p>This is the second paragraph.</p>\n",
-		Configs: map[string]interface{}{"Config": "Value"},
+		Name:       "Name",
+		Version:    "1.2.3",
+		Host:       "Host",
+		Metrics:    map[string]string{"Name": "[Counter] Description"},
+		Doc:        "<h1>Markdown: Syntax</h1>\n\n<p>This is the first paragraph.</p>\n\n<h2>Overview</h2>\n\n<p>This is the second paragraph.</p>\n",
+		Configs:    map[string]interface{}{"Config": "Value"},
+		Components: []map[string]interface{}{{"test": "123"}},
 	}
 	assert.Equal(t, exp, serviceInfo)
 	expected, err := json.Marshal(exp)

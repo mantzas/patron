@@ -17,7 +17,6 @@ The entry point of the framework is the `Service`. The `Service` uses `Component
 
 `Patron` provides same defaults for making the usage as simple as possible.
 
-
 ## How to Contribute
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).
