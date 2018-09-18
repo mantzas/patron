@@ -21,7 +21,7 @@ The entry point of the framework is the `Service`. The `Service` uses `Component
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## cli
+## patron-cli
 
 The framework supplies a cli in order to simplify repository generation with the following features:
 
