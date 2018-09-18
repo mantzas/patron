@@ -145,17 +145,17 @@ func createMain(name, version string) error {
 }
 
 func gitCommit() error {
-	log.Printf("git add")
+	log.Printf("git: add .")
 	err := exec.Command("git", "add", ".").Run()
 	if err != nil {
 		return err
 	}
-	log.Printf("git commit")
+	log.Printf("git: commit")
 	return exec.Command("git", "commit", "-m", "Initial commit").Run()
 }
 
 func goFormat() error {
-	log.Print("running go fmt")
+	log.Print("go: fmt ./...")
 	out, err := exec.Command("go", "fmt", "./...").CombinedOutput()
 	if err != nil {
 		return errors.New(string(out))
