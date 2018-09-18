@@ -21,6 +21,20 @@ The entry point of the framework is the `Service`. The `Service` uses `Component
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## cli
+
+The framework supplies a cli in order to simplify repository generation with the following features:
+
+- git repository creation
+- cmd folder and main.go creation
+- go module support and vendoring
+
+The latest version can be installed with
+
+```go
+go get github.com/mantzas/patron/cmd/patron-cli
+```
+
 ## Service
 
 The `Service` has the role of glueing all of the above together, which are:
