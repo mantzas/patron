@@ -12,13 +12,11 @@ import (
 )
 
 const (
-	nameTemplate    = "{{name}}"
-	versionTemplate = "{{version}}"
+	nameTemplate = "{{name}}"
 )
 
 func main() {
 	module := flag.String("m", "", `define the module name ("github.com/mantzas/patron")`)
-	version := flag.String("v", "1.0.0", "define the version")
 	path := flag.String("p", "", "define the project folder (defaults to current)")
 	vendor := flag.Bool("d", true, "define vendoring behavior")
 	flag.Parse()
@@ -48,7 +46,7 @@ func main() {
 		log.Fatalf("failed to create git: %v", err)
 	}
 
-	err = createMain(name, *version)
+	err = createMain(name)
 	if err != nil {
 		log.Fatalf("failed to create main: %v", err)
 	}
@@ -131,7 +129,7 @@ func createPathAndChdir(path string) error {
 	return os.Chdir(path)
 }
 
-func createMain(name, version string) error {
+func createMain(name string) error {
 	folder := fmt.Sprintf("cmd/%s", name)
 	log.Printf("create folder: %s", folder)
 	err := os.MkdirAll(folder, 0775)
@@ -141,7 +139,7 @@ func createMain(name, version string) error {
 
 	file := fmt.Sprintf("%s/main.go", folder)
 	log.Printf("create file: %s", file)
-	return ioutil.WriteFile(file, mainContent(name, version), 0664)
+	return ioutil.WriteFile(file, mainContent(name), 0664)
 }
 
 func gitCommit() error {
@@ -175,7 +173,7 @@ CMD ["./{{name}}"]
 	return []byte(strings.Replace(cnt, nameTemplate, name, -1))
 }
 
-func mainContent(name, version string) []byte {
+func mainContent(name string) []byte {
 	cnt := `package main
 
 import (
@@ -188,7 +186,7 @@ import (
 
 func main() {
 	name := "{{name}}"
-	version := "{{version}}"
+	version := "dev"
 
 	err := patron.SetupLogging(name, version)
 	if err != nil {
@@ -207,9 +205,7 @@ func main() {
 	}
 }
 `
-	cnt = strings.Replace(cnt, nameTemplate, name, -1)
-	cnt = strings.Replace(cnt, versionTemplate, version, -1)
-	return []byte(cnt)
+	return []byte(strings.Replace(cnt, nameTemplate, name, -1))
 }
 
 func readmeContent(name string) []byte {
