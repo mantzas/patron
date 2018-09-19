@@ -163,11 +163,15 @@ func goFormat() error {
 
 func dockerfileContent(name string) []byte {
 	cnt := `FROM golang:latest as builder
+RUN cd ..
+RUN mkdir {{name}}
+WORKDIR {{name}}
 COPY . ./
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o {{name}} ./cmd/{{name}}/main.go 
+ARG VER=dev
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags '-X main.version=${VER}' -o {{name}} ./cmd/{{name}}/main.go 
 
 FROM scratch
-COPY --from=builder {{name}} .
+COPY --from=builder /go/{{name}}/{{name}} .
 CMD ["./{{name}}"]
 `
 	return []byte(strings.Replace(cnt, nameTemplate, name, -1))
@@ -184,9 +188,12 @@ import (
 	"github.com/mantzas/patron/log"
 )
 
+var (
+	version = "dev"
+)
+
 func main() {
 	name := "{{name}}"
-	version := "dev"
 
 	err := patron.SetupLogging(name, version)
 	if err != nil {
