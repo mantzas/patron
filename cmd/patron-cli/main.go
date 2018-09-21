@@ -167,8 +167,8 @@ RUN cd ..
 RUN mkdir {{name}}
 WORKDIR {{name}}
 COPY . ./
-ARG VER=dev
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags '-X main.version=${VER}' -o {{name}} ./cmd/{{name}}/main.go 
+ARG version=dev
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags "-X main.version=$version" -o {{name}} ./cmd/{{name}}/main.go 
 
 FROM scratch
 COPY --from=builder /go/{{name}}/{{name}} .
