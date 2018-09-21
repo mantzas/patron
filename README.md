@@ -33,7 +33,7 @@ The framework supplies a cli in order to simplify repository generation with the
 The latest version can be installed with
 
 ```go
-go get github.com/mantzas/patron/cmd/patron-cli
+go get github.com/mantzas/patron/cmd/patron
 ```
 
 ## Service
