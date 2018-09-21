@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/info"
@@ -16,10 +15,6 @@ import (
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
 	"github.com/uber/jaeger-client-go"
-)
-
-const (
-	shutdownTimeout = 5 * time.Second
 )
 
 var logSetupOnce sync.Once
@@ -173,8 +168,7 @@ func (s *Service) setupDefaultTracing(name, version string) error {
 	var prm = "0.1"
 	var err error
 
-	prm, ok = os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM")
-	if ok {
+	if prm, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM"); ok {
 		prmVal, err = strconv.ParseFloat(prm, 64)
 		if err != nil {
 			return errors.Wrap(err, "env var for jaeger sampler param is not valid")

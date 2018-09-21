@@ -3,9 +3,9 @@ package http
 import (
 	"net/http"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
-	"github.com/mantzas/patron/errors"
 )
 
 type responseWriter struct {

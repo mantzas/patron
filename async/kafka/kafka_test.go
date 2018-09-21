@@ -128,7 +128,7 @@ func Test_message(t *testing.T) {
 	assert.NotNil(t, msg.Context())
 	assert.NoError(t, msg.Ack())
 	assert.NoError(t, msg.Nack())
-	m := make(map[string]string, 0)
+	m := make(map[string]string)
 	assert.NoError(t, msg.Decode(&m))
 	assert.Equal(t, "value", m["key"])
 }
