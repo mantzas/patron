@@ -2,6 +2,7 @@ package async
 
 import (
 	"context"
+	"time"
 
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
@@ -11,25 +12,29 @@ import (
 type Component struct {
 	proc         ProcessorFunc
 	failStrategy FailStrategy
-	cns          Consumer
+	cf           ConsumerFactory
+	retries      int
+	retryWait    time.Duration
 	info         map[string]interface{}
 }
 
 // New returns a new async component. The default behavior is to return a error of failure.
 // Use options to change the default behavior.
-func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
+func New(p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, error) {
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
 
-	if cns == nil {
+	if cf == nil {
 		return nil, errors.New("consumer is required")
 	}
 
 	c := &Component{
 		proc:         p,
-		cns:          cns,
+		cf:           cf,
 		failStrategy: NackExitStrategy,
+		retries:      0,
+		retryWait:    0,
 		info:         make(map[string]interface{}),
 	}
 
@@ -39,7 +44,10 @@ func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 			return nil, err
 		}
 	}
-	c.createInfo()
+
+	c.info["type"] = "async"
+	c.info["fail-strategy"] = c.failStrategy
+
 	return c, nil
 }
 
@@ -50,19 +58,47 @@ func (c *Component) Info() map[string]interface{} {
 
 // Run starts the consumer processing loop messages.
 func (c *Component) Run(ctx context.Context) error {
-	chMsg, chErr, err := c.cns.Consume(ctx)
+
+	var err error
+	retries := c.retries
+
+	for {
+		err = c.processing(ctx)
+		retries--
+		if c.retries > 0 {
+			log.Errorf("failed run, retries %d out of %d with %v wait: %v", retries, c.retries, c.retryWait, err)
+			time.Sleep(c.retryWait)
+		}
+
+		if retries < 0 {
+			break
+		}
+	}
+
+	return err
+}
+
+func (c *Component) processing(ctx context.Context) error {
+
+	cns, err := c.cf.Create()
+	if err != nil {
+		return errors.Wrap(err, "failed to create consumer")
+	}
+	c.info["consumer"] = cns.Info()
+
+	chMsg, chErr, err := cns.Consume(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to get consumer channels")
 	}
 
 	failCh := make(chan error)
+
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				log.Info("closing consumer")
-				failCh <- c.cns.Close()
-				return
+				failCh <- cns.Close()
 			case msg := <-chMsg:
 				log.Debug("New message from consumer arrived")
 				go c.processMessage(msg, failCh)
@@ -72,7 +108,6 @@ func (c *Component) Run(ctx context.Context) error {
 			}
 		}
 	}()
-
 	return <-failCh
 }
 
@@ -109,10 +144,4 @@ func (c *Component) executeFailureStrategy(msg Message, err error) error {
 		return errors.New("invalid failure strategy")
 	}
 	return nil
-}
-
-func (c *Component) createInfo() {
-	c.info["type"] = "async"
-	c.info["fail-strategy"] = c.failStrategy
-	c.info["consumer"] = c.cns.Info()
 }

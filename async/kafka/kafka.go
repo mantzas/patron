@@ -54,6 +54,25 @@ const (
 
 var topicPartitionOffsetDiff *prometheus.GaugeVec
 
+// Factory definition of a consumer factory.
+type Factory struct {
+	name    string
+	ct      string
+	topic   string
+	brokers []string
+	oo      []OptionFunc
+}
+
+// NewFactory constructor.
+func NewFactory(name, ct, topic string, brokers []string, oo ...OptionFunc) *Factory {
+	return &Factory{name: name, ct: ct, topic: topic, brokers: brokers, oo: oo}
+}
+
+// Create a new consumer.
+func (f *Factory) Create() (*Consumer, error) {
+	return NewConsumer(f.name, f.ct, f.topic, f.brokers, f.oo...)
+}
+
 // Consumer definition of a Kafka consumer.
 type Consumer struct {
 	brokers     []string
@@ -67,8 +86,8 @@ type Consumer struct {
 	info        map[string]interface{}
 }
 
-// New creates a ew Kafka consumer with defaults. To override those default you should provide a option.
-func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer, error) {
+// NewConsumer creates a ew Kafka consumer with defaults. To override those default you should provide a option.
+func NewConsumer(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")

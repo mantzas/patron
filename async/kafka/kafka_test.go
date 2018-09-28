@@ -54,7 +54,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.options...)
+			got, err := NewConsumer(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.options...)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -101,7 +101,7 @@ func Test_determineContentType(t *testing.T) {
 }
 
 func TestConsumer_Info(t *testing.T) {
-	c, err := New("name", "application/json", "topic", []string{"1", "2"})
+	c, err := NewConsumer("name", "application/json", "topic", []string{"1", "2"})
 	assert.NoError(t, err)
 	expected := make(map[string]interface{})
 	expected["type"] = "kafka-consumer"

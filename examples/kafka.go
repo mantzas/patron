@@ -20,7 +20,7 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 
 	kafkaCmp := kafkaComponent{}
 
-	cns, err := kafka.New(name, json.Type, topic, []string{broker})
+	cns, err := kafka.NewConsumer(name, json.Type, topic, []string{broker})
 	if err != nil {
 		return nil, err
 	}
