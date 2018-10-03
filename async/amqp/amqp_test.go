@@ -28,7 +28,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.url, tt.args.queue, tt.args.exchange, tt.args.opt)
+			got, err := NewConsumer(tt.args.url, tt.args.queue, tt.args.exchange, tt.args.opt)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -47,7 +47,7 @@ func Test_mapHeader(t *testing.T) {
 }
 
 func TestConsumer_Info(t *testing.T) {
-	c, err := New("url", "queue", "exchange")
+	c, err := NewConsumer("url", "queue", "exchange")
 	assert.NoError(t, err)
 	expected := make(map[string]interface{})
 	expected["type"] = "amqp-consumer"

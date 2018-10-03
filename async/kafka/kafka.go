@@ -69,7 +69,7 @@ func NewFactory(name, ct, topic string, brokers []string, oo ...OptionFunc) *Fac
 }
 
 // Create a new consumer.
-func (f *Factory) Create() (*Consumer, error) {
+func (f *Factory) Create() (async.Consumer, error) {
 	return NewConsumer(f.name, f.ct, f.topic, f.brokers, f.oo...)
 }
 

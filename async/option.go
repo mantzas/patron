@@ -1,6 +1,8 @@
 package async
 
 import (
+	"time"
+
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 )
@@ -28,6 +30,24 @@ func FailureStrategy(fs FailStrategy) OptionFunc {
 		}
 		c.failStrategy = fs
 		log.Info("failure strategy set")
+		return nil
+	}
+}
+
+// ConsumerRetry set's the parameters for the retry policy of the consumer.
+func ConsumerRetry(retries int, retryWait time.Duration) OptionFunc {
+	return func(c *Component) error {
+		if retries < 0 {
+			return errors.New("invalid retries provided")
+		}
+
+		if retryWait < 0 {
+			return errors.New("invalid retry wait provided")
+		}
+
+		c.retries = retries
+		c.retryWait = retryWait
+		log.Info("consumer retry set")
 		return nil
 	}
 }

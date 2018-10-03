@@ -60,18 +60,21 @@ func (c *Component) Info() map[string]interface{} {
 func (c *Component) Run(ctx context.Context) error {
 
 	var err error
-	retries := c.retries
+	retries := 0
 
 	for {
 		err = c.processing(ctx)
-		retries--
-		if c.retries > 0 {
-			log.Errorf("failed run, retries %d out of %d with %v wait: %v", retries, c.retries, c.retryWait, err)
-			time.Sleep(c.retryWait)
+		if err == nil {
+			return nil
+		}
+		retries++
+		if retries > c.retries {
+			break
 		}
 
-		if retries < 0 {
-			break
+		if c.retries > 0 {
+			log.Errorf("failed run, retry %d/%d with %v wait: %v", retries, c.retries, c.retryWait, err)
+			time.Sleep(c.retryWait)
 		}
 	}
 

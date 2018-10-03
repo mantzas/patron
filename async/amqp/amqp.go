@@ -54,6 +54,24 @@ func (m *message) Nack() error {
 	return err
 }
 
+// Factory of a AMQP consumer
+type Factory struct {
+	url      string
+	queue    string
+	exchange string
+	oo       []OptionFunc
+}
+
+// NewFactory constructor.
+func NewFactory(url, queue, exchange string, oo ...OptionFunc) *Factory {
+	return &Factory{url: url, queue: queue, exchange: exchange, oo: oo}
+}
+
+// Create a new consumer.
+func (f *Factory) Create() (async.Consumer, error) {
+	return NewConsumer(f.url, f.queue, f.exchange, f.oo...)
+}
+
 // Consumer defines a AMQP subscriber.
 type Consumer struct {
 	url      string
@@ -69,8 +87,8 @@ type Consumer struct {
 	info     map[string]interface{}
 }
 
-// New creates a new AMQP consumer with some defaults. Use option to change.
-func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
+// NewConsumer creates a new AMQP consumer with some defaults. Use option to change.
+func NewConsumer(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 
 	if url == "" {
 		return nil, errors.New("RabbitMQ url is required")

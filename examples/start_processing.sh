@@ -1,3 +1,3 @@
 #!/bin/bash
 
-curl -i -H "Content-Type: application/json" -H "Accept: application/json" -X POST http://localhost:50000
+curl -i -X POST http://localhost:50000
