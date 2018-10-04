@@ -94,7 +94,7 @@ func (f *Factory) Create() (async.Consumer, error) {
 	config.Consumer.Return.Errors = true
 	config.Version = sarama.V0_11_0_0
 
-	c := &Consumer{
+	c := &consumer{
 		brokers:     f.brokers,
 		topic:       f.topic,
 		cfg:         config,
@@ -119,8 +119,7 @@ func (f *Factory) Create() (async.Consumer, error) {
 	return c, nil
 }
 
-// Consumer definition of a Kafka consumer.
-type Consumer struct {
+type consumer struct {
 	brokers     []string
 	topic       string
 	buffer      int
@@ -133,12 +132,12 @@ type Consumer struct {
 }
 
 // Info return the information of the consumer.
-func (c *Consumer) Info() map[string]interface{} {
+func (c *consumer) Info() map[string]interface{} {
 	return c.info
 }
 
 // Consume starts consuming messages from a Kafka topic.
-func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
+func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
 
@@ -204,14 +203,14 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 }
 
 // Close handles closing channel and connection of AMQP.
-func (c *Consumer) Close() error {
+func (c *consumer) Close() error {
 	if c.ms == nil {
 		return nil
 	}
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
-func (c *Consumer) consumers() ([]sarama.PartitionConsumer, error) {
+func (c *consumer) consumers() ([]sarama.PartitionConsumer, error) {
 
 	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
 	if err != nil {
@@ -238,7 +237,7 @@ func (c *Consumer) consumers() ([]sarama.PartitionConsumer, error) {
 	return pcs, nil
 }
 
-func (c *Consumer) createInfo() {
+func (c *consumer) createInfo() {
 	c.info["type"] = "kafka-consumer"
 	c.info["brokers"] = strings.Join(c.brokers, ",")
 	c.info["topic"] = c.topic
