@@ -9,11 +9,11 @@ import (
 )
 
 // OptionFunc definition for configuring the consumer in a functional way.
-type OptionFunc func(*Consumer) error
+type OptionFunc func(*consumer) error
 
 // Buffer option for adjusting the incoming messages buffer.
 func Buffer(buf int) OptionFunc {
-	return func(c *Consumer) error {
+	return func(c *consumer) error {
 		if buf < 0 {
 			return errors.New("buffer must greater or equal than 0")
 		}
@@ -24,7 +24,7 @@ func Buffer(buf int) OptionFunc {
 
 // Timeout option for adjusting the timeout of the connection.
 func Timeout(timeout time.Duration) OptionFunc {
-	return func(c *Consumer) error {
+	return func(c *consumer) error {
 		c.cfg = amqp.Config{
 			Dial: func(network, addr string) (net.Conn, error) {
 				return net.DialTimeout(network, addr, timeout)
@@ -36,7 +36,7 @@ func Timeout(timeout time.Duration) OptionFunc {
 
 // Requeue option for adjusting the requeue policy of a message.
 func Requeue(requeue bool) OptionFunc {
-	return func(c *Consumer) error {
+	return func(c *consumer) error {
 		c.requeue = requeue
 		return nil
 	}

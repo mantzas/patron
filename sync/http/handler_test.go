@@ -38,7 +38,7 @@ func Test_determineEncoding(t *testing.T) {
 		{"success", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, false},
 		{"success, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, false},
 		{"wrong accept", args{req: request(t, json.Type, "xxx")}, nil, nil, true},
-		{"missing content/accept, defaults to json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, false},
+		{"missing content/accept, defaults json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, false},
 		{"accept */*, defaults to json", args{req: request(t, json.TypeCharset, "*/*")}, json.Decode, json.Encode, false},
 		{"wrong content", args{req: request(t, "application/xml", json.TypeCharset)}, nil, nil, true},
 	}
