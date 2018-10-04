@@ -20,7 +20,11 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 
 	kafkaCmp := kafkaComponent{}
 
-	cf := kafka.NewFactory(name, json.Type, topic, []string{broker})
+	cf, err := kafka.New(name, json.Type, topic, []string{broker})
+	if err != nil {
+		return nil, err
+	}
+
 	cmp, err := async.New(kafkaCmp.Process, cf, async.ConsumerRetry(10, 5*time.Second))
 	if err != nil {
 		return nil, err

@@ -13,7 +13,7 @@ import (
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -63,31 +63,8 @@ type Factory struct {
 	oo      []OptionFunc
 }
 
-// NewFactory constructor.
-func NewFactory(name, ct, topic string, brokers []string, oo ...OptionFunc) *Factory {
-	return &Factory{name: name, ct: ct, topic: topic, brokers: brokers, oo: oo}
-}
-
-// Create a new consumer.
-func (f *Factory) Create() (async.Consumer, error) {
-	return NewConsumer(f.name, f.ct, f.topic, f.brokers, f.oo...)
-}
-
-// Consumer definition of a Kafka consumer.
-type Consumer struct {
-	brokers     []string
-	topic       string
-	buffer      int
-	start       Offset
-	cfg         *sarama.Config
-	contentType string
-	cnl         context.CancelFunc
-	ms          sarama.Consumer
-	info        map[string]interface{}
-}
-
-// NewConsumer creates a ew Kafka consumer with defaults. To override those default you should provide a option.
-func NewConsumer(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer, error) {
+// New constructor.
+func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Factory, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -101,39 +78,58 @@ func NewConsumer(name, ct, topic string, brokers []string, oo ...OptionFunc) (*C
 		return nil, errors.New("topic is required")
 	}
 
+	return &Factory{name: name, ct: ct, topic: topic, brokers: brokers, oo: oo}, nil
+}
+
+// Create a new consumer.
+func (f *Factory) Create() (async.Consumer, error) {
+
 	host, err := os.Hostname()
 	if err != nil {
 		return nil, errors.New("failed to get hostname")
 	}
 
 	config := sarama.NewConfig()
-	config.ClientID = fmt.Sprintf("%s-%s", host, name)
+	config.ClientID = fmt.Sprintf("%s-%s", host, f.name)
 	config.Consumer.Return.Errors = true
 	config.Version = sarama.V0_11_0_0
 
 	c := &Consumer{
-		brokers:     brokers,
-		topic:       topic,
+		brokers:     f.brokers,
+		topic:       f.topic,
 		cfg:         config,
-		contentType: ct,
+		contentType: f.ct,
 		buffer:      1000,
 		start:       OffsetNewest,
 		info:        make(map[string]interface{}),
 	}
 
-	for _, o := range oo {
+	for _, o := range f.oo {
 		err = o(c)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = setupMetrics(name)
+	err = setupMetrics(f.name)
 	if err != nil {
 		return nil, err
 	}
 	c.createInfo()
 	return c, nil
+}
+
+// Consumer definition of a Kafka consumer.
+type Consumer struct {
+	brokers     []string
+	topic       string
+	buffer      int
+	start       Offset
+	cfg         *sarama.Config
+	contentType string
+	cnl         context.CancelFunc
+	ms          sarama.Consumer
+	info        map[string]interface{}
 }
 
 // Info return the information of the consumer.

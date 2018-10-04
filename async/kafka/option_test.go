@@ -60,9 +60,11 @@ func TestVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := NewConsumer("test", "", "topic", []string{"test"})
+			f, err := New("test", "", "topic", []string{"test"})
 			assert.NoError(t, err)
-			err = Version(tt.args.version)(c)
+			c, err := f.Create()
+			assert.NoError(t, err)
+			err = Version(tt.args.version)(c.(*Consumer))
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
