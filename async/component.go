@@ -6,10 +6,15 @@ import (
 
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/metric"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+var consumerErrors *prometheus.CounterVec
 
 // Component implementation of a async component.
 type Component struct {
+	name         string
 	proc         ProcessorFunc
 	failStrategy FailStrategy
 	cf           ConsumerFactory
@@ -20,7 +25,12 @@ type Component struct {
 
 // New returns a new async component. The default behavior is to return a error of failure.
 // Use options to change the default behavior.
-func New(p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, error) {
+func New(name string, p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, error) {
+
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
+
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
@@ -30,6 +40,7 @@ func New(p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, err
 	}
 
 	c := &Component{
+		name:         name,
 		proc:         p,
 		cf:           cf,
 		failStrategy: NackExitStrategy,
@@ -47,6 +58,10 @@ func New(p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, err
 
 	c.info["type"] = "async"
 	c.info["fail-strategy"] = c.failStrategy
+	err := setupMetrics()
+	if err != nil {
+		return nil, err
+	}
 
 	return c, nil
 }
@@ -60,20 +75,15 @@ func (c *Component) Info() map[string]interface{} {
 func (c *Component) Run(ctx context.Context) error {
 
 	var err error
-	retries := 0
 
-	for {
+	for i := 0; i <= c.retries; i++ {
 		err = c.processing(ctx)
 		if err == nil {
 			return nil
 		}
-		retries++
-		if retries > c.retries {
-			break
-		}
-
+		c.consumerErrorsInc()
 		if c.retries > 0 {
-			log.Errorf("failed run, retry %d/%d with %v wait: %v", retries, c.retries, c.retryWait, err)
+			log.Errorf("failed run, retry %d/%d with %v wait: %v", i, c.retries, c.retryWait, err)
 			time.Sleep(c.retryWait)
 		}
 	}
@@ -147,4 +157,22 @@ func (c *Component) executeFailureStrategy(msg Message, err error) error {
 		return errors.New("invalid failure strategy")
 	}
 	return nil
+}
+
+func setupMetrics() error {
+	var err error
+	consumerErrors, err = metric.NewCounter(
+		"async_component",
+		"consumer_errors",
+		"Consumer errors, classified by name and type",
+		"name",
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Component) consumerErrorsInc() {
+	consumerErrors.WithLabelValues(c.name).Inc()
 }

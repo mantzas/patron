@@ -12,9 +12,10 @@ import (
 func TestNew(t *testing.T) {
 	proc := mockProcessor{}
 	type args struct {
-		p   ProcessorFunc
-		cf  ConsumerFactory
-		opt OptionFunc
+		name string
+		p    ProcessorFunc
+		cf   ConsumerFactory
+		opt  OptionFunc
 	}
 	tests := []struct {
 		name    string
@@ -23,28 +24,33 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:    "success",
-			args:    args{p: proc.Process, cf: &mockConsumerFactory{}, opt: FailureStrategy(NackExitStrategy)},
+			args:    args{name: "name", p: proc.Process, cf: &mockConsumerFactory{}, opt: FailureStrategy(NackExitStrategy)},
 			wantErr: false,
 		},
 		{
+			name:    "failed, missing name",
+			args:    args{name: "", p: proc.Process, cf: &mockConsumerFactory{}, opt: FailureStrategy(NackExitStrategy)},
+			wantErr: true,
+		},
+		{
 			name:    "failed, missing processor func",
-			args:    args{p: nil, cf: &mockConsumerFactory{}, opt: FailureStrategy(NackExitStrategy)},
+			args:    args{name: "name", p: nil, cf: &mockConsumerFactory{}, opt: FailureStrategy(NackExitStrategy)},
 			wantErr: true,
 		},
 		{
 			name:    "failed, missing consumer",
-			args:    args{p: proc.Process, cf: nil, opt: FailureStrategy(NackExitStrategy)},
+			args:    args{name: "name", p: proc.Process, cf: nil, opt: FailureStrategy(NackExitStrategy)},
 			wantErr: true,
 		},
 		{
 			name:    "failed, invalid fail strategy",
-			args:    args{p: proc.Process, cf: &mockConsumerFactory{}, opt: FailureStrategy(3)},
+			args:    args{name: "name", p: proc.Process, cf: &mockConsumerFactory{}, opt: FailureStrategy(3)},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.p, tt.args.cf, tt.args.opt)
+			got, err := New(tt.args.name, tt.args.p, tt.args.cf, tt.args.opt)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -59,7 +65,7 @@ func TestNew(t *testing.T) {
 func TestRun_ReturnsError(t *testing.T) {
 	cnr := mockConsumer{consumeError: true}
 	proc := mockProcessor{}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr})
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr})
 	assert.NoError(t, err)
 	ctx := context.Background()
 	err = cmp.Run(ctx)
@@ -72,7 +78,7 @@ func TestRun_Process_Error_NackExitStrategy(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr})
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr})
 	assert.NoError(t, err)
 	ctx := context.Background()
 	cnr.chMsg <- &mockMessage{ctx: ctx}
@@ -86,7 +92,7 @@ func TestRun_Process_Error_NackStrategy(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr}, FailureStrategy(NackStrategy))
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr}, FailureStrategy(NackStrategy))
 	assert.NoError(t, err)
 	ctx, cnl := context.WithCancel(context.Background())
 	cnr.chMsg <- &mockMessage{ctx: ctx}
@@ -106,7 +112,7 @@ func TestRun_Process_Error_AckStrategy(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr}, FailureStrategy(AckStrategy))
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr}, FailureStrategy(AckStrategy))
 	assert.NoError(t, err)
 	ctx, cnl := context.WithCancel(context.Background())
 	cnr.chMsg <- &mockMessage{ctx: ctx}
@@ -126,7 +132,7 @@ func TestRun_Process_Error_InvalidStrategy(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr})
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr})
 	cmp.failStrategy = 4
 	assert.NoError(t, err)
 	ctx := context.Background()
@@ -141,7 +147,7 @@ func TestRun_ConsumeError(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: true}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr})
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr})
 	assert.NoError(t, err)
 	ctx := context.Background()
 	cnr.chErr <- errors.New("CONSUMER ERROR")
@@ -151,7 +157,7 @@ func TestRun_ConsumeError(t *testing.T) {
 
 func TestRun_ConsumeError_WithRetry(t *testing.T) {
 	proc := mockProcessor{retError: true}
-	cmp, err := New(proc.Process, &mockConsumerFactory{retErr: true}, ConsumerRetry(3, 2*time.Millisecond))
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{retErr: true}, ConsumerRetry(3, 2*time.Millisecond))
 	assert.NoError(t, err)
 	ctx := context.Background()
 	err = cmp.Run(ctx)
@@ -164,7 +170,7 @@ func TestRun_Process_Shutdown(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: false}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr})
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr})
 	assert.NoError(t, err)
 	cnr.chMsg <- &mockMessage{ctx: context.Background()}
 	ch := make(chan bool)
@@ -185,7 +191,7 @@ func TestInfo(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: false}
-	cmp, err := New(proc.Process, &mockConsumerFactory{c: &cnr}, FailureStrategy(AckStrategy))
+	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr}, FailureStrategy(AckStrategy))
 	assert.NoError(t, err)
 	cnr.chMsg <- &mockMessage{ctx: context.Background()}
 	ch := make(chan bool)

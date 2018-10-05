@@ -23,7 +23,7 @@ func TestFailureStrategy(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(proc.Process, &mockConsumerFactory{})
+			c, err := New("test", proc.Process, &mockConsumerFactory{})
 			assert.NoError(t, err)
 			err = FailureStrategy(tt.args.fs)(c)
 			if tt.wantErr {
@@ -52,7 +52,7 @@ func TestConsumerRetry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New(proc.Process, &mockConsumerFactory{})
+			c, err := New("test", proc.Process, &mockConsumerFactory{})
 			assert.NoError(t, err)
 			err = ConsumerRetry(tt.args.retries, tt.args.retryWait)(c)
 			if tt.wantErr {

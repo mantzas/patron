@@ -12,10 +12,17 @@ import (
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/metric"
 	"github.com/mantzas/patron/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+var topicPartitionOffsetDiff *prometheus.GaugeVec
+
+func init() {
+
+}
 
 type message struct {
 	span opentracing.Span
@@ -51,8 +58,6 @@ const (
 	// OffsetOldest starts consuming from the oldest available message in the topic.
 	OffsetOldest Offset = -2
 )
-
-var topicPartitionOffsetDiff *prometheus.GaugeVec
 
 // Factory definition of a consumer factory.
 type Factory struct {
@@ -264,24 +269,16 @@ func mapHeader(hh []*sarama.RecordHeader) map[string]string {
 }
 
 func setupMetrics(namespace string) error {
-	if topicPartitionOffsetDiff != nil {
-		return nil
-	}
-
-	topicPartitionOffsetDiff = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: "kafka_consumer",
-			Name:      "offset_diff",
-			Help:      "Message offset difference with high watermark, classified by topic and partition",
-		},
-		[]string{"topic", "partition"},
+	var err error
+	topicPartitionOffsetDiff, err = metric.NewGauge(
+		"kafka_consumer",
+		"offset_diff",
+		"Message offset difference with high watermark, classified by topic and partition",
+		"topic",
+		"partition",
 	)
-
-	if err := prometheus.Register(topicPartitionOffsetDiff); err != nil {
-		if _, ok := err.(prometheus.AlreadyRegisteredError); ok {
-			return errors.Wrap(err, "failed to register kafka consumer metrics")
-		}
+	if err != nil {
+		return err
 	}
 	return nil
 }
