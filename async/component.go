@@ -2,34 +2,50 @@ package async
 
 import (
 	"context"
+	"time"
 
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/metric"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+var consumerErrors *prometheus.CounterVec
 
 // Component implementation of a async component.
 type Component struct {
+	name         string
 	proc         ProcessorFunc
 	failStrategy FailStrategy
-	cns          Consumer
+	cf           ConsumerFactory
+	retries      int
+	retryWait    time.Duration
 	info         map[string]interface{}
 }
 
 // New returns a new async component. The default behavior is to return a error of failure.
 // Use options to change the default behavior.
-func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
+func New(name string, p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, error) {
+
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
+
 	if p == nil {
 		return nil, errors.New("work processor is required")
 	}
 
-	if cns == nil {
+	if cf == nil {
 		return nil, errors.New("consumer is required")
 	}
 
 	c := &Component{
+		name:         name,
 		proc:         p,
-		cns:          cns,
+		cf:           cf,
 		failStrategy: NackExitStrategy,
+		retries:      0,
+		retryWait:    0,
 		info:         make(map[string]interface{}),
 	}
 
@@ -39,7 +55,14 @@ func New(p ProcessorFunc, cns Consumer, oo ...OptionFunc) (*Component, error) {
 			return nil, err
 		}
 	}
-	c.createInfo()
+
+	c.info["type"] = "async"
+	c.info["fail-strategy"] = c.failStrategy
+	err := setupMetrics()
+	if err != nil {
+		return nil, err
+	}
+
 	return c, nil
 }
 
@@ -50,19 +73,45 @@ func (c *Component) Info() map[string]interface{} {
 
 // Run starts the consumer processing loop messages.
 func (c *Component) Run(ctx context.Context) error {
-	chMsg, chErr, err := c.cns.Consume(ctx)
+
+	var err error
+
+	for i := 0; i <= c.retries; i++ {
+		err = c.processing(ctx)
+		if err == nil {
+			return nil
+		}
+		c.consumerErrorsInc()
+		if c.retries > 0 {
+			log.Errorf("failed run, retry %d/%d with %v wait: %v", i, c.retries, c.retryWait, err)
+			time.Sleep(c.retryWait)
+		}
+	}
+
+	return err
+}
+
+func (c *Component) processing(ctx context.Context) error {
+
+	cns, err := c.cf.Create()
+	if err != nil {
+		return errors.Wrap(err, "failed to create consumer")
+	}
+	c.info["consumer"] = cns.Info()
+
+	chMsg, chErr, err := cns.Consume(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to get consumer channels")
 	}
 
 	failCh := make(chan error)
+
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				log.Info("closing consumer")
-				failCh <- c.cns.Close()
-				return
+				failCh <- cns.Close()
 			case msg := <-chMsg:
 				log.Debug("New message from consumer arrived")
 				go c.processMessage(msg, failCh)
@@ -72,7 +121,6 @@ func (c *Component) Run(ctx context.Context) error {
 			}
 		}
 	}()
-
 	return <-failCh
 }
 
@@ -111,8 +159,20 @@ func (c *Component) executeFailureStrategy(msg Message, err error) error {
 	return nil
 }
 
-func (c *Component) createInfo() {
-	c.info["type"] = "async"
-	c.info["fail-strategy"] = c.failStrategy
-	c.info["consumer"] = c.cns.Info()
+func setupMetrics() error {
+	var err error
+	consumerErrors, err = metric.NewCounter(
+		"async_component",
+		"consumer_errors",
+		"Consumer errors, classified by name and type",
+		"name",
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Component) consumerErrorsInc() {
+	consumerErrors.WithLabelValues(c.name).Inc()
 }

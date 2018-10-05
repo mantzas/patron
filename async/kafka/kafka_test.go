@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/mocktracer"
-
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,11 +41,6 @@ func TestNew(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "fails with invalid option",
-			args:    args{name: "test", brokers: brokers, topic: "topic1", options: []OptionFunc{Buffer(-100)}},
-			wantErr: true,
-		},
-		{
 			name:    "success",
 			args:    args{name: "test", brokers: brokers, topic: "topic1"},
 			wantErr: false,
@@ -64,7 +58,39 @@ func TestNew(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestFactory_Create(t *testing.T) {
+	type fields struct {
+		oo []OptionFunc
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{name: "success", wantErr: false},
+		{name: "failed with invalid option", fields: fields{oo: []OptionFunc{Buffer(-100)}}, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &Factory{
+				name:    "test",
+				ct:      "",
+				topic:   "topic",
+				brokers: []string{"192.168.1.1"},
+				oo:      tt.fields.oo,
+			}
+			got, err := f.Create()
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, got)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, got)
+			}
+		})
+	}
 }
 
 func Test_determineContentType(t *testing.T) {
@@ -101,7 +127,9 @@ func Test_determineContentType(t *testing.T) {
 }
 
 func TestConsumer_Info(t *testing.T) {
-	c, err := New("name", "application/json", "topic", []string{"1", "2"})
+	f, err := New("name", "application/json", "topic", []string{"1", "2"})
+	assert.NoError(t, err)
+	c, err := f.Create()
 	assert.NoError(t, err)
 	expected := make(map[string]interface{})
 	expected["type"] = "kafka-consumer"

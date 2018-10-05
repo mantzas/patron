@@ -19,6 +19,11 @@ type Message interface {
 	Nack() error
 }
 
+// ConsumerFactory interface for creating consumers.
+type ConsumerFactory interface {
+	Create() (Consumer, error)
+}
+
 // Consumer interface which every specific consumer has to implement.
 type Consumer interface {
 	Consume(context.Context) (<-chan Message, <-chan error, error)

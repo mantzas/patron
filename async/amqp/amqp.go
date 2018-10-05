@@ -54,23 +54,16 @@ func (m *message) Nack() error {
 	return err
 }
 
-// Consumer defines a AMQP subscriber.
-type Consumer struct {
+// Factory of a AMQP consumer
+type Factory struct {
 	url      string
 	queue    string
 	exchange string
-	requeue  bool
-	tag      string
-	buffer   int
-	traceTag opentracing.Tag
-	cfg      amqp.Config
-	ch       *amqp.Channel
-	conn     *amqp.Connection
-	info     map[string]interface{}
+	oo       []OptionFunc
 }
 
-// New creates a new AMQP consumer with some defaults. Use option to change.
-func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
+// New constructor.
+func New(url, queue, exchange string, oo ...OptionFunc) (*Factory, error) {
 
 	if url == "" {
 		return nil, errors.New("RabbitMQ url is required")
@@ -84,18 +77,24 @@ func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 		return nil, errors.New("RabbitMQ exchange name is required")
 	}
 
-	c := &Consumer{
-		url:      url,
-		queue:    queue,
-		exchange: exchange,
+	return &Factory{url: url, queue: queue, exchange: exchange, oo: oo}, nil
+}
+
+// Create a new consumer.
+func (f *Factory) Create() (async.Consumer, error) {
+
+	c := &consumer{
+		url:      f.url,
+		queue:    f.queue,
+		exchange: f.exchange,
 		requeue:  true,
 		cfg:      defaultCfg,
 		buffer:   1000,
-		traceTag: opentracing.Tag{Key: "queue", Value: queue},
+		traceTag: opentracing.Tag{Key: "queue", Value: f.queue},
 		info:     make(map[string]interface{}),
 	}
 
-	for _, o := range oo {
+	for _, o := range f.oo {
 		err := o(c)
 		if err != nil {
 			return nil, err
@@ -103,18 +102,31 @@ func New(url, queue, exchange string, oo ...OptionFunc) (*Consumer, error) {
 	}
 
 	c.createInfo()
-
 	return c, nil
 }
 
+type consumer struct {
+	url      string
+	queue    string
+	exchange string
+	requeue  bool
+	tag      string
+	buffer   int
+	traceTag opentracing.Tag
+	cfg      amqp.Config
+	ch       *amqp.Channel
+	conn     *amqp.Connection
+	info     map[string]interface{}
+}
+
 // Info return the information of the consumer.
-func (c *Consumer) Info() map[string]interface{} {
+func (c *consumer) Info() map[string]interface{} {
 	return c.info
 }
 
 // Consume starts of consuming a AMQP queue.
-func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
-	deliveries, err := c.consumer()
+func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
+	deliveries, err := c.consume()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed initialize consumer")
 	}
@@ -160,7 +172,7 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 }
 
 // Close handles closing channel and connection of AMQP.
-func (c *Consumer) Close() error {
+func (c *consumer) Close() error {
 	var errChan error
 	var errConn error
 
@@ -173,7 +185,7 @@ func (c *Consumer) Close() error {
 	return errors.Aggregate(errChan, errConn)
 }
 
-func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
+func (c *consumer) consume() (<-chan amqp.Delivery, error) {
 	conn, err := amqp.DialConfig(c.url, c.cfg)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to dial @ %s", c.url)
@@ -212,7 +224,7 @@ func (c *Consumer) consumer() (<-chan amqp.Delivery, error) {
 	return deliveries, nil
 }
 
-func (c *Consumer) createInfo() {
+func (c *consumer) createInfo() {
 	c.info["type"] = "amqp-consumer"
 	c.info["queue"] = c.queue
 	c.info["exchange"] = c.exchange

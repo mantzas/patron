@@ -22,7 +22,7 @@ func TestBuffer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := Consumer{}
+			c := consumer{}
 			err := Buffer(tt.args.buf)(&c)
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -34,13 +34,13 @@ func TestBuffer(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	c := Consumer{}
+	c := consumer{}
 	err := Start(1000)(&c)
 	assert.NoError(t, err)
 }
 
 func TestTimeout(t *testing.T) {
-	c := Consumer{cfg: sarama.NewConfig()}
+	c := consumer{cfg: sarama.NewConfig()}
 	err := Timeout(time.Second)(&c)
 	assert.NoError(t, err)
 }
@@ -60,9 +60,11 @@ func TestVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := New("test", "", "topic", []string{"test"})
+			f, err := New("test", "", "topic", []string{"test"})
 			assert.NoError(t, err)
-			err = Version(tt.args.version)(c)
+			c, err := f.Create()
+			assert.NoError(t, err)
+			err = Version(tt.args.version)(c.(*consumer))
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

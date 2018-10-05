@@ -22,7 +22,7 @@ func TestBuffer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := Consumer{}
+			c := consumer{}
 			err := Buffer(tt.args.buf)(&c)
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -34,13 +34,13 @@ func TestBuffer(t *testing.T) {
 }
 
 func TestRequeue(t *testing.T) {
-	c := Consumer{}
+	c := consumer{}
 	err := Requeue(false)(&c)
 	assert.NoError(t, err)
 }
 
 func TestTimeout(t *testing.T) {
-	c := Consumer{}
+	c := consumer{}
 	err := Timeout(time.Second)(&c)
 	assert.NoError(t, err)
 }

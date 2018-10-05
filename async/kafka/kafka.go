@@ -12,10 +12,13 @@ import (
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/metric"
 	"github.com/mantzas/patron/trace"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+var topicPartitionOffsetDiff *prometheus.GaugeVec
 
 type message struct {
 	span opentracing.Span
@@ -52,23 +55,17 @@ const (
 	OffsetOldest Offset = -2
 )
 
-var topicPartitionOffsetDiff *prometheus.GaugeVec
-
-// Consumer definition of a Kafka consumer.
-type Consumer struct {
-	brokers     []string
-	topic       string
-	buffer      int
-	start       Offset
-	cfg         *sarama.Config
-	contentType string
-	cnl         context.CancelFunc
-	ms          sarama.Consumer
-	info        map[string]interface{}
+// Factory definition of a consumer factory.
+type Factory struct {
+	name    string
+	ct      string
+	topic   string
+	brokers []string
+	oo      []OptionFunc
 }
 
-// New creates a ew Kafka consumer with defaults. To override those default you should provide a option.
-func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer, error) {
+// New constructor.
+func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Factory, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -82,34 +79,40 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 		return nil, errors.New("topic is required")
 	}
 
+	return &Factory{name: name, ct: ct, topic: topic, brokers: brokers, oo: oo}, nil
+}
+
+// Create a new consumer.
+func (f *Factory) Create() (async.Consumer, error) {
+
 	host, err := os.Hostname()
 	if err != nil {
 		return nil, errors.New("failed to get hostname")
 	}
 
 	config := sarama.NewConfig()
-	config.ClientID = fmt.Sprintf("%s-%s", host, name)
+	config.ClientID = fmt.Sprintf("%s-%s", host, f.name)
 	config.Consumer.Return.Errors = true
 	config.Version = sarama.V0_11_0_0
 
-	c := &Consumer{
-		brokers:     brokers,
-		topic:       topic,
+	c := &consumer{
+		brokers:     f.brokers,
+		topic:       f.topic,
 		cfg:         config,
-		contentType: ct,
+		contentType: f.ct,
 		buffer:      1000,
 		start:       OffsetNewest,
 		info:        make(map[string]interface{}),
 	}
 
-	for _, o := range oo {
+	for _, o := range f.oo {
 		err = o(c)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = setupMetrics(name)
+	err = setupMetrics()
 	if err != nil {
 		return nil, err
 	}
@@ -117,13 +120,25 @@ func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Consumer,
 	return c, nil
 }
 
+type consumer struct {
+	brokers     []string
+	topic       string
+	buffer      int
+	start       Offset
+	cfg         *sarama.Config
+	contentType string
+	cnl         context.CancelFunc
+	ms          sarama.Consumer
+	info        map[string]interface{}
+}
+
 // Info return the information of the consumer.
-func (c *Consumer) Info() map[string]interface{} {
+func (c *consumer) Info() map[string]interface{} {
 	return c.info
 }
 
 // Consume starts consuming messages from a Kafka topic.
-func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
+func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan error, error) {
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
 
@@ -189,14 +204,14 @@ func (c *Consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 }
 
 // Close handles closing channel and connection of AMQP.
-func (c *Consumer) Close() error {
+func (c *consumer) Close() error {
 	if c.ms == nil {
 		return nil
 	}
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
-func (c *Consumer) consumers() ([]sarama.PartitionConsumer, error) {
+func (c *consumer) consumers() ([]sarama.PartitionConsumer, error) {
 
 	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
 	if err != nil {
@@ -223,7 +238,7 @@ func (c *Consumer) consumers() ([]sarama.PartitionConsumer, error) {
 	return pcs, nil
 }
 
-func (c *Consumer) createInfo() {
+func (c *consumer) createInfo() {
 	c.info["type"] = "kafka-consumer"
 	c.info["brokers"] = strings.Join(c.brokers, ",")
 	c.info["topic"] = c.topic
@@ -249,25 +264,17 @@ func mapHeader(hh []*sarama.RecordHeader) map[string]string {
 	return mp
 }
 
-func setupMetrics(namespace string) error {
-	if topicPartitionOffsetDiff != nil {
-		return nil
-	}
-
-	topicPartitionOffsetDiff = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: "kafka_consumer",
-			Name:      "offset_diff",
-			Help:      "Message offset difference with high watermark, classified by topic and partition",
-		},
-		[]string{"topic", "partition"},
+func setupMetrics() error {
+	var err error
+	topicPartitionOffsetDiff, err = metric.NewGauge(
+		"kafka_consumer",
+		"offset_diff",
+		"Message offset difference with high watermark, classified by topic and partition",
+		"topic",
+		"partition",
 	)
-
-	if err := prometheus.Register(topicPartitionOffsetDiff); err != nil {
-		if _, ok := err.(prometheus.AlreadyRegisteredError); ok {
-			return errors.Wrap(err, "failed to register kafka consumer metrics")
-		}
+	if err != nil {
+		return err
 	}
 	return nil
 }

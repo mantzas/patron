@@ -17,11 +17,12 @@ func newAmqpComponent(url, queue, exchange string) (*amqpComponent, error) {
 
 	amqpCmp := amqpComponent{}
 
-	cns, err := amqp.New(url, queue, exchange)
+	cf, err := amqp.New(url, queue, exchange)
 	if err != nil {
 		return nil, err
 	}
-	cmp, err := async.New(amqpCmp.Process, cns)
+
+	cmp, err := async.New("amqp-cmp", amqpCmp.Process, cf, async.ConsumerRetry(10, 10*time.Second))
 	if err != nil {
 		return nil, err
 	}
