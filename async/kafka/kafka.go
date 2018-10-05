@@ -20,10 +20,6 @@ import (
 
 var topicPartitionOffsetDiff *prometheus.GaugeVec
 
-func init() {
-
-}
-
 type message struct {
 	span opentracing.Span
 	ctx  context.Context
@@ -116,7 +112,7 @@ func (f *Factory) Create() (async.Consumer, error) {
 		}
 	}
 
-	err = setupMetrics(f.name)
+	err = setupMetrics()
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +264,7 @@ func mapHeader(hh []*sarama.RecordHeader) map[string]string {
 	return mp
 }
 
-func setupMetrics(namespace string) error {
+func setupMetrics() error {
 	var err error
 	topicPartitionOffsetDiff, err = metric.NewGauge(
 		"kafka_consumer",
