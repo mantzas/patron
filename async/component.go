@@ -56,8 +56,7 @@ func New(name string, p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*C
 		}
 	}
 
-	c.info["type"] = "async"
-	c.info["fail-strategy"] = c.failStrategy
+	c.setupInfo()
 	err := setupMetrics()
 	if err != nil {
 		return nil, err
@@ -157,6 +156,13 @@ func (c *Component) executeFailureStrategy(msg Message, err error) error {
 		return errors.New("invalid failure strategy")
 	}
 	return nil
+}
+
+func (c *Component) setupInfo() {
+	c.info["type"] = "async"
+	c.info["fail-strategy"] = c.failStrategy.String()
+	c.info["consumer-retries"] = c.retries
+	c.info["consumer-timeout"] = c.retryWait.String()
 }
 
 func setupMetrics() error {

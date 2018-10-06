@@ -7,10 +7,29 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestOffset_String(t *testing.T) {
+	tests := []struct {
+		name string
+		o    Offset
+		want string
+	}{
+		{name: "OffsetNewest", o: OffsetNewest, want: "OffsetNewest"},
+		{name: "OffsetOldest", o: OffsetOldest, want: "OffsetOldest"},
+		{name: "10", o: 10, want: "10"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.String(); got != tt.want {
+				t.Errorf("Offset.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestNew(t *testing.T) {
 	brokers := []string{"192.168.1.1"}

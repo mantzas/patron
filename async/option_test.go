@@ -7,6 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFailStrategy_String(t *testing.T) {
+	tests := []struct {
+		name string
+		fs   FailStrategy
+		want string
+	}{
+		{name: "NackExitStrategy", fs: NackExitStrategy, want: "NackExitStrategy"},
+		{name: "NackStrategy", fs: NackStrategy, want: "NackStrategy"},
+		{name: "AckStrategy", fs: AckStrategy, want: "AckStrategy"},
+		{name: "Not mapped", fs: -1, want: "N/A"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.fs.String())
+		})
+	}
+}
+
 func TestFailureStrategy(t *testing.T) {
 	proc := mockProcessor{}
 	type args struct {

@@ -12,6 +12,7 @@ import (
 	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
+	"github.com/mantzas/patron/metric"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
 	"github.com/uber/jaeger-client-go"
@@ -54,6 +55,7 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 		return nil, err
 	}
 
+	metric.Setup(name)
 	err = s.setupDefaultTracing(name, version)
 	if err != nil {
 		return nil, err

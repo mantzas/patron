@@ -55,6 +55,17 @@ const (
 	OffsetOldest Offset = -2
 )
 
+func (o Offset) String() string {
+	switch o {
+	case OffsetNewest:
+		return "OffsetNewest"
+	case OffsetOldest:
+		return "OffsetOldest"
+	default:
+		return strconv.FormatInt(int64(o), 10)
+	}
+}
+
 // Factory definition of a consumer factory.
 type Factory struct {
 	name    string
@@ -244,7 +255,7 @@ func (c *consumer) createInfo() {
 	c.info["topic"] = c.topic
 	c.info["buffer"] = c.buffer
 	c.info["default-content-type"] = c.contentType
-	c.info["start"] = c.start
+	c.info["start"] = c.start.String()
 }
 
 func determineContentType(hdr []*sarama.RecordHeader) (string, error) {

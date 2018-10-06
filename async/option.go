@@ -19,6 +19,19 @@ const (
 	AckStrategy FailStrategy = 2
 )
 
+func (fs FailStrategy) String() string {
+	switch fs {
+	case NackExitStrategy:
+		return "NackExitStrategy"
+	case NackStrategy:
+		return "NackStrategy"
+	case AckStrategy:
+		return "AckStrategy"
+	default:
+		return "N/A"
+	}
+}
+
 // OptionFunc definition for configuring the component in a functional way.
 type OptionFunc func(*Component) error
 
