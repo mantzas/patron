@@ -191,7 +191,13 @@ func TestInfo(t *testing.T) {
 		chErr: make(chan error, 10),
 	}
 	proc := mockProcessor{retError: false}
-	cmp, err := New("test", proc.Process, &mockConsumerFactory{c: &cnr}, FailureStrategy(AckStrategy))
+	cmp, err := New(
+		"test",
+		proc.Process,
+		&mockConsumerFactory{c: &cnr},
+		FailureStrategy(AckStrategy),
+		ConsumerRetry(5, 2*time.Second),
+	)
 	assert.NoError(t, err)
 	cnr.chMsg <- &mockMessage{ctx: context.Background()}
 	ch := make(chan bool)
@@ -207,8 +213,10 @@ func TestInfo(t *testing.T) {
 	cnsInfo := map[string]interface{}{"key": "value"}
 	expected := make(map[string]interface{})
 	expected["type"] = "async"
-	expected["fail-strategy"] = AckStrategy
+	expected["fail-strategy"] = AckStrategy.String()
 	expected["consumer"] = cnsInfo
+	expected["consumer-retries"] = 5
+	expected["consumer-timeout"] = "2s"
 	assert.Equal(t, expected, cmp.Info())
 }
 

@@ -66,10 +66,11 @@ A `Component` is a interface that exposes the following API:
 ```go
 type Component interface {
   Run(ctx context.Context) error  
+  Info() map[string]interface{}
 }
 ```
 
-The above API gives the `Service` the ability to start and gracefully shutdown a `component` via context cancellation. The framework divides the components in 2 categories:
+The above API gives the `Service` the ability to start and gracefully shutdown a `component` via context cancellation. Furthermore the component describes itself by implementing the `Info` method and thus giving the service the ability to report the information of all components. The framework divides the components in 2 categories:
 
 - synchronous, which are components that follow the request/response pattern and
 - asynchronous, which consume messages from a source but don't respond anything back
