@@ -156,7 +156,7 @@ func TestConsumer_Info(t *testing.T) {
 	expected["topic"] = "topic"
 	expected["buffer"] = 1000
 	expected["default-content-type"] = "application/json"
-	expected["start"] = OffsetNewest
+	expected["start"] = OffsetNewest.String()
 	assert.Equal(t, expected, c.Info())
 }
 
