@@ -13,7 +13,7 @@ jobs:
           name: Getting linter and unit test reporter
           command: |
             go get -u golang.org/x/lint/golint
-            go get github.com/jstemmer/go-junit-report
+            go get -u github.com/jstemmer/go-junit-report
 
       - checkout
 
