@@ -10,9 +10,10 @@ jobs:
     steps:
       
       - run:
-          name: Getting linter
+          name: Getting linter and unit test reporter
           command: |
             go get -u golang.org/x/lint/golint
+            go get github.com/jstemmer/go-junit-report
 
       - checkout
 
@@ -24,8 +25,7 @@ jobs:
       - run:
           name: Running with test coverage and send to codecov
           command: |
-            mkdir -p $TEST_RESULTS
-            go get github.com/jstemmer/go-junit-report
+            mkdir -p $TEST_RESULTS            
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
             go test ./... -cover -race -mod=vendor -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
             bash <(curl -s https://codecov.io/bash)
