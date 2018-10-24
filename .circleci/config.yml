@@ -13,7 +13,7 @@ jobs:
       - run:
           name: Getting and running linter
           command: |
-            go get -u golang.org/x/lint/golint
+            go get -u -mod=vendor golang.org/x/lint/golint
             golint -set_exit_status=1 `go list ./...`
           
       - run:
