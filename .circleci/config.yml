@@ -19,7 +19,7 @@ jobs:
       - run:
           name: Running linter
           command: |
-            golint -set_exit_status=1 `go list ./...`
+            golint -set_exit_status=1 `go list -mod=vendor ./...`
           
       - run:
           name: Running with test coverage and send to codecov
