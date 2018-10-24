@@ -8,6 +8,7 @@ import (
 func profilingRoutes() []Route {
 	return []Route{
 		NewRouteRaw("/debug/pprof/", http.MethodGet, profIndex),
+		NewRouteRaw("/debug/pprof/allocs/", http.MethodGet, pprofAllocsIndex),
 		NewRouteRaw("/debug/pprof/cmdline/", http.MethodGet, profCmdline),
 		NewRouteRaw("/debug/pprof/profile/", http.MethodGet, profProfile),
 		NewRouteRaw("/debug/pprof/symbol/", http.MethodGet, profSymbol),
@@ -22,6 +23,10 @@ func profilingRoutes() []Route {
 
 func profIndex(w http.ResponseWriter, r *http.Request) {
 	pprof.Index(w, r)
+}
+
+func pprofAllocsIndex(w http.ResponseWriter, r *http.Request) {
+	pprof.Handler("allocs").ServeHTTP(w, r)
 }
 
 func profCmdline(w http.ResponseWriter, r *http.Request) {

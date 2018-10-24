@@ -25,6 +25,7 @@ func Test_PprofHandlers(t *testing.T) {
 		want int
 	}{
 		{"index", "/debug/pprof/", 200},
+		{"cmdline", "/debug/pprof/allocs/", 200},
 		{"cmdline", "/debug/pprof/cmdline/", 200},
 		{"profile", "/debug/pprof/profile/?seconds=1", 200},
 		{"symbol", "/debug/pprof/symbol/", 200},
