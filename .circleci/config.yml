@@ -21,11 +21,11 @@ jobs:
           name: Running linter
           command: |
             golint -set_exit_status=1 `go list -mod=vendor ./...`
-          
+
       - run:
           name: Running with test coverage and send to codecov
           command: |
-            mkdir -p $TEST_RESULTS            
+            mkdir -p $TEST_RESULTS
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
             go test ./... -cover -race -mod=vendor -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
             bash <(curl -s https://codecov.io/bash)
