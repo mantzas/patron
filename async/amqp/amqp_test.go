@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/mantzas/patron/encoding/json"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"

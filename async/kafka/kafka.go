@@ -216,9 +216,14 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 
 // Close handles closing channel and connection of AMQP.
 func (c *consumer) Close() error {
+	if c.cnl != nil {
+		c.cnl()
+	}
+
 	if c.ms == nil {
 		return nil
 	}
+
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
