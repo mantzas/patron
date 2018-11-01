@@ -167,9 +167,12 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 				select {
 				case <-ctx.Done():
 					log.Info("canceling consuming messages requested")
+					closeConsumer(consumer)
 					return
 				case consumerError := <-consumer.Errors():
+					closeConsumer(consumer)
 					chErr <- consumerError
+					return
 				case m := <-consumer.Messages():
 					log.Debugf("data received from topic %s", m.Topic)
 					topicPartitionOffsetDiffGaugeSet(m.Topic, m.Partition, consumer.HighWaterMarkOffset(), m.Offset)
@@ -216,9 +219,14 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 
 // Close handles closing channel and connection of AMQP.
 func (c *consumer) Close() error {
+	if c.cnl != nil {
+		c.cnl()
+	}
+
 	if c.ms == nil {
 		return nil
 	}
+
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
@@ -256,6 +264,16 @@ func (c *consumer) createInfo() {
 	c.info["buffer"] = c.buffer
 	c.info["default-content-type"] = c.contentType
 	c.info["start"] = c.start.String()
+}
+
+func closeConsumer(cns sarama.PartitionConsumer) {
+	if cns == nil {
+		return
+	}
+	err := cns.Close()
+	if err != nil {
+		log.Errorf("failed to close partition consumer: %v", err)
+	}
 }
 
 func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
