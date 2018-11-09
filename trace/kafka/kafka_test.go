@@ -65,7 +65,7 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 	ap, err := NewAsyncProducer([]string{seed.Addr()}, Version(sarama.V0_8_2_0.String()))
 	assert.NoError(t, err)
 	assert.NotNil(t, ap)
-	err = trace.Setup("test", "1.0.0", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1)
+	err = trace.Setup("test", "1.0.0", "0.0.0.0:6831", jaeger.SamplerTypeProbabilistic, 0.1, true)
 	assert.NoError(t, err)
 	_, ctx := trace.ChildSpan(context.Background(), "123", "cmp")
 	err = ap.Send(ctx, msg)
