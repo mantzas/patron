@@ -156,6 +156,17 @@ func SetupLogging(name, version string) error {
 }
 
 func (s *Service) setupDefaultTracing(name, version string) error {
+	disabled := true
+	var err error
+
+	disabledEnv, ok := os.LookupEnv("PATRON_JAEGER_DISABLED")
+	if ok {
+		disabled, err = strconv.ParseBool(disabledEnv)
+		if err != nil {
+			return errors.Wrap(err, "env var for jaeger enable is not valid")
+		}
+	}
+
 	agent, ok := os.LookupEnv("PATRON_JAEGER_AGENT")
 	if !ok {
 		agent = "0.0.0.0:6831"
@@ -168,7 +179,6 @@ func (s *Service) setupDefaultTracing(name, version string) error {
 	info.UpsertConfig("jaeger-agent-sampler-type", tp)
 	var prmVal = 0.1
 	var prm = "0.1"
-	var err error
 
 	if prm, ok := os.LookupEnv("PATRON_JAEGER_SAMPLER_PARAM"); ok {
 		prmVal, err = strconv.ParseFloat(prm, 64)
@@ -178,8 +188,8 @@ func (s *Service) setupDefaultTracing(name, version string) error {
 	}
 
 	info.UpsertConfig("jaeger-agent-sampler-param", prm)
-	log.Infof("setting up default tracing to %s, %s with param %s", agent, tp, prm)
-	return trace.Setup(name, version, agent, tp, prmVal)
+	log.Infof("setting up default tracing to disabled: %v %s, %s with param %s", disabled, agent, tp, prm)
+	return trace.Setup(name, version, agent, tp, prmVal, disabled)
 }
 
 func (s *Service) createHTTPComponent() (Component, error) {

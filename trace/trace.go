@@ -37,7 +37,7 @@ var (
 )
 
 // Setup tracing by providing all necessary parameters.
-func Setup(name, ver, agent, typ string, prm float64) error {
+func Setup(name, ver, agent, typ string, prm float64, disabled bool) error {
 	if ver != "" {
 		version = ver
 	}
@@ -52,6 +52,7 @@ func Setup(name, ver, agent, typ string, prm float64) error {
 			BufferFlushInterval: 1 * time.Second,
 			LocalAgentHostPort:  agent,
 		},
+		Disabled: disabled,
 	}
 	time.Sleep(100 * time.Millisecond)
 	metricsFactory := prometheus.New()
@@ -187,7 +188,7 @@ func (r consumerOption) Apply(o *opentracing.StartSpanOptions) {
 	ext.SpanKindConsumer.Apply(o)
 }
 
-// ComponentOpName returns a operation name for a compoent.
+// ComponentOpName returns a operation name for a component.
 func ComponentOpName(cmp, target string) string {
 	return cmp + " " + target
 }
