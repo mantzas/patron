@@ -53,7 +53,7 @@ func TestNewSyncProducer_Option_Failure(t *testing.T) {
 
 func TestNewSyncProducer_Success(t *testing.T) {
 	seed := createKafkaBroker(t, false)
-	got, err := NewAsyncProducer([]string{seed.Addr()})
+	got, err := NewAsyncProducer([]string{seed.Addr()}, Version(sarama.V0_8_2_0.String()))
 	assert.NoError(t, err)
 	assert.NotNil(t, got)
 }

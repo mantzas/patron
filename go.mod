@@ -1,7 +1,7 @@
 module github.com/mantzas/patron
 
 require (
-	github.com/Shopify/sarama v1.16.0
+	github.com/Shopify/sarama v1.19.0
 	github.com/Shopify/toxiproxy v2.1.3+incompatible // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
