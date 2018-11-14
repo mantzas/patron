@@ -43,11 +43,6 @@ func init() {
 		fmt.Printf("failed to set log level env var: %v", err)
 		os.Exit(1)
 	}
-	err = os.Setenv("PATRON_JAEGER_DISABLED", "false")
-	if err != nil {
-		fmt.Printf("failed to set jaeger enabled env vars: %v", err)
-		os.Exit(1)
-	}
 	err = os.Setenv("PATRON_JAEGER_SAMPLER_PARAM", "1.0")
 	if err != nil {
 		fmt.Printf("failed to set sampler env vars: %v", err)
