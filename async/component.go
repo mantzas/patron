@@ -80,6 +80,9 @@ func (c *Component) Run(ctx context.Context) error {
 		if err == nil {
 			return nil
 		}
+		if ctx.Err() == context.Canceled {
+			break
+		}
 		c.consumerErrorsInc()
 		if c.retries > 0 {
 			log.Errorf("failed run, retry %d/%d with %v wait: %v", i, c.retries, c.retryWait, err)
