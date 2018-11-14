@@ -37,7 +37,7 @@ var (
 )
 
 // Setup tracing by providing all necessary parameters.
-func Setup(name, ver, agent, typ string, prm float64, disabled bool) error {
+func Setup(name, ver, agent, typ string, prm float64) error {
 	if ver != "" {
 		version = ver
 	}
@@ -52,7 +52,6 @@ func Setup(name, ver, agent, typ string, prm float64, disabled bool) error {
 			BufferFlushInterval: 1 * time.Second,
 			LocalAgentHostPort:  agent,
 		},
-		Disabled: disabled,
 	}
 	time.Sleep(100 * time.Millisecond)
 	metricsFactory := prometheus.New()
