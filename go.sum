@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+github.com/Shopify/sarama v1.16.0 h1:9pI5+ZN06jB3bu5kHXqzzaErMC5rimcIZBQL9IOiEQ0=
+github.com/Shopify/sarama v1.16.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
+>>>>>>> 62ced7d95e039916ddc3d13f8506c019aa5e4355
 github.com/Shopify/sarama v1.19.0 h1:9oksLxC6uxVPHPVYUmq6xhr1BOF/hHobWH2UzO67z1s=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.3+incompatible h1:awiJqUYH4q4OmoBiRccJykjd7B+w0loJi2keSna4X/M=

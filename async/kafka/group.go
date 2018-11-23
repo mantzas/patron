@@ -1,5 +1,6 @@
 package kafka
 
+<<<<<<< HEAD
 import (
 	"context"
 	"fmt"
@@ -87,4 +88,13 @@ func (g *group) createInfo() {
 	g.info["buffer"] = g.buffer
 	g.info["default-content-type"] = g.contentType
 	g.info["start"] = g.start.String()
+=======
+type group struct {
+	baseConsumer
+}
+
+func (g *group) createInfo() {
+	g.baseConsumer.createInfo()
+	g.info["type"] = "kafka-consumer-group"
+>>>>>>> 62ced7d95e039916ddc3d13f8506c019aa5e4355
 }

@@ -40,7 +40,11 @@ func TestStart(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	c := consumer{cfg: sarama.NewConfig()}
+	c := consumer{
+		base: base{
+			cfg: sarama.NewConfig(),
+		},
+	}
 	err := Timeout(time.Second)(&c)
 	assert.NoError(t, err)
 }
