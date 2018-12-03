@@ -41,7 +41,7 @@ func TestStart(t *testing.T) {
 
 func TestTimeout(t *testing.T) {
 	c := consumer{
-		base: base{
+		baseConsumer: baseConsumer{
 			cfg: sarama.NewConfig(),
 		},
 	}

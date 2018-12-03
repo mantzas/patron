@@ -106,7 +106,7 @@ func (f *Factory) Create() (async.Consumer, error) {
 	config.Version = sarama.V0_11_0_0
 
 	c := &consumer{
-		base: base{
+		baseConsumer: baseConsumer{
 			brokers:     f.brokers,
 			topic:       f.topic,
 			cfg:         config,
