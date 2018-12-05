@@ -13,6 +13,7 @@ require (
 	github.com/golang/snappy v0.0.0-20170215233205-553a64147049 // indirect
 	github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c
 	github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9
+	github.com/mantzas/gocloud v0.0.0-20180320185241-c483b29f4357
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20180313041242-367231351874
 	github.com/opentracing/opentracing-go v0.0.0-20180606204148-bd9c31933947

@@ -22,6 +22,8 @@ github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c h1:jWtZjFEUE/Bz0IeIhqC
 github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9 h1:TrJiKy0TujUDAEeXQCwLjfoU0JtkOG3yImw3jAWJxo0=
 github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
+github.com/mantzas/gocloud v0.0.0-20180320185241-c483b29f4357 h1:tcb4DYGCs4InEFrixVHQ/E1rcXKe23W7ImfiwGXn64Q=
+github.com/mantzas/gocloud v0.0.0-20180320185241-c483b29f4357/go.mod h1:XH3bO02Cp0K8AAKHsRkOp5+gW4OEnlMWeGOJi5+ar+8=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/opentracing-contrib/go-stdlib v0.0.0-20180313041242-367231351874 h1:DtlPgOQ8cofwtTZHaYqLk6KWee3AfvYCi0pcZ1K8d58=
