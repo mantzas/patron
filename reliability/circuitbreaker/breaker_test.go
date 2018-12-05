@@ -9,54 +9,47 @@ import (
 )
 
 func TestNewCircuitBreaker(t *testing.T) {
-	c := NewCircuitBreaker(Setting{})
-	assert.NotNil(t, c)
+	set := Setting{FailureThreshold: 1, RetryTimeout: 1 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
+	cb := New(set)
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.Equal(t, utcFuture, cb.lastFailure)
 }
 
-func TestExecute_Closed(t *testing.T) {
-	set := Setting{FailureThreshold: 1, RetryTimeout: 10 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-	res, err := NewCircuitBreaker(set).Execute(testSuccessAction)
-
-	assert.Nil(t, err)
-	assert.Equal(t, "test", res)
-}
-
-func TestExecute_Open(t *testing.T) {
-	set := Setting{FailureThreshold: 1, RetryTimeout: 10 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-
-	cb := NewCircuitBreaker(set)
-	cb.state.IncreaseFailure()
-
+func TestCircuitBreaker_Closed(t *testing.T) {
+	set := Setting{FailureThreshold: 1, RetryTimeout: 1 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
+	cb := New(set)
 	_, err := cb.Execute(testSuccessAction)
-
-	assert.NotNil(t, err)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.Equal(t, utcFuture, cb.lastFailure)
 }
 
-func TestExecute_Failed(t *testing.T) {
-	set := Setting{FailureThreshold: 1, RetryTimeout: 10 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-
-	_, err := NewCircuitBreaker(set).Execute(testFailureAction)
-
-	assert.NotNil(t, err)
-}
-
-func TestExecute_SuccessAfterFailed(t *testing.T) {
-	set := Setting{FailureThreshold: 1, RetryTimeout: 10 * time.Millisecond, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-
-	cb := NewCircuitBreaker(set)
+func TestCircuitBreaker_Open(t *testing.T) {
+	set := Setting{FailureThreshold: 1, RetryTimeout: 1 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
+	cb := New(set)
 	_, err := cb.Execute(testFailureAction)
-	assert.NotNil(t, err)
-	time.Sleep(20 * time.Millisecond)
-	_, err = cb.Execute(testSuccessAction)
-
-	assert.Nil(t, err)
+	assert.Error(t, err)
+	assert.Equal(t, 1, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, time.Now().UTC().After(cb.lastFailure))
+	_, err = cb.Execute(testFailureAction)
+	assert.Error(t, err)
+	assert.Equal(t, 1, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, time.Now().UTC().After(cb.lastFailure))
 }
 
 var err error
 
 func BenchmarkCircuitBreaker_Execute(b *testing.B) {
 	set := Setting{FailureThreshold: 1, RetryTimeout: 1 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-	c := NewCircuitBreaker(set)
+	c := New(set)
 
 	for i := 0; i < b.N; i++ {
 		_, err = c.Execute(testSuccessAction)
