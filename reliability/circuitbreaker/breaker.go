@@ -1,10 +1,17 @@
 package circuitbreaker
 
 import (
-	"errors"
 	"sync"
 	"time"
 )
+
+// OpenError defines a open error.
+type OpenError struct {
+}
+
+func (oe OpenError) Error() string {
+	return "circuit is open"
+}
 
 type status int
 
@@ -15,7 +22,8 @@ const (
 )
 
 var (
-	utcFuture = time.Date(9999, 12, 31, 23, 59, 59, 999999, time.UTC)
+	tsFuture  = time.Date(9999, 12, 31, 23, 59, 59, 999999, time.UTC).UnixNano()
+	openError = new(OpenError)
 )
 
 // Setting definition.
@@ -42,72 +50,56 @@ type Executor interface {
 type CircuitBreaker struct {
 	set Setting
 	sync.Mutex
-	executions  int
-	failures    int
-	retries     int
-	lastFailure time.Time
+	status     status
+	executions int
+	failures   int
+	retries    int
+	nextRetry  int64
 }
 
 // New constructor.
 func New(s Setting) *CircuitBreaker {
 	return &CircuitBreaker{
-		set:         s,
-		executions:  0,
-		failures:    0,
-		retries:     0,
-		lastFailure: utcFuture,
+		set:        s,
+		executions: 0,
+		failures:   0,
+		retries:    0,
+		nextRetry:  tsFuture,
 	}
 }
 
 // Execute the function enclosed.
 func (cb *CircuitBreaker) Execute(act Action) (interface{}, error) {
-	status := cb.status()
-	if status == open {
-		return nil, errors.New("circuit is open")
-	}
 
-	cb.incrExecutions()
+	// calculate status
+	cb.calcStatus1()
+
+	if cb.status == open {
+		return nil, openError
+	}
 
 	resp, err := act()
 	if err != nil {
 		cb.incFailure()
 		return nil, err
 	}
+	cb.incSuccess()
 
-	if status == halfOpen {
-		cb.incRetrySuccess()
-	} else {
-		cb.reset()
-	}
-
-	return resp, nil
+	return resp, err
 }
 
-func (cb *CircuitBreaker) status() status {
+func (cb *CircuitBreaker) calcStatus1(now int64) {
 	cb.Lock()
 	defer cb.Unlock()
 
-	if cb.set.FailureThreshold > cb.failures {
-		return closed
+	switch cb.status {
+	case closed:
+	case open:
+	case halfOpen:
+
 	}
 
-	retry := cb.lastFailure.Add(cb.set.RetryTimeout)
-	now := time.Now().UTC()
-
-	if retry.Before(now) || retry.Equal(now) {
-
-		if cb.retries >= cb.set.RetrySuccessThreshold {
-			return closed
-		}
-
-		if cb.executions > cb.set.MaxRetryExecutionThreshold {
-			return open
-		}
-
-		return halfOpen
-	}
-
-	return open
+	return
 }
 
 func (cb *CircuitBreaker) incrExecutions() {
@@ -123,7 +115,14 @@ func (cb *CircuitBreaker) incFailure() {
 
 	cb.failures++
 	cb.executions = 0
-	cb.lastFailure = time.Now().UTC()
+	cb.nextRetry = time.Now().UTC().Add(cb.set.RetryTimeout)
+}
+
+func (cb *CircuitBreaker) incSuccess() {
+	cb.Lock()
+	defer cb.Unlock()
+
+	cb.retries++
 }
 
 func (cb *CircuitBreaker) incRetrySuccess() {
@@ -140,5 +139,5 @@ func (cb *CircuitBreaker) reset() {
 	cb.failures = 0
 	cb.executions = 0
 	cb.retries = 0
-	cb.lastFailure = utcFuture
+	cb.nextRetry = utcFuture
 }
