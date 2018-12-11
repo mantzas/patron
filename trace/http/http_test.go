@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,6 +34,28 @@ func TestTracedClient_Do(t *testing.T) {
 	sp := mtr.FinishedSpans()[0]
 	assert.NotNil(t, sp)
 	assert.Equal(t, trace.HTTPOpName("Client", "GET", ts.URL), sp.OperationName)
+}
+
+func TestTracedClient_Do_Error(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "true", r.Header.Get("Mockpfx-Ids-Sampled"))
+		assert.Equal(t, "46", r.Header.Get("Mockpfx-Ids-Spanid"))
+		assert.Equal(t, "43", r.Header.Get("Mockpfx-Ids-Traceid"))
+		fmt.Fprintln(w, "Hello, client")
+	}))
+	defer ts.Close()
+	mtr := mocktracer.New()
+	opentracing.SetGlobalTracer(mtr)
+	c, err := New()
+	assert.NoError(t, err)
+	req, err := http.NewRequest("GET", "", nil)
+	assert.NoError(t, err)
+	rsp, err := c.Do(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, rsp)
+	sp := mtr.FinishedSpans()[0]
+	assert.NotNil(t, sp)
+	assert.Equal(t, "HTTP GET", sp.OperationName)
 }
 
 func TestNew(t *testing.T) {
