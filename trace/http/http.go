@@ -7,7 +7,7 @@ import (
 
 	"github.com/mantzas/patron/trace"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -52,9 +52,10 @@ func (tc *TracedClient) Do(ctx context.Context, req *http.Request) (*http.Respon
 	rsp, err := tc.cl.Do(req)
 	if err != nil {
 		ext.Error.Set(ht.Span(), true)
+	} else {
+		ext.HTTPStatusCode.Set(ht.Span(), uint16(rsp.StatusCode))
 	}
 	ext.HTTPMethod.Set(ht.Span(), req.Method)
 	ext.HTTPUrl.Set(ht.Span(), req.URL.String())
-	ext.HTTPStatusCode.Set(ht.Span(), uint16(rsp.StatusCode))
 	return rsp, err
 }
