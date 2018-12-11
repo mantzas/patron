@@ -42,7 +42,7 @@ func TestNewDeleteRoute(t *testing.T) {
 	assert.True(t, r.Trace)
 }
 func TestNewRouteRaw(t *testing.T) {
-	r := NewRouteRaw("/index", http.MethodGet, nil)
+	r := NewRouteRaw("/index", http.MethodGet, nil, false)
 	assert.Equal(t, "/index", r.Pattern)
 	assert.Equal(t, "GET", r.Method)
 	assert.False(t, r.Trace)
