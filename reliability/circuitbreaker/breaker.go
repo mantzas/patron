@@ -16,7 +16,7 @@ func (oe OpenError) Error() string {
 type status int
 
 const (
-	closed status = iota
+	close status = iota
 	halfOpen
 	open
 )
@@ -72,7 +72,7 @@ func New(s Setting) *CircuitBreaker {
 func (cb *CircuitBreaker) Execute(act Action) (interface{}, error) {
 
 	// calculate status
-	cb.calcStatus1()
+	cb.calcStatus()
 
 	if cb.status == open {
 		return nil, openError
@@ -88,25 +88,58 @@ func (cb *CircuitBreaker) Execute(act Action) (interface{}, error) {
 	return resp, err
 }
 
-func (cb *CircuitBreaker) calcStatus1(now int64) {
+func (cb *CircuitBreaker) calcStatus() {
 	cb.Lock()
 	defer cb.Unlock()
 
 	switch cb.status {
-	case closed:
-	case open:
-	case halfOpen:
+	case close:
+		if cb.failures >= cb.set.FailureThreshold {
+			cb.transitionToOpen()
+			return
+		}
 
+	case open:
+		if cb.nextRetry >= time.Now().UnixNano() {
+			cb.transitionToHalfOpen()
+			return
+		}
+
+	case halfOpen:
+		if cb.retries >= cb.set.RetrySuccessThreshold {
+			cb.transitionToClose()
+			return
+		}
+
+		if cb.executions >= cb.set.MaxRetryExecutionThreshold {
+			cb.transitionToOpen()
+		}
 	}
 
 	return
 }
 
-func (cb *CircuitBreaker) incrExecutions() {
-	cb.Lock()
-	defer cb.Unlock()
+func (cb *CircuitBreaker) transitionToOpen() {
+	cb.status = open
+	cb.failures = 0
+	cb.executions = 0
+	cb.retries = 0
+	cb.nextRetry = time.Now().Add(cb.set.RetryTimeout).UnixNano()
+}
 
-	cb.executions++
+func (cb *CircuitBreaker) transitionToHalfOpen() {
+	cb.status = halfOpen
+	cb.failures = 0
+	cb.executions = 0
+	cb.retries = 0
+}
+
+func (cb *CircuitBreaker) transitionToClose() {
+	cb.status = close
+	cb.failures = 0
+	cb.executions = 0
+	cb.retries = 0
+	cb.nextRetry = tsFuture
 }
 
 func (cb *CircuitBreaker) incFailure() {
@@ -114,8 +147,7 @@ func (cb *CircuitBreaker) incFailure() {
 	defer cb.Unlock()
 
 	cb.failures++
-	cb.executions = 0
-	cb.nextRetry = time.Now().UTC().Add(cb.set.RetryTimeout)
+	cb.executions++
 }
 
 func (cb *CircuitBreaker) incSuccess() {
@@ -123,21 +155,5 @@ func (cb *CircuitBreaker) incSuccess() {
 	defer cb.Unlock()
 
 	cb.retries++
-}
-
-func (cb *CircuitBreaker) incRetrySuccess() {
-	cb.Lock()
-	defer cb.Unlock()
-
-	cb.retries++
-}
-
-func (cb *CircuitBreaker) reset() {
-	cb.Lock()
-	defer cb.Unlock()
-
-	cb.failures = 0
-	cb.executions = 0
-	cb.retries = 0
-	cb.nextRetry = utcFuture
+	cb.executions++
 }
