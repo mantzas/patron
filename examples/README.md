@@ -30,16 +30,38 @@ docker-compose down
 
 ## running the example
 
-just run (within the examples folder):
+Start first service:
 
 ```shell
-go run main.go
+go run examples/first/main.go
+
+```
+
+Start second service:
+
+```shell
+go run examples/second/main.go
+
+```
+
+Start third service:
+
+```shell
+go run examples/third/main.go
+
+```
+
+Start fourth service:
+
+```shell
+go run examples/fourth/main.go
+
 ```
 
 and the use curl to send a request:
 
 ```shell
-curl -i -H "Content-Type: application/json" -X POST http://localhost:50000
+curl -i -X POST http://localhost:50000
 ```
 
 After that head over to [jaeger](http://localhost:16686/search) and [prometheus](http://localhost:9090/graph).
