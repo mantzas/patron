@@ -36,6 +36,13 @@ The latest version can be installed with
 go get github.com/mantzas/patron/cmd/patron
 ```
 
+The below is an example of a service created with the cli that has a module name `github.com/mantzas/test` and will be created in the test folder in the currend directory.
+
+```go
+patron -m "github.com/mantzas/test" -p "test"
+```
+
+
 ## Service
 
 The `Service` has the role of glueing all of the above together, which are:
