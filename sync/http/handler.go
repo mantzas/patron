@@ -123,7 +123,7 @@ func handleError(w http.ResponseWriter, err error) {
 	case *sync.ForbiddenError:
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 	case *sync.NotFoundError:
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		http.Error(w, "", http.StatusNotFound)
 	case *sync.ServiceUnavailableError:
 		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 	default:
