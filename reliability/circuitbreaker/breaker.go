@@ -5,6 +5,12 @@ import (
 	"math"
 	"sync"
 	"time"
+
+	"github.com/mantzas/patron/log"
+
+	"github.com/mantzas/patron/metric"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // OpenError defines a open error.
@@ -23,9 +29,29 @@ const (
 )
 
 var (
-	tsFuture  = int64(math.MaxInt64)
-	openError = new(OpenError)
+	tsFuture       = int64(math.MaxInt64)
+	openError      = new(OpenError)
+	breakerCounter *prometheus.CounterVec
+	statusMap      = map[status]string{close: "close", open: "open"}
 )
+
+func init() {
+	var err error
+	breakerCounter, err = metric.NewCounter(
+		"reliability",
+		"circuit_breaker",
+		"Circuit breaker status, classified by name and status",
+		"name",
+		"status",
+	)
+	if err != nil {
+		log.Errorf("failed to register breaker counter: %v", err)
+	}
+}
+
+func breakerCounterInc(name string, st status) {
+	breakerCounter.WithLabelValues(name, statusMap[st]).Inc()
+}
 
 // Setting definition.
 type Setting struct {
@@ -41,11 +67,6 @@ type Setting struct {
 
 // Action function to execute in circuit breaker.
 type Action func() (interface{}, error)
-
-// Executor interface.
-type Executor interface {
-	Execute(act Action) (interface{}, error)
-}
 
 // CircuitBreaker implementation.
 type CircuitBreaker struct {
@@ -73,6 +94,7 @@ func New(name string, s Setting) (*CircuitBreaker, error) {
 	return &CircuitBreaker{
 		name:       name,
 		set:        s,
+		status:     close,
 		executions: 0,
 		failures:   0,
 		retries:    0,
@@ -170,6 +192,7 @@ func (cb *CircuitBreaker) transitionToOpen() {
 	cb.executions = 0
 	cb.retries = 0
 	cb.nextRetry = time.Now().Add(cb.set.RetryTimeout).UnixNano()
+	breakerCounterInc(cb.name, cb.status)
 }
 
 func (cb *CircuitBreaker) transitionToClose() {
@@ -178,4 +201,5 @@ func (cb *CircuitBreaker) transitionToClose() {
 	cb.executions = 0
 	cb.retries = 0
 	cb.nextRetry = tsFuture
+	breakerCounterInc(cb.name, cb.status)
 }
