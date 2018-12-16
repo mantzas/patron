@@ -1,6 +1,7 @@
 package circuitbreaker
 
 import (
+	"errors"
 	"math"
 	"sync"
 	"time"
@@ -29,13 +30,13 @@ var (
 // Setting definition.
 type Setting struct {
 	// The threshold for the circuit to open.
-	FailureThreshold int
+	FailureThreshold uint
 	// The timeout after which we set the state to half-open and allow a retry.
 	RetryTimeout time.Duration
 	// The threshold of the retry successes which returns the state to open.
-	RetrySuccessThreshold int
+	RetrySuccessThreshold uint
 	// The threshold of how many retry executions are allowed when the status is half-open.
-	MaxRetryExecutionThreshold int
+	MaxRetryExecutionThreshold uint
 }
 
 // Action function to execute in circuit breaker.
@@ -48,24 +49,35 @@ type Executor interface {
 
 // CircuitBreaker implementation.
 type CircuitBreaker struct {
-	set Setting
+	name string
+	set  Setting
 	sync.RWMutex
 	status     status
-	executions int
-	failures   int
-	retries    int
+	executions uint
+	failures   uint
+	retries    uint
 	nextRetry  int64
 }
 
 // New constructor.
-func New(s Setting) *CircuitBreaker {
+func New(name string, s Setting) (*CircuitBreaker, error) {
+
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
+
+	if s.MaxRetryExecutionThreshold < s.RetrySuccessThreshold {
+		return nil, errors.New("max retry has to be greater than the retry threshold")
+	}
+
 	return &CircuitBreaker{
+		name:       name,
 		set:        s,
 		executions: 0,
 		failures:   0,
 		retries:    0,
 		nextRetry:  tsFuture,
-	}
+	}, nil
 }
 
 func (cb *CircuitBreaker) isHalfOpen() bool {
