@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mantzas/patron/reliability/circuitbreaker"
 	"github.com/mantzas/patron/trace"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -19,6 +20,7 @@ type Client interface {
 // TracedClient defines a HTTP client with tracing integrated.
 type TracedClient struct {
 	cl *http.Client
+	cb *circuitbreaker.CircuitBreaker
 }
 
 // New creates a new HTTP client.
@@ -28,6 +30,7 @@ func New(oo ...OptionFunc) (*TracedClient, error) {
 			Timeout:   60 * time.Second,
 			Transport: &nethttp.Transport{},
 		},
+		cb: nil,
 	}
 
 	for _, o := range oo {
@@ -48,14 +51,32 @@ func (tc *TracedClient) Do(ctx context.Context, req *http.Request) (*http.Respon
 		req,
 		nethttp.OperationName(trace.HTTPOpName("Client", req.Method, req.URL.String())),
 		nethttp.ComponentName(trace.HTTPClientComponent))
+
 	defer ht.Finish()
-	rsp, err := tc.cl.Do(req)
+
+	rsp, err := tc.do(req)
 	if err != nil {
 		ext.Error.Set(ht.Span(), true)
 	} else {
 		ext.HTTPStatusCode.Set(ht.Span(), uint16(rsp.StatusCode))
 	}
+
 	ext.HTTPMethod.Set(ht.Span(), req.Method)
 	ext.HTTPUrl.Set(ht.Span(), req.URL.String())
 	return rsp, err
+}
+
+func (tc *TracedClient) do(req *http.Request) (*http.Response, error) {
+	if tc.cb == nil {
+		return tc.cl.Do(req)
+	}
+
+	r, err := tc.cb.Execute(func() (interface{}, error) {
+		return tc.cl.Do(req)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return r.(*http.Response), nil
 }
