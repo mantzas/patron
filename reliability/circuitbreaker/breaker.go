@@ -1,6 +1,7 @@
 package circuitbreaker
 
 import (
+	"math"
 	"sync"
 	"time"
 )
@@ -17,12 +18,11 @@ type status int
 
 const (
 	close status = iota
-	halfOpen
 	open
 )
 
 var (
-	tsFuture  = time.Date(9999, 12, 31, 23, 59, 59, 999999, time.UTC).UnixNano()
+	tsFuture  = int64(math.MaxInt64)
 	openError = new(OpenError)
 )
 
@@ -49,7 +49,7 @@ type Executor interface {
 // CircuitBreaker implementation.
 type CircuitBreaker struct {
 	set Setting
-	sync.Mutex
+	sync.RWMutex
 	status     status
 	executions int
 	failures   int
@@ -68,13 +68,36 @@ func New(s Setting) *CircuitBreaker {
 	}
 }
 
+func (cb *CircuitBreaker) isHalfOpen() bool {
+	cb.RLock()
+	defer cb.RUnlock()
+	if cb.status == open && cb.nextRetry <= time.Now().UnixNano() {
+		return true
+	}
+	return false
+}
+
+func (cb *CircuitBreaker) isOpen() bool {
+	cb.RLock()
+	defer cb.RUnlock()
+	if cb.status == open && cb.nextRetry > time.Now().UnixNano() {
+		return true
+	}
+	return false
+}
+
+func (cb *CircuitBreaker) isClose() bool {
+	cb.RLock()
+	defer cb.RUnlock()
+	if cb.status == close {
+		return true
+	}
+	return false
+}
+
 // Execute the function enclosed.
 func (cb *CircuitBreaker) Execute(act Action) (interface{}, error) {
-
-	// calculate status
-	cb.calcStatus()
-
-	if cb.status == open {
+	if cb.isOpen() {
 		return nil, openError
 	}
 
@@ -88,35 +111,45 @@ func (cb *CircuitBreaker) Execute(act Action) (interface{}, error) {
 	return resp, err
 }
 
-func (cb *CircuitBreaker) calcStatus() {
+func (cb *CircuitBreaker) incFailure() {
+	// allow closed and half open to transition to open
+	if cb.isOpen() {
+		return
+	}
 	cb.Lock()
 	defer cb.Unlock()
 
-	switch cb.status {
-	case close:
-		if cb.failures >= cb.set.FailureThreshold {
-			cb.transitionToOpen()
-			return
-		}
+	cb.failures++
 
-	case open:
-		if cb.nextRetry >= time.Now().UnixNano() {
-			cb.transitionToHalfOpen()
-			return
-		}
-
-	case halfOpen:
-		if cb.retries >= cb.set.RetrySuccessThreshold {
-			cb.transitionToClose()
-			return
-		}
-
-		if cb.executions >= cb.set.MaxRetryExecutionThreshold {
-			cb.transitionToOpen()
-		}
+	if cb.status == close && cb.failures >= cb.set.FailureThreshold {
+		cb.transitionToOpen()
+		return
 	}
 
-	return
+	cb.executions++
+
+	if cb.executions < cb.set.MaxRetryExecutionThreshold {
+		return
+	}
+
+	cb.transitionToOpen()
+}
+
+func (cb *CircuitBreaker) incSuccess() {
+	// allow only half open in order to transition to closed
+	if !cb.isHalfOpen() {
+		return
+	}
+	cb.Lock()
+	defer cb.Unlock()
+
+	cb.retries++
+	cb.executions++
+
+	if cb.retries < cb.set.RetrySuccessThreshold {
+		return
+	}
+	cb.transitionToClose()
 }
 
 func (cb *CircuitBreaker) transitionToOpen() {
@@ -127,33 +160,10 @@ func (cb *CircuitBreaker) transitionToOpen() {
 	cb.nextRetry = time.Now().Add(cb.set.RetryTimeout).UnixNano()
 }
 
-func (cb *CircuitBreaker) transitionToHalfOpen() {
-	cb.status = halfOpen
-	cb.failures = 0
-	cb.executions = 0
-	cb.retries = 0
-}
-
 func (cb *CircuitBreaker) transitionToClose() {
 	cb.status = close
 	cb.failures = 0
 	cb.executions = 0
 	cb.retries = 0
 	cb.nextRetry = tsFuture
-}
-
-func (cb *CircuitBreaker) incFailure() {
-	cb.Lock()
-	defer cb.Unlock()
-
-	cb.failures++
-	cb.executions++
-}
-
-func (cb *CircuitBreaker) incSuccess() {
-	cb.Lock()
-	defer cb.Unlock()
-
-	cb.retries++
-	cb.executions++
 }

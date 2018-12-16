@@ -17,96 +17,144 @@ func TestNewCircuitBreaker(t *testing.T) {
 	assert.Equal(t, tsFuture, cb.nextRetry)
 }
 
-// func TestCircuitBreaker_Closed(t *testing.T) {
-// 	set := Setting{FailureThreshold: 1, RetryTimeout: 1 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-// 	cb := New(set)
-// 	_, err := cb.Execute(testSuccessAction)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, 0, cb.failures)
-// 	assert.Equal(t, 0, cb.executions)
-// 	assert.Equal(t, 0, cb.retries)
-// 	assert.Equal(t, utcFuture, cb.nextRetry)
-// }
+func TestCircuitBreaker_isHalfOpen(t *testing.T) {
+	type fields struct {
+		status    status
+		nextRetry int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{name: "closed", fields: fields{status: close, nextRetry: tsFuture}, want: false},
+		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, want: false},
+		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cb := &CircuitBreaker{
+				status:    tt.fields.status,
+				nextRetry: tt.fields.nextRetry,
+			}
+			assert.Equal(t, tt.want, cb.isHalfOpen())
+		})
+	}
+}
 
-// func TestCircuitBreaker_Open(t *testing.T) {
-// 	set := Setting{FailureThreshold: 1, RetryTimeout: 1 * time.Second, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-// 	cb := New(set)
-// 	_, err := cb.Execute(testFailureAction)
-// 	assert.Error(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 0, cb.executions)
-// 	assert.Equal(t, 0, cb.retries)
-// 	assert.True(t, time.Now().UTC().Before(cb.nextRetry))
-// 	_, err = cb.Execute(testFailureAction)
-// 	assert.Error(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 0, cb.executions)
-// 	assert.Equal(t, 0, cb.retries)
-// 	assert.True(t, time.Now().UTC().Before(cb.nextRetry))
-// }
+func TestCircuitBreaker_isOpen(t *testing.T) {
+	type fields struct {
+		status    status
+		nextRetry int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{name: "closed", fields: fields{status: close, nextRetry: tsFuture}, want: false},
+		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, want: false},
+		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cb := &CircuitBreaker{
+				status:    tt.fields.status,
+				nextRetry: tt.fields.nextRetry,
+			}
+			assert.Equal(t, tt.want, cb.isOpen())
+		})
+	}
+}
 
-// func TestCircuitBreaker_HalfOpen_Closed(t *testing.T) {
-// 	set := Setting{FailureThreshold: 1, RetryTimeout: 5 * time.Millisecond, RetrySuccessThreshold: 1, MaxRetryExecutionThreshold: 1}
-// 	cb := New(set)
-// 	_, err := cb.Execute(testFailureAction)
-// 	assert.Error(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 0, cb.executions)
-// 	assert.Equal(t, 0, cb.retries)
-// 	assert.True(t, time.Now().UTC().Before(cb.nextRetry))
-// 	time.Sleep(10 * time.Millisecond)
-// 	_, err = cb.Execute(testSuccessAction)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 1, cb.executions)
-// 	assert.Equal(t, 1, cb.retries)
-// 	assert.True(t, time.Now().UTC().After(cb.nextRetry))
-// 	_, err = cb.Execute(testSuccessAction)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, 0, cb.failures)
-// 	assert.Equal(t, 0, cb.executions)
-// 	assert.Equal(t, 0, cb.retries)
-// 	assert.Equal(t, utcFuture, cb.nextRetry)
-// }
+func TestCircuitBreaker_isClose(t *testing.T) {
+	type fields struct {
+		status    status
+		nextRetry int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{name: "closed", fields: fields{status: close, nextRetry: tsFuture}, want: true},
+		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, want: false},
+		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cb := &CircuitBreaker{
+				status:    tt.fields.status,
+				nextRetry: tt.fields.nextRetry,
+			}
+			assert.Equal(t, tt.want, cb.isClose())
+		})
+	}
+}
 
-// func TestCircuitBreaker_HalfOpen_Open(t *testing.T) {
-// 	set := Setting{
-// 		FailureThreshold:           1,
-// 		RetryTimeout:               5 * time.Millisecond,
-// 		RetrySuccessThreshold:      3,
-// 		MaxRetryExecutionThreshold: 2,
-// 	}
-// 	cb := New(set)
-// 	_, err := cb.Execute(testFailureAction)
-// 	assert.Error(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 0, cb.executions)
-// 	assert.Equal(t, 0, cb.retries)
-// 	assert.True(t, time.Now().UTC().Before(cb.nextRetry))
-// 	assert.Equal(t, closed, cb.status)
-// 	time.Sleep(10 * time.Millisecond)
-// 	_, err = cb.Execute(testSuccessAction)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 1, cb.executions)
-// 	assert.Equal(t, 1, cb.retries)
-// 	assert.True(t, time.Now().UTC().After(cb.nextRetry))
-// 	assert.Equal(t, halfOpen, cb.status)
-// 	_, err = cb.Execute(testSuccessAction)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 2, cb.executions)
-// 	assert.Equal(t, 2, cb.retries)
-// 	assert.True(t, time.Now().UTC().After(cb.nextRetry))
-// 	assert.Equal(t, halfOpen, cb.status)
-// 	_, err = cb.Execute(testSuccessAction)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, 1, cb.failures)
-// 	assert.Equal(t, 3, cb.executions)
-// 	assert.Equal(t, 3, cb.retries)
-// 	assert.True(t, time.Now().UTC().After(cb.nextRetry))
-// 	assert.Equal(t, halfOpen, cb.status)
-// }
+func TestCircuitBreaker_Close_Open_HalfOpen_Open_HalfOpen_Close(t *testing.T) {
+	retryTimeout := 5 * time.Millisecond
+	waitRetryTimeout := 7 * time.Millisecond
+
+	set := Setting{FailureThreshold: 1, RetryTimeout: retryTimeout, RetrySuccessThreshold: 2, MaxRetryExecutionThreshold: 2}
+	cb := New(set)
+	_, err := cb.Execute(testSuccessAction)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, cb.isClose())
+	assert.Equal(t, tsFuture, cb.nextRetry)
+	// will transition to open
+	_, err = cb.Execute(testFailureAction)
+	assert.Error(t, err)
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, cb.isOpen())
+	assert.True(t, cb.nextRetry < tsFuture)
+	// open, returns err immediately
+	_, err = cb.Execute(testSuccessAction)
+	assert.Error(t, err)
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, cb.isOpen())
+	assert.True(t, cb.nextRetry < tsFuture)
+	// should be half open now and will stay in there
+	time.Sleep(waitRetryTimeout)
+	_, err = cb.Execute(testFailureAction)
+	assert.EqualError(t, err, "Test error")
+	assert.Equal(t, 1, cb.failures)
+	assert.Equal(t, 1, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, cb.isHalfOpen())
+	assert.True(t, cb.nextRetry < tsFuture)
+	// should be half open now and will transition to open
+	_, err = cb.Execute(testFailureAction)
+	assert.EqualError(t, err, "Test error")
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, cb.isOpen())
+	assert.True(t, cb.nextRetry < tsFuture)
+	// should be half open now and will transition to close
+	time.Sleep(waitRetryTimeout)
+	_, err = cb.Execute(testSuccessAction)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 1, cb.executions)
+	assert.Equal(t, 1, cb.retries)
+	assert.True(t, cb.isHalfOpen())
+	assert.True(t, cb.nextRetry < tsFuture)
+	_, err = cb.Execute(testSuccessAction)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cb.failures)
+	assert.Equal(t, 0, cb.executions)
+	assert.Equal(t, 0, cb.retries)
+	assert.True(t, cb.isClose())
+	assert.Equal(t, tsFuture, cb.nextRetry)
+}
 
 var err error
 
@@ -115,7 +163,7 @@ func BenchmarkCircuitBreaker_Execute(b *testing.B) {
 	c := New(set)
 
 	for i := 0; i < b.N; i++ {
-		_, err = c.Execute(testSuccessAction)
+		_, err = c.Execute(testFailureAction)
 	}
 }
 
