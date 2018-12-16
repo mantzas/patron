@@ -36,12 +36,11 @@ The latest version can be installed with
 go get github.com/mantzas/patron/cmd/patron
 ```
 
-The below is an example of a service created with the cli that has a module name `github.com/mantzas/test` and will be created in the test folder in the currend directory.
+The below is an example of a service created with the cli that has a module name `github.com/mantzas/test` and will be created in the test folder in the current directory.
 
 ```go
 patron -m "github.com/mantzas/test" -p "test"
 ```
-
 
 ## Service
 
@@ -156,7 +155,7 @@ Everything else is exactly the same.
 
 ## Metrics and Tracing
 
-Tracing and metrics are provided by jaeger's implementation of the OpenTracing project.
+Tracing and metrics are provided by Jaeger's implementation of the OpenTracing project.
 Every component has been integrated with the above library and produces traces and metrics.
 Metrics are provided with the default HTTP component at the `/metrics` route for Prometheus to scrape.
 Tracing will be send to a jaeger agent which can be setup though environment variables mentioned in the config section. Sane defaults are applied for making the use easy.
@@ -166,6 +165,26 @@ downstream systems. The tracing information is added to each implementations hea
 - HTTP
 - AMQP
 - Kafka
+- SQL
+
+## Reliability
+
+The reliability package contains the following implementations:
+
+- Circuit Breaker
+
+### Circuit Breaker
+
+The circuit breaker supports a half-open state which allows to probe for successful responses in order to close the circuit again. Every aspect of the circuit breaker is configurable via it's settings.
+
+## Clients
+
+The following clients have been implemented:
+
+- http, with distributed tracing and optional circuit breaker
+- sql, with distributed tracing
+- kafka, with distributed tracing
+- amqp, with distributed tracing
 
 ## Logging
 
