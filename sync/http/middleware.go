@@ -5,6 +5,7 @@ import (
 
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/sync/http/auth"
 	"github.com/mantzas/patron/trace"
 )
 
@@ -52,7 +53,7 @@ func (w *responseWriter) WriteHeader(code int) {
 }
 
 // Middleware which returns all selected middlewares.
-func Middleware(trace bool, auth Authenticator, path string, next http.HandlerFunc) http.HandlerFunc {
+func Middleware(trace bool, auth auth.Authenticator, path string, next http.HandlerFunc) http.HandlerFunc {
 	if trace {
 		if auth == nil {
 			return tracingMiddleware(path, recoveryMiddleware(next))
@@ -96,7 +97,7 @@ func recoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func authMiddleware(auth Authenticator, next http.HandlerFunc) http.HandlerFunc {
+func authMiddleware(auth auth.Authenticator, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authenticated, err := auth.Authenticate(r)
 		if err != nil {

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/sync/http/auth"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +33,7 @@ func TestMiddleware(t *testing.T) {
 	type args struct {
 		next  http.HandlerFunc
 		trace bool
-		auth  Authenticator
+		auth  auth.Authenticator
 	}
 	tests := []struct {
 		name         string
