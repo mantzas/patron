@@ -36,7 +36,7 @@ func TestSetRoutes(t *testing.T) {
 		rr      []Route
 		wantErr bool
 	}{
-		{"success", []Route{NewGetRoute("/", testHandler{}.Process, true)}, false},
+		{"success", []Route{NewGetRoute("/", testHandler{}.Process, true, nil)}, false},
 		{"error for no routes", nil, true},
 	}
 	for _, tt := range tests {

@@ -36,5 +36,5 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func infoRoute() Route {
-	return NewRouteRaw("/info", http.MethodGet, infoHandler, false)
+	return NewRouteRaw("/info", http.MethodGet, infoHandler, false, nil)
 }

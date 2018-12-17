@@ -40,8 +40,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
-	rr := []Route{NewRoute("/", "GET", nil, true)}
-	s, err := New(Routes(rr))
+	rr := []Route{NewRoute("/", "GET", nil, true, nil)}
+	s, err := New(Routes(rr), Port(50003))
 	assert.NoError(t, err)
 	done := make(chan bool)
 	ctx, cnl := context.WithCancel(context.Background())
@@ -56,8 +56,8 @@ func TestComponent_ListenAndServe_DefaultRoutes_Shutdown(t *testing.T) {
 }
 
 func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
-	rr := []Route{NewRoute("/", "GET", nil, true)}
-	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.key"))
+	rr := []Route{NewRoute("/", "GET", nil, true, nil)}
+	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.key"), Port(50001))
 	assert.NoError(t, err)
 	done := make(chan bool)
 	ctx, cnl := context.WithCancel(context.Background())
@@ -72,12 +72,12 @@ func TestComponent_ListenAndServeTLS_DefaultRoutes_Shutdown(t *testing.T) {
 }
 
 func TestInfo(t *testing.T) {
-	rr := []Route{NewRoute("/", "GET", nil, true)}
-	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.key"))
+	rr := []Route{NewRoute("/", "GET", nil, true, nil)}
+	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.key"), Port(50005))
 	assert.NoError(t, err)
 	expected := make(map[string]interface{})
 	expected["type"] = "https"
-	expected["port"] = 50000
+	expected["port"] = 50005
 	expected["read-timeout"] = httpReadTimeout.String()
 	expected["write-timeout"] = httpWriteTimeout.String()
 	expected["idle-timeout"] = httpIdleTimeout.String()
@@ -87,7 +87,7 @@ func TestInfo(t *testing.T) {
 }
 
 func TestComponent_ListenAndServeTLS_FailsInvalidCerts(t *testing.T) {
-	rr := []Route{NewRoute("/", "GET", nil, true)}
+	rr := []Route{NewRoute("/", "GET", nil, true, nil)}
 	s, err := New(Routes(rr), Secure("testdata/server.pem", "testdata/server.pem"))
 	assert.NoError(t, err)
 	assert.Error(t, s.Run(context.Background()))

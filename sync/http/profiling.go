@@ -7,17 +7,17 @@ import (
 
 func profilingRoutes() []Route {
 	return []Route{
-		NewRouteRaw("/debug/pprof/", http.MethodGet, profIndex, false),
-		NewRouteRaw("/debug/pprof/allocs/", http.MethodGet, pprofAllocsIndex, false),
-		NewRouteRaw("/debug/pprof/cmdline/", http.MethodGet, profCmdline, false),
-		NewRouteRaw("/debug/pprof/profile/", http.MethodGet, profProfile, false),
-		NewRouteRaw("/debug/pprof/symbol/", http.MethodGet, profSymbol, false),
-		NewRouteRaw("/debug/pprof/trace/", http.MethodGet, profTrace, false),
-		NewRouteRaw("/debug/pprof/heap/", http.MethodGet, profHeap, false),
-		NewRouteRaw("/debug/pprof/goroutine/", http.MethodGet, profGoroutine, false),
-		NewRouteRaw("/debug/pprof/block/", http.MethodGet, profBlock, false),
-		NewRouteRaw("/debug/pprof/threadcreate/", http.MethodGet, profThreadcreate, false),
-		NewRouteRaw("/debug/pprof/mutex/", http.MethodGet, profMutex, false),
+		NewRouteRaw("/debug/pprof/", http.MethodGet, profIndex, false, nil),
+		NewRouteRaw("/debug/pprof/allocs/", http.MethodGet, pprofAllocsIndex, false, nil),
+		NewRouteRaw("/debug/pprof/cmdline/", http.MethodGet, profCmdline, false, nil),
+		NewRouteRaw("/debug/pprof/profile/", http.MethodGet, profProfile, false, nil),
+		NewRouteRaw("/debug/pprof/symbol/", http.MethodGet, profSymbol, false, nil),
+		NewRouteRaw("/debug/pprof/trace/", http.MethodGet, profTrace, false, nil),
+		NewRouteRaw("/debug/pprof/heap/", http.MethodGet, profHeap, false, nil),
+		NewRouteRaw("/debug/pprof/goroutine/", http.MethodGet, profGoroutine, false, nil),
+		NewRouteRaw("/debug/pprof/block/", http.MethodGet, profBlock, false, nil),
+		NewRouteRaw("/debug/pprof/threadcreate/", http.MethodGet, profThreadcreate, false, nil),
+		NewRouteRaw("/debug/pprof/mutex/", http.MethodGet, profMutex, false, nil),
 	}
 }
 

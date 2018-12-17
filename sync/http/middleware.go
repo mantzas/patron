@@ -51,13 +51,21 @@ func (w *responseWriter) WriteHeader(code int) {
 	w.statusHeaderWritten = true
 }
 
-// DefaultMiddleware which handles tracing and recovery.
-func DefaultMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
-	return TracingMiddleware(path, RecoveryMiddleware(next))
+// Middleware which returns all selected middlewares.
+func Middleware(trace bool, auth Authenticator, path string, next http.HandlerFunc) http.HandlerFunc {
+	if trace {
+		if auth == nil {
+			return tracingMiddleware(path, recoveryMiddleware(next))
+		}
+		return tracingMiddleware(path, authMiddleware(auth, recoveryMiddleware(next)))
+	}
+	if auth == nil {
+		return recoveryMiddleware(next)
+	}
+	return authMiddleware(auth, recoveryMiddleware(next))
 }
 
-// TracingMiddleware for handling tracing and metrics.
-func TracingMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
+func tracingMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sp, r := trace.HTTPSpan(path, r)
 		lw := newResponseWriter(w)
@@ -66,8 +74,7 @@ func TracingMiddleware(path string, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// RecoveryMiddleware for recovering from failed requests.
-func RecoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func recoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -85,6 +92,23 @@ func RecoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()
+		next(w, r)
+	}
+}
+
+func authMiddleware(auth Authenticator, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authenticated, err := auth.Authenticate(r)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		if !authenticated {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
 		next(w, r)
 	}
 }

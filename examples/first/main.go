@@ -42,7 +42,7 @@ func main() {
 
 	// Set up routes
 	routes := []patronhttp.Route{
-		patronhttp.NewPostRoute("/", first, true),
+		patronhttp.NewPostRoute("/", first, true, nil),
 	}
 
 	srv, err := patron.New(

@@ -228,7 +228,7 @@ func Test_extractParams(t *testing.T) {
 	}
 
 	router := httprouter.New()
-	route := NewRoute("/users/:id/status", "GET", proc, false)
+	route := NewRoute("/users/:id/status", "GET", proc, false, nil)
 	router.HandlerFunc(route.Method, route.Pattern, route.Handler)
 	router.ServeHTTP(httptest.NewRecorder(), req)
 	assert.Equal(t, "1", fields["id"])

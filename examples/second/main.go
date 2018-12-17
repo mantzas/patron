@@ -57,7 +57,7 @@ func main() {
 
 	// Set up routes
 	routes := []patronhttp.Route{
-		patronhttp.NewGetRoute("/", httpCmp.second, true),
+		patronhttp.NewGetRoute("/", httpCmp.second, true, nil),
 	}
 
 	srv, err := patron.New(
