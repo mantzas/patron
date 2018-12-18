@@ -253,3 +253,25 @@ The factory function type defines a factory for creating a logger.
 ```go
 type FactoryFunc func(map[string]interface{}) Logger
 ```
+
+## Security
+
+The necessary abstraction are available to implement authentication in the following components:
+
+- HTTP
+
+### HTTP
+
+In order to use authentication, a authenticator has to be implement following the interface:
+
+```go
+type Authenticator interface {
+  Authenticate(req *http.Request) (bool, error)
+}
+```
+
+This authenticator can then be used to set up routes with authentication.
+
+The following authenticator are available:
+
+- API key authenticator, see examples

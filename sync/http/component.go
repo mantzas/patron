@@ -73,11 +73,7 @@ func (c *Component) Run(ctx context.Context) error {
 	c.Lock()
 	log.Debug("applying tracing to routes")
 	for i := 0; i < len(c.routes); i++ {
-		if c.routes[i].Trace {
-			c.routes[i].Handler = DefaultMiddleware(c.routes[i].Pattern, c.routes[i].Handler)
-		} else {
-			c.routes[i].Handler = RecoveryMiddleware(c.routes[i].Handler)
-		}
+		c.routes[i].Handler = Middleware(c.routes[i].Trace, c.routes[i].Auth, c.routes[i].Pattern, c.routes[i].Handler)
 	}
 	chFail := make(chan error)
 	srv := c.createHTTPServer()

@@ -18,7 +18,7 @@ func TestRoutes(t *testing.T) {
 	}{
 		{"failure due to empty routes", args{rr: []http.Route{}}, true},
 		{"failure due to nil routes", args{rr: nil}, true},
-		{"success", args{rr: []http.Route{http.NewRoute("/", "GET", nil, true)}}, false},
+		{"success", args{rr: []http.Route{http.NewRoute("/", "GET", nil, true, nil)}}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

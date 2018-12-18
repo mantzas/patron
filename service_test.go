@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	route := http.NewRoute("/", "GET", nil, true)
+	route := http.NewRoute("/", "GET", nil, true, nil)
 	type args struct {
 		name string
 		opt  OptionFunc

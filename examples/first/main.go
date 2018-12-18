@@ -72,6 +72,7 @@ func first(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 	}
 	secondRouteReq.Header.Add("Content-Type", "application/json")
 	secondRouteReq.Header.Add("Accept", "application/json")
+	secondRouteReq.Header.Add("Authorization", "Apikey 123456")
 	cl, err := tracehttp.New(tracehttp.Timeout(5 * time.Second))
 	if err != nil {
 		return nil, err
