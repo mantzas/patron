@@ -11,6 +11,7 @@ import (
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync"
 	patronhttp "github.com/mantzas/patron/sync/http"
+	"github.com/mantzas/patron/sync/http/auth/apikey"
 	tracehttp "github.com/mantzas/patron/trace/http"
 	"github.com/mantzas/patron/trace/kafka"
 	"github.com/pkg/errors"
@@ -55,9 +56,14 @@ func main() {
 		log.Fatalf("failed to create processor %v", err)
 	}
 
+	auth, err := apikey.New(&apiKeyValidator{validKey: "123456"})
+	if err != nil {
+		log.Fatalf("failed to create authenticator %v", err)
+	}
+
 	// Set up routes
 	routes := []patronhttp.Route{
-		patronhttp.NewGetRoute("/", httpCmp.second, true),
+		patronhttp.NewAuthGetRoute("/", httpCmp.second, true, auth),
 	}
 
 	srv, err := patron.New(
@@ -121,4 +127,15 @@ func (hc *httpComponent) second(ctx context.Context, req *sync.Request) (*sync.R
 
 	log.Infof("request processed: %s", m)
 	return sync.NewResponse(fmt.Sprintf("got %s from google", rsp.Status)), nil
+}
+
+type apiKeyValidator struct {
+	validKey string
+}
+
+func (av apiKeyValidator) Validate(key string) (bool, error) {
+	if key == av.validKey {
+		return true, nil
+	}
+	return false, nil
 }
