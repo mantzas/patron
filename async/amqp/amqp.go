@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -157,7 +156,7 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					chErr <- err
 					return
 				}
-				chCtx = log.WithContext(chCtx, log.Sub(map[string]interface{}{"messageID": strconv.FormatUint(d.DeliveryTag, 10)}))
+				chCtx = log.WithContext(chCtx, log.Sub(map[string]interface{}{"messageID": uuid.New().String()}))
 				chMsg <- &message{
 					ctx:     chCtx,
 					dec:     dec,

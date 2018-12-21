@@ -223,6 +223,25 @@ The following implementations are provided as sub-package and are by default wir
 
 - zerolog, which supports the excellent [zerolog](https://github.com/rs/zerolog) library and is set up by default
 
+### Context Logging
+
+Logs can be associated with some contextual data e.g. a request id. Every line logged should contain this id thus grouping the logs together. This is achieved with the usage of the context package like demonstrated bellow:
+
+```go
+ctx := log.WithContext(r.Context(), log.Sub(map[string]interface{}{"requestID": uuid.New().String()}))
+```
+
+The context travels through the code as a argument and can be acquired as follows:
+
+```go
+logger:=log.FromContext(ctx)
+logger.Infof("request processed")
+```
+
+Benchmarks are provided to show the performance of this.
+
+`Every provided component creates a context logger which is then propagated in the context`
+
 ### Logger
 
 The logger interface defines the actual logger.

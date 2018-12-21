@@ -136,6 +136,31 @@ func TestLog_Debugf(t *testing.T) {
 	assert.Equal(t, 1, l.debugCount)
 }
 
+var bCtx context.Context
+
+func Benchmark_WithContext(b *testing.B) {
+	l := Sub(map[string]interface{}{"subkey1": "subval1"})
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		bCtx = WithContext(context.Background(), l)
+	}
+}
+
+var l Logger
+
+func Benchmark_FromContext(b *testing.B) {
+	l := Sub(map[string]interface{}{"subkey1": "subval1"})
+	ctx := WithContext(context.Background(), l)
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		l = FromContext(ctx)
+	}
+}
+
 type testLogger struct {
 	debugCount int
 	infoCount  int
