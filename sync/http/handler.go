@@ -46,48 +46,43 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 }
 
 func determineEncoding(r *http.Request) (string, encoding.DecodeFunc, encoding.EncodeFunc, error) {
+	cth, cok := r.Header[encoding.ContentTypeHeader]
+	ach, aok := r.Header[encoding.AcceptHeader]
 
-	dec, err := determineDecoder(r.Header)
-	if err != nil {
-		return "", nil, nil, err
+	// No headers default to JSON
+	if !cok && !aok {
+		return json.TypeCharset, json.Decode, json.Encode, nil
 	}
 
-	ct, enc, err := determineEncoder(r.Header)
-	if err != nil {
-		return "", nil, nil, err
+	var enc encoding.EncodeFunc
+	var dec encoding.DecodeFunc
+	var ct string
+
+	if cok {
+		switch cth[0] {
+		case "*/*", json.Type, json.TypeCharset:
+			enc = json.Encode
+			dec = json.Decode
+			ct = json.TypeCharset
+		default:
+			return "", nil, nil, errors.New("content type header not supported")
+		}
+	}
+
+	if aok {
+		switch ach[0] {
+		case "*/*", json.Type, json.TypeCharset:
+			enc = json.Encode
+			if dec == nil {
+				dec = json.Decode
+			}
+			ct = json.TypeCharset
+		default:
+			return "", nil, nil, errors.New("accept header not supported")
+		}
 	}
 
 	return ct, dec, enc, nil
-}
-
-func determineDecoder(hdr http.Header) (encoding.DecodeFunc, error) {
-	h, ok := hdr[encoding.ContentTypeHeader]
-	if !ok {
-		return json.Decode, nil
-	}
-
-	switch h[0] {
-	case json.Type, json.TypeCharset:
-		return json.Decode, nil
-	}
-
-	return nil, errors.New("content type header not supported")
-}
-
-func determineEncoder(hdr http.Header) (string, encoding.EncodeFunc, error) {
-	h, ok := hdr[encoding.AcceptHeader]
-	if !ok {
-		return json.TypeCharset, json.Encode, nil
-	}
-
-	switch h[0] {
-	case "*/*":
-		return json.TypeCharset, json.Encode, nil
-	case json.Type, json.TypeCharset:
-		return h[0], json.Encode, nil
-	}
-
-	return "", nil, errors.New("accept header not supported")
 }
 
 func extractFields(r *http.Request) map[string]string {

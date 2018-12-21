@@ -33,14 +33,15 @@ func Test_determineEncoding(t *testing.T) {
 		args    args
 		decode  encoding.DecodeFunc
 		encode  encoding.EncodeFunc
+		ct      string
 		wantErr bool
 	}{
-		{"success", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, false},
-		{"success, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, false},
-		{"wrong accept", args{req: request(t, json.Type, "xxx")}, nil, nil, true},
-		{"missing header, defaults json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, false},
-		{"accept */*, defaults to json", args{req: request(t, json.TypeCharset, "*/*")}, json.Decode, json.Encode, false},
-		{"wrong content", args{req: request(t, "application/xml", json.TypeCharset)}, nil, nil, true},
+		{"success", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"success, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"wrong accept", args{req: request(t, json.Type, "xxx")}, nil, nil, json.TypeCharset, true},
+		{"missing header, defaults json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"accept */*, defaults to json", args{req: request(t, json.TypeCharset, "*/*")}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"wrong content", args{req: request(t, "application/xml", json.TypeCharset)}, nil, nil, json.TypeCharset, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -54,7 +55,7 @@ func Test_determineEncoding(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, got)
 				assert.NotNil(t, got1)
-				assert.Equal(t, json.TypeCharset, ct)
+				assert.Equal(t, tt.ct, ct)
 			}
 		})
 	}
