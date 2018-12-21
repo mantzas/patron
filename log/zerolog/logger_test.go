@@ -38,6 +38,16 @@ func TestLogger_Sub(t *testing.T) {
 	assert.Equal(t, "{\"lvl\":\"debug\",\"key\":\"value\",\"subkey1\":\"subval1\",\"msg\":\"testing\"}\n", b.String())
 }
 
+func TestLogger_Sub_NoFields(t *testing.T) {
+	var b bytes.Buffer
+	zl := zerolog.New(&b)
+	l := NewLogger(&zl, log.DebugLevel, f)
+	sl := l.Sub(nil)
+	assert.NotNil(t, sl)
+	sl.Debug("testing")
+	assert.Equal(t, "{\"lvl\":\"debug\",\"key\":\"value\",\"msg\":\"testing\"}\n", b.String())
+}
+
 func TestLogger_Panic(t *testing.T) {
 	var b bytes.Buffer
 	zl := zerolog.New(&b)

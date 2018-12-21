@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,23 @@ func TestSetup(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLog_Context_NilLogger(t *testing.T) {
+	ctx := context.Background()
+	ctx = WithContext(ctx, nil)
+	slc := FromContext(ctx)
+	assert.NotNil(t, slc)
+}
+
+func TestLog_Context(t *testing.T) {
+	l := testLogger{}
+	logger = &l
+	sl := Sub(map[string]interface{}{})
+	ctx := context.Background()
+	ctx = WithContext(ctx, sl)
+	slc := FromContext(ctx)
+	assert.NotNil(t, slc)
 }
 
 func TestLog_Sub(t *testing.T) {

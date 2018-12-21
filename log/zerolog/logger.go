@@ -33,6 +33,9 @@ func NewLogger(l *zerolog.Logger, lvl log.Level, f map[string]interface{}) log.L
 
 // Sub returns a sub logger with new fields attached.
 func (l *Logger) Sub(ff map[string]interface{}) log.Logger {
+	if ff == nil {
+		return l
+	}
 	sl := l.logger.With().Fields(ff).Logger()
 	return &Logger{logger: &sl}
 }

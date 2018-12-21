@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+
 	"github.com/mantzas/patron/errors"
 )
 
@@ -41,6 +43,8 @@ type Logger interface {
 	Debugf(string, ...interface{})
 }
 
+type ctxKey struct{}
+
 // FactoryFunc function type for creating loggers.
 type FactoryFunc func(map[string]interface{}) Logger
 
@@ -58,6 +62,19 @@ func Setup(f FactoryFunc, fls map[string]interface{}) error {
 
 	logger = f(fls)
 	return nil
+}
+
+// FromContext returns the logger in the context or a nil logger.
+func FromContext(ctx context.Context) Logger {
+	if l, ok := ctx.Value(ctxKey{}).(Logger); ok {
+		return l
+	}
+	return &nilLogger{}
+}
+
+// WithContext associates a logger with a context for later reuse.
+func WithContext(ctx context.Context, l Logger) context.Context {
+	return context.WithValue(ctx, ctxKey{}, l)
 }
 
 // Sub returns a sub logger with new fields attached.
