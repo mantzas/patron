@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mantzas/patron"
+	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync"
 	patronhttp "github.com/mantzas/patron/sync/http"
@@ -96,26 +97,26 @@ func newHTTPComponent(kafkaBroker, topic, url string) (*httpComponent, error) {
 
 func (hc *httpComponent) second(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 
-	var m string
-	err := req.Decode(&m)
+	var u examples.User
+	err := req.Decode(&u)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode message")
 	}
 
 	googleReq, err := http.NewRequest("GET", "https://www.google.com", nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create requestfor www.google.com")
+		return nil, errors.Wrap(err, "failed to create request for www.google.com")
 	}
 	cl, err := tracehttp.New(tracehttp.Timeout(5 * time.Second))
 	if err != nil {
 		return nil, err
 	}
-	rsp, err := cl.Do(ctx, googleReq)
+	_, err = cl.Do(ctx, googleReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get www.google.com")
 	}
 
-	kafkaMsg, err := kafka.NewJSONMessage(hc.topic, m)
+	kafkaMsg, err := kafka.NewJSONMessage(hc.topic, &u)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +126,8 @@ func (hc *httpComponent) second(ctx context.Context, req *sync.Request) (*sync.R
 		return nil, err
 	}
 
-	log.FromContext(ctx).Infof("request processed: %s", m)
-	return sync.NewResponse(fmt.Sprintf("got %s from google", rsp.Status)), nil
+	log.FromContext(ctx).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
+	return nil, nil
 }
 
 type apiKeyValidator struct {

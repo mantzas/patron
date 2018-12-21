@@ -8,6 +8,7 @@ import (
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/async/amqp"
+	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
 )
 
@@ -88,13 +89,13 @@ func newAmqpComponent(url, queue, exchange string) (*amqpComponent, error) {
 }
 
 func (ac *amqpComponent) Process(msg async.Message) error {
-	var m string
+	var u examples.User
 
-	err := msg.Decode(&m)
+	err := msg.Decode(&u)
 	if err != nil {
 		return err
 	}
 
-	log.FromContext(msg.Context()).Infof("request processed: %s", m)
+	log.FromContext(msg.Context()).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
 	return nil
 }

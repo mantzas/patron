@@ -9,18 +9,14 @@ import (
 	"time"
 
 	"github.com/mantzas/patron"
-	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
+	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync"
 	patronhttp "github.com/mantzas/patron/sync/http"
 	tracehttp "github.com/mantzas/patron/trace/http"
 	"github.com/pkg/errors"
 )
-
-type user struct {
-	Firstname string `json:"firstname,omitempty"`
-	Lastname  string `json:"lastname,omitempty"`
-}
 
 func init() {
 	err := os.Setenv("PATRON_LOG_LEVEL", "debug")
@@ -67,14 +63,14 @@ func main() {
 
 func first(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 
-	var u user
+	var u examples.User
 
 	err := req.Decode(&u)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode request")
 	}
 
-	b, err := json.Encode(fmt.Sprintf("%s %s", u.Firstname, u.Lastname))
+	b, err := protobuf.Encode(&u)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed create request")
 	}
@@ -83,8 +79,8 @@ func first(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed create request")
 	}
-	secondRouteReq.Header.Add("Content-Type", "application/json")
-	secondRouteReq.Header.Add("Accept", "application/json")
+	secondRouteReq.Header.Add("Content-Type", protobuf.Type)
+	secondRouteReq.Header.Add("Accept", protobuf.Type)
 	secondRouteReq.Header.Add("Authorization", "Apikey 123456")
 	cl, err := tracehttp.New(tracehttp.Timeout(5 * time.Second))
 	if err != nil {
@@ -95,6 +91,6 @@ func first(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 		return nil, errors.Wrap(err, "failed to post to second service")
 	}
 
-	log.FromContext(ctx).Infof("request processed")
+	log.FromContext(ctx).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
 	return sync.NewResponse(fmt.Sprintf("got %s from second HTTP route", rsp.Status)), nil
 }

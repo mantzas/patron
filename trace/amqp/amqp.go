@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/streadway/amqp"
 )
@@ -31,6 +32,15 @@ func NewJSONMessage(d interface{}) (*Message, error) {
 		return nil, errors.Wrap(err, "failed to marshal to JSON")
 	}
 	return &Message{contentType: json.Type, body: body}, nil
+}
+
+// NewProtobufMessage creates a new message with a protobuf encoded body.
+func NewProtobufMessage(d interface{}) (*Message, error) {
+	body, err := protobuf.Encode(d)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal to protobuf")
+	}
+	return &Message{contentType: protobuf.Type, body: body}, nil
 }
 
 // Publisher interface of a RabbitMQ publisher.
