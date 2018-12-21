@@ -27,6 +27,13 @@ func TestSetup(t *testing.T) {
 	}
 }
 
+func TestLog_Sub(t *testing.T) {
+	l := testLogger{}
+	logger = &l
+	sl := Sub(map[string]interface{}{})
+	assert.NotNil(t, sl)
+}
+
 func TestLog_Panic(t *testing.T) {
 	l := testLogger{}
 	logger = &l
@@ -118,6 +125,10 @@ type testLogger struct {
 	errorCount int
 	fatalCount int
 	panicCount int
+}
+
+func (t *testLogger) Sub(map[string]interface{}) Logger {
+	return t
 }
 
 func (t *testLogger) Panic(args ...interface{}) {

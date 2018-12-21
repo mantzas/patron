@@ -31,6 +31,12 @@ func NewLogger(l *zerolog.Logger, lvl log.Level, f map[string]interface{}) log.L
 	return &Logger{logger: &zl}
 }
 
+// Sub returns a sub logger with new fields attached.
+func (l *Logger) Sub(ff map[string]interface{}) log.Logger {
+	sl := l.logger.With().Fields(ff).Logger()
+	return &Logger{logger: &sl}
+}
+
 // Panic logging.
 func (l *Logger) Panic(args ...interface{}) {
 	l.logger.Panic().Msg(fmt.Sprint(args...))
