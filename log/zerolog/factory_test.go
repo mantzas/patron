@@ -32,7 +32,7 @@ func Test_sourceFields(t *testing.T) {
 	key, src, ok := sourceFields(1)
 	assert.True(t, ok)
 	assert.Equal(t, "src", key)
-	assert.Equal(t, "zerolog/factory_test.go:31", src)
+	assert.Equal(t, "zerolog/factory_test.go:32", src)
 }
 
 var l log.Logger
