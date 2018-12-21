@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,30 @@ func TestSetup(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLog_Context_NilLogger(t *testing.T) {
+	ctx := context.Background()
+	ctx = WithContext(ctx, nil)
+	slc := FromContext(ctx)
+	assert.NotNil(t, slc)
+}
+
+func TestLog_Context(t *testing.T) {
+	l := testLogger{}
+	logger = &l
+	sl := Sub(map[string]interface{}{})
+	ctx := context.Background()
+	ctx = WithContext(ctx, sl)
+	slc := FromContext(ctx)
+	assert.NotNil(t, slc)
+}
+
+func TestLog_Sub(t *testing.T) {
+	l := testLogger{}
+	logger = &l
+	sl := Sub(map[string]interface{}{})
+	assert.NotNil(t, sl)
 }
 
 func TestLog_Panic(t *testing.T) {
@@ -111,6 +136,31 @@ func TestLog_Debugf(t *testing.T) {
 	assert.Equal(t, 1, l.debugCount)
 }
 
+var bCtx context.Context
+
+func Benchmark_WithContext(b *testing.B) {
+	l := Sub(map[string]interface{}{"subkey1": "subval1"})
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		bCtx = WithContext(context.Background(), l)
+	}
+}
+
+var l Logger
+
+func Benchmark_FromContext(b *testing.B) {
+	l := Sub(map[string]interface{}{"subkey1": "subval1"})
+	ctx := WithContext(context.Background(), l)
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		l = FromContext(ctx)
+	}
+}
+
 type testLogger struct {
 	debugCount int
 	infoCount  int
@@ -118,6 +168,10 @@ type testLogger struct {
 	errorCount int
 	fatalCount int
 	panicCount int
+}
+
+func (t *testLogger) Sub(map[string]interface{}) Logger {
+	return t
 }
 
 func (t *testLogger) Panic(args ...interface{}) {

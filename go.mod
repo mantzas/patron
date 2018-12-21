@@ -11,7 +11,7 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/golang/protobuf v1.1.0 // indirect
 	github.com/golang/snappy v0.0.0-20170215233205-553a64147049 // indirect
-	github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c
+	github.com/google/uuid v1.1.0
 	github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20180313041242-367231351874

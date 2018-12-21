@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+
 	"github.com/mantzas/patron/errors"
 )
 
@@ -26,6 +28,7 @@ const (
 
 // Logger interface definition of a logger.
 type Logger interface {
+	Sub(map[string]interface{}) Logger
 	Fatal(...interface{})
 	Fatalf(string, ...interface{})
 	Panic(...interface{})
@@ -40,10 +43,12 @@ type Logger interface {
 	Debugf(string, ...interface{})
 }
 
+type ctxKey struct{}
+
 // FactoryFunc function type for creating loggers.
 type FactoryFunc func(map[string]interface{}) Logger
 
-var logger Logger = nilLogger{}
+var logger Logger = &nilLogger{}
 
 // Setup logging by providing a logger factory.
 func Setup(f FactoryFunc, fls map[string]interface{}) error {
@@ -57,6 +62,24 @@ func Setup(f FactoryFunc, fls map[string]interface{}) error {
 
 	logger = f(fls)
 	return nil
+}
+
+// FromContext returns the logger in the context or a nil logger.
+func FromContext(ctx context.Context) Logger {
+	if l, ok := ctx.Value(ctxKey{}).(Logger); ok {
+		return l
+	}
+	return &nilLogger{}
+}
+
+// WithContext associates a logger with a context for later reuse.
+func WithContext(ctx context.Context, l Logger) context.Context {
+	return context.WithValue(ctx, ctxKey{}, l)
+}
+
+// Sub returns a sub logger with new fields attached.
+func Sub(ff map[string]interface{}) Logger {
+	return logger.Sub(ff)
 }
 
 // Panic logging.
@@ -122,38 +145,42 @@ func Debugf(msg string, args ...interface{}) {
 type nilLogger struct {
 }
 
-func (nl nilLogger) Panic(args ...interface{}) {
+func (nl *nilLogger) Sub(map[string]interface{}) Logger {
+	return nl
 }
 
-func (nl nilLogger) Panicf(msg string, args ...interface{}) {
+func (nl *nilLogger) Panic(args ...interface{}) {
 }
 
-func (nl nilLogger) Fatal(args ...interface{}) {
+func (nl *nilLogger) Panicf(msg string, args ...interface{}) {
 }
 
-func (nl nilLogger) Fatalf(msg string, args ...interface{}) {
+func (nl *nilLogger) Fatal(args ...interface{}) {
 }
 
-func (nl nilLogger) Error(args ...interface{}) {
+func (nl *nilLogger) Fatalf(msg string, args ...interface{}) {
 }
 
-func (nl nilLogger) Errorf(msg string, args ...interface{}) {
+func (nl *nilLogger) Error(args ...interface{}) {
 }
 
-func (nl nilLogger) Warn(args ...interface{}) {
+func (nl *nilLogger) Errorf(msg string, args ...interface{}) {
 }
 
-func (nl nilLogger) Warnf(msg string, args ...interface{}) {
+func (nl *nilLogger) Warn(args ...interface{}) {
 }
 
-func (nl nilLogger) Info(args ...interface{}) {
+func (nl *nilLogger) Warnf(msg string, args ...interface{}) {
 }
 
-func (nl nilLogger) Infof(msg string, args ...interface{}) {
+func (nl *nilLogger) Info(args ...interface{}) {
 }
 
-func (nl nilLogger) Debug(args ...interface{}) {
+func (nl *nilLogger) Infof(msg string, args ...interface{}) {
 }
 
-func (nl nilLogger) Debugf(msg string, args ...interface{}) {
+func (nl *nilLogger) Debug(args ...interface{}) {
+}
+
+func (nl *nilLogger) Debugf(msg string, args ...interface{}) {
 }

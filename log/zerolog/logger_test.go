@@ -28,6 +28,26 @@ func TestNewLogger(t *testing.T) {
 	}
 }
 
+func TestLogger_Sub(t *testing.T) {
+	var b bytes.Buffer
+	zl := zerolog.New(&b)
+	l := NewLogger(&zl, log.DebugLevel, f)
+	sl := l.Sub(map[string]interface{}{"subkey1": "subval1"})
+	assert.NotNil(t, sl)
+	sl.Debug("testing")
+	assert.Equal(t, "{\"lvl\":\"debug\",\"key\":\"value\",\"subkey1\":\"subval1\",\"msg\":\"testing\"}\n", b.String())
+}
+
+func TestLogger_Sub_NoFields(t *testing.T) {
+	var b bytes.Buffer
+	zl := zerolog.New(&b)
+	l := NewLogger(&zl, log.DebugLevel, f)
+	sl := l.Sub(nil)
+	assert.NotNil(t, sl)
+	sl.Debug("testing")
+	assert.Equal(t, "{\"lvl\":\"debug\",\"key\":\"value\",\"msg\":\"testing\"}\n", b.String())
+}
+
 func TestLogger_Panic(t *testing.T) {
 	var b bytes.Buffer
 	zl := zerolog.New(&b)
@@ -132,6 +152,23 @@ func Benchmark_LoggingDisabled(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		l.Debugf("testing %d", 1)
+		t = n
+	}
+}
+
+var bl log.Logger
+
+func Benchmark_Sub(b *testing.B) {
+
+	var bf bytes.Buffer
+	zl := zerolog.New(&bf)
+	l := NewLogger(&zl, log.NoLevel, f)
+	ff := map[string]interface{}{"subkey1": "subval1"}
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		bl = l.Sub(ff)
 		t = n
 	}
 }

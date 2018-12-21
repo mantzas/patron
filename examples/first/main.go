@@ -82,6 +82,6 @@ func first(ctx context.Context, req *sync.Request) (*sync.Response, error) {
 		return nil, errors.Wrap(err, "failed to post to second service")
 	}
 
-	log.Infof("request processed")
+	log.FromContext(ctx).Infof("request processed")
 	return sync.NewResponse(fmt.Sprintf("got %s from second HTTP route", rsp.Status)), nil
 }

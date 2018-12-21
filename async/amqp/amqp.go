@@ -14,7 +14,7 @@ import (
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/streadway/amqp"
 )
 
@@ -156,7 +156,7 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					chErr <- err
 					return
 				}
-
+				chCtx = log.WithContext(chCtx, log.Sub(map[string]interface{}{"messageID": uuid.New().String()}))
 				chMsg <- &message{
 					ctx:     chCtx,
 					dec:     dec,

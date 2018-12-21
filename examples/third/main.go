@@ -116,6 +116,6 @@ func (kc *kafkaComponent) Process(msg async.Message) error {
 		return err
 	}
 
-	log.Infof("request processed: %s", m)
+	log.FromContext(msg.Context()).Infof("request processed: %s", m)
 	return nil
 }
