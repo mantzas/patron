@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"github.com/google/uuid"
 	"context"
 	"fmt"
 	"os"
@@ -201,6 +202,8 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 							chErr <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
 							return
 						}
+
+						chCtx = log.WithContext(chCtx, log.Sub(map[string]interface{}{"messageID": uuid.New().String()}))
 
 						chMsg <- &message{
 							ctx:  chCtx,

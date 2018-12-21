@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/streadway/amqp"
 )
 
@@ -156,7 +157,7 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					chErr <- err
 					return
 				}
-
+				chCtx = log.WithContext(chCtx, log.Sub(map[string]interface{}{"messageID": strconv.FormatUint(d.DeliveryTag, 10)}))
 				chMsg <- &message{
 					ctx:     chCtx,
 					dec:     dec,

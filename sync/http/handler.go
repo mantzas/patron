@@ -3,6 +3,10 @@ package http
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+
+	"github.com/mantzas/patron/log"
+
 	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
@@ -26,8 +30,9 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 			f[k] = v
 		}
 
+		ctx := log.WithContext(r.Context(), log.Sub(map[string]interface{}{"requestID": uuid.New().String()}))
 		req := sync.NewRequest(f, r.Body, dec)
-		rsp, err := hnd(r.Context(), req)
+		rsp, err := hnd(ctx, req)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -95,7 +100,6 @@ func extractFields(r *http.Request) map[string]string {
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.EncodeFunc) error {
-
 	if rsp == nil {
 		w.WriteHeader(http.StatusNoContent)
 		return nil
