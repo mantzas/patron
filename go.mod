@@ -9,7 +9,7 @@ require (
 	github.com/eapache/go-resiliency v1.1.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20160609142408-bb955e01b934 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/golang/protobuf v1.1.0 // indirect
+	github.com/golang/protobuf v1.2.0
 	github.com/golang/snappy v0.0.0-20170215233205-553a64147049 // indirect
 	github.com/google/uuid v1.1.0
 	github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9

@@ -12,7 +12,7 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
-# github.com/golang/protobuf v1.1.0
+# github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
 # github.com/golang/snappy v0.0.0-20170215233205-553a64147049
 github.com/golang/snappy
