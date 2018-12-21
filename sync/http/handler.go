@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-
-	"github.com/mantzas/patron/log"
-
 	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
 	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync"
 )
 
@@ -64,6 +63,10 @@ func determineEncoding(r *http.Request) (string, encoding.DecodeFunc, encoding.E
 			enc = json.Encode
 			dec = json.Decode
 			ct = json.TypeCharset
+		case protobuf.Type, protobuf.TypeGoogle:
+			enc = protobuf.Encode
+			dec = protobuf.Decode
+			ct = protobuf.Type
 		default:
 			return "", nil, nil, errors.New("content type header not supported")
 		}
@@ -77,6 +80,12 @@ func determineEncoding(r *http.Request) (string, encoding.DecodeFunc, encoding.E
 				dec = json.Decode
 			}
 			ct = json.TypeCharset
+		case protobuf.Type, protobuf.TypeGoogle:
+			enc = protobuf.Encode
+			if dec == nil {
+				dec = protobuf.Decode
+			}
+			ct = protobuf.Type
 		default:
 			return "", nil, nil, errors.New("accept header not supported")
 		}

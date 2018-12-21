@@ -9,6 +9,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/sync"
 	"github.com/stretchr/testify/assert"
@@ -36,10 +37,15 @@ func Test_determineEncoding(t *testing.T) {
 		ct      string
 		wantErr bool
 	}{
-		{"success", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
-		{"success, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"success json", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"success json, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"success json, missing content type", args{req: request(t, "", json.Type)}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"success protobuf", args{req: request(t, protobuf.Type, protobuf.TypeGoogle)}, protobuf.Decode, protobuf.Encode, protobuf.Type, false},
+		{"success protobuf, missing accept", args{req: request(t, protobuf.Type, "")}, protobuf.Decode, protobuf.Encode, protobuf.Type, false},
+		{"success protobuf, missing content type", args{req: request(t, "", protobuf.Type)}, protobuf.Decode, protobuf.Encode, protobuf.Type, false},
 		{"wrong accept", args{req: request(t, json.Type, "xxx")}, nil, nil, json.TypeCharset, true},
-		{"missing header, defaults json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"missing content header, defaults json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
+		{"missing headers, defaults json", args{req: request(t, "", "")}, json.Decode, json.Encode, json.TypeCharset, false},
 		{"accept */*, defaults to json", args{req: request(t, json.TypeCharset, "*/*")}, json.Decode, json.Encode, json.TypeCharset, false},
 		{"wrong content", args{req: request(t, "application/xml", json.TypeCharset)}, nil, nil, json.TypeCharset, true},
 	}
