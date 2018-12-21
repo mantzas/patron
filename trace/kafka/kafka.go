@@ -7,7 +7,7 @@ import (
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -24,7 +24,6 @@ func NewMessage(t string, b []byte) *Message {
 
 // NewJSONMessage creates a new message with a JSON encoded body.
 func NewJSONMessage(t string, d interface{}) (*Message, error) {
-
 	b, err := json.Encode(d)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to JSON encode")

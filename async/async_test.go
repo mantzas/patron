@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +17,8 @@ func TestDetermineDecoder(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success", args{contentType: json.Type}, false},
+		{"success json", args{contentType: json.Type}, false},
+		{"success protobuf", args{contentType: protobuf.Type}, false},
 		{"failure", args{contentType: "XXX"}, true},
 	}
 	for _, tt := range tests {

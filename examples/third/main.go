@@ -9,6 +9,7 @@ import (
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/async/kafka"
 	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace/amqp"
 )
@@ -99,14 +100,14 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 }
 
 func (kc *kafkaComponent) Process(msg async.Message) error {
-	var m string
+	var u examples.User
 
-	err := msg.Decode(&m)
+	err := msg.Decode(&u)
 	if err != nil {
 		return err
 	}
 
-	amqpMsg, err := amqp.NewJSONMessage(m)
+	amqpMsg, err := amqp.NewProtobufMessage(&u)
 	if err != nil {
 		return err
 	}
@@ -116,6 +117,6 @@ func (kc *kafkaComponent) Process(msg async.Message) error {
 		return err
 	}
 
-	log.FromContext(msg.Context()).Infof("request processed: %s", m)
+	log.FromContext(msg.Context()).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
 	return nil
 }

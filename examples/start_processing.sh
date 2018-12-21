@@ -1,3 +1,3 @@
 #!/bin/bash
 
-curl -i -X POST http://localhost:50000
+curl -i -H "Content-Type: application/json" -X POST http://localhost:50000 --data '{"firstname":"John","lastname":"Doe"}'

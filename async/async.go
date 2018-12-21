@@ -5,6 +5,7 @@ import (
 
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
 	"github.com/mantzas/patron/errors"
 )
 
@@ -36,6 +37,8 @@ func DetermineDecoder(contentType string) (encoding.DecodeRawFunc, error) {
 	switch contentType {
 	case json.Type, json.TypeCharset:
 		return json.DecodeRaw, nil
+	case protobuf.Type, protobuf.TypeGoogle:
+		return protobuf.DecodeRaw, nil
 	}
-	return nil, errors.Errorf("accept header %s is unsupported", contentType)
+	return nil, errors.Errorf("content header %s is unsupported", contentType)
 }
