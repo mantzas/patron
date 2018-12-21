@@ -125,7 +125,7 @@ func (hc *httpComponent) second(ctx context.Context, req *sync.Request) (*sync.R
 		return nil, err
 	}
 
-	log.Infof("request processed: %s", m)
+	log.FromContext(ctx).Infof("request processed: %s", m)
 	return sync.NewResponse(fmt.Sprintf("got %s from google", rsp.Status)), nil
 }
 
