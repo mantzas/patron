@@ -17,6 +17,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+type user struct {
+	Firstname string `json:"firstname,omitempty"`
+	Lastname  string `json:"lastname,omitempty"`
+}
+
 func init() {
 	err := os.Setenv("PATRON_LOG_LEVEL", "debug")
 	if err != nil {
@@ -61,7 +66,15 @@ func main() {
 }
 
 func first(ctx context.Context, req *sync.Request) (*sync.Response, error) {
-	b, err := json.Encode("patron")
+
+	var u user
+
+	err := req.Decode(&u)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode request")
+	}
+
+	b, err := json.Encode(fmt.Sprintf("%s %s", u.Firstname, u.Lastname))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed create request")
 	}
