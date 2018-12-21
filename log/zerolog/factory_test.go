@@ -2,6 +2,7 @@ package zerolog
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mantzas/patron/log"
 	"github.com/stretchr/testify/assert"
@@ -32,4 +33,22 @@ func Test_sourceFields(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "src", key)
 	assert.Equal(t, "zerolog/factory_test.go:31", src)
+}
+
+var l log.Logger
+
+func Benchmark_Create(b *testing.B) {
+	f := Create(log.InfoLevel)
+	fld := map[string]interface{}{
+		"key1": "val1",
+		"key2": 123,
+		"key3": 123.456,
+		"key4": time.Now(),
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		l = f(fld)
+	}
 }

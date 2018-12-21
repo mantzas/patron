@@ -32,61 +32,61 @@ func NewLogger(l *zerolog.Logger, lvl log.Level, f map[string]interface{}) log.L
 }
 
 // Panic logging.
-func (zl Logger) Panic(args ...interface{}) {
-	zl.logger.Panic().Msg(fmt.Sprint(args...))
+func (l *Logger) Panic(args ...interface{}) {
+	l.logger.Panic().Msg(fmt.Sprint(args...))
 }
 
 // Panicf logging.
-func (zl Logger) Panicf(msg string, args ...interface{}) {
-	zl.logger.Panic().Msgf(msg, args...)
+func (l *Logger) Panicf(msg string, args ...interface{}) {
+	l.logger.Panic().Msgf(msg, args...)
 }
 
 // Fatal logging.
-func (zl Logger) Fatal(args ...interface{}) {
-	zl.logger.Fatal().Msg(fmt.Sprint(args...))
+func (l *Logger) Fatal(args ...interface{}) {
+	l.logger.Fatal().Msg(fmt.Sprint(args...))
 }
 
 // Fatalf logging.
-func (zl Logger) Fatalf(msg string, args ...interface{}) {
-	zl.logger.Fatal().Msgf(msg, args...)
+func (l *Logger) Fatalf(msg string, args ...interface{}) {
+	l.logger.Fatal().Msgf(msg, args...)
 }
 
 // Error logging.
-func (zl Logger) Error(args ...interface{}) {
-	zl.logger.Error().Msg(fmt.Sprint(args...))
+func (l *Logger) Error(args ...interface{}) {
+	l.logger.Error().Msg(fmt.Sprint(args...))
 }
 
 // Errorf logging.
-func (zl Logger) Errorf(msg string, args ...interface{}) {
-	zl.logger.Error().Msgf(msg, args...)
+func (l *Logger) Errorf(msg string, args ...interface{}) {
+	l.logger.Error().Msgf(msg, args...)
 }
 
 // Warn logging.
-func (zl Logger) Warn(args ...interface{}) {
-	zl.logger.Warn().Msg(fmt.Sprint(args...))
+func (l *Logger) Warn(args ...interface{}) {
+	l.logger.Warn().Msg(fmt.Sprint(args...))
 }
 
 // Warnf logging.
-func (zl Logger) Warnf(msg string, args ...interface{}) {
-	zl.logger.Warn().Msgf(msg, args...)
+func (l *Logger) Warnf(msg string, args ...interface{}) {
+	l.logger.Warn().Msgf(msg, args...)
 }
 
 // Info logging.
-func (zl Logger) Info(args ...interface{}) {
-	zl.logger.Info().Msg(fmt.Sprint(args...))
+func (l *Logger) Info(args ...interface{}) {
+	l.logger.Info().Msg(fmt.Sprint(args...))
 }
 
 // Infof logging.
-func (zl Logger) Infof(msg string, args ...interface{}) {
-	zl.logger.Info().Msgf(msg, args...)
+func (l *Logger) Infof(msg string, args ...interface{}) {
+	l.logger.Info().Msgf(msg, args...)
 }
 
 // Debug logging.
-func (zl Logger) Debug(args ...interface{}) {
-	zl.logger.Debug().Msg(fmt.Sprint(args...))
+func (l *Logger) Debug(args ...interface{}) {
+	l.logger.Debug().Msg(fmt.Sprint(args...))
 }
 
 // Debugf logging.
-func (zl Logger) Debugf(msg string, args ...interface{}) {
-	zl.logger.Debug().Msgf(msg, args...)
+func (l *Logger) Debugf(msg string, args ...interface{}) {
+	l.logger.Debug().Msgf(msg, args...)
 }
