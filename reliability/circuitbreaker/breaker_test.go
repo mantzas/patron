@@ -39,19 +39,21 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestCircuitBreaker_isHalfOpen(t *testing.T) {
+func TestCircuitBreaker_States(t *testing.T) {
 	type fields struct {
 		status    status
 		nextRetry int64
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   bool
+		name         string
+		fields       fields
+		wantOpen     bool
+		wantClose    bool
+		wantHalfOpen bool
 	}{
-		{name: "closed", fields: fields{status: close, nextRetry: tsFuture}, want: false},
-		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, want: false},
-		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, want: true},
+		{name: "closed", fields: fields{status: close, nextRetry: tsFuture}, wantOpen: false, wantClose: true, wantHalfOpen: false},
+		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, wantOpen: true, wantClose: false, wantHalfOpen: false},
+		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, wantOpen: false, wantClose: false, wantHalfOpen: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -59,57 +61,9 @@ func TestCircuitBreaker_isHalfOpen(t *testing.T) {
 				status:    tt.fields.status,
 				nextRetry: tt.fields.nextRetry,
 			}
-			assert.Equal(t, tt.want, cb.isHalfOpen())
-		})
-	}
-}
-
-func TestCircuitBreaker_isOpen(t *testing.T) {
-	type fields struct {
-		status    status
-		nextRetry int64
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   bool
-	}{
-		{name: "closed", fields: fields{status: close, nextRetry: tsFuture}, want: false},
-		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, want: false},
-		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, want: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cb := &CircuitBreaker{
-				status:    tt.fields.status,
-				nextRetry: tt.fields.nextRetry,
-			}
-			assert.Equal(t, tt.want, cb.isOpen())
-		})
-	}
-}
-
-func TestCircuitBreaker_isClose(t *testing.T) {
-	type fields struct {
-		status    status
-		nextRetry int64
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   bool
-	}{
-		{name: "closed", fields: fields{status: close, nextRetry: tsFuture}, want: true},
-		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, want: false},
-		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, want: false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cb := &CircuitBreaker{
-				status:    tt.fields.status,
-				nextRetry: tt.fields.nextRetry,
-			}
-			assert.Equal(t, tt.want, cb.isClose())
+			assert.Equal(t, tt.wantOpen, cb.isOpen())
+			assert.Equal(t, tt.wantClose, cb.isClose())
+			//assert.Equal(t, tt.wantHalfOpen, cb.isHalfOpen())
 		})
 	}
 }

@@ -181,14 +181,23 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 			case <-ctx.Done():
 				log.Info("canceling consuming messages requested")
 				closeConsumer(cns)
+				return
 			case ev := <-cns.Events():
 				switch e := ev.(type) {
 				case kafka.AssignedPartitions:
 					log.Infof("assigned partitions: %v", e)
-					cns.Assign(e.Partitions)
+					err = cns.Assign(e.Partitions)
+					if err != nil {
+						chErr <- errors.Wrap(err, "failed to assign partitions")
+					}
+					return
 				case kafka.RevokedPartitions:
 					log.Infof("revoking partitions: %v", e)
-					cns.Unassign()
+					err = cns.Unassign()
+					if err != nil {
+						chErr <- errors.Wrap(err, "failed to revoke partitions")
+					}
+					return
 				case kafka.Error:
 					// Errors should generally be considered as informational, the client will try to automatically recover
 					log.Errorf("failure in message consumption: %v", e)
@@ -282,7 +291,7 @@ func closeConsumer(cns *kafka.Consumer) {
 
 func determineContentType(hdr []kafka.Header) (string, error) {
 	for _, h := range hdr {
-		if string(h.Key) == encoding.ContentTypeHeader {
+		if h.Key == encoding.ContentTypeHeader {
 			return string(h.Value), nil
 		}
 	}
