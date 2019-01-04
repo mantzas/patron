@@ -10,6 +10,13 @@ jobs:
     steps:
       
       - run:
+          name: Retrieve Kafka C Handler
+          command: |
+            wget -qO - https://packages.confluent.io/deb/5.1/archive.key | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/5.1 stable main"
+            sudo apt install librdkafka-dev
+
+      - run:
           name: Getting linter and unit test reporter
           command: |
             go get -u golang.org/x/lint/golint
