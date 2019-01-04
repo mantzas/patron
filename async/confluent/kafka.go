@@ -1,12 +1,13 @@
-package kafka
+package confluent
 
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/Shopify/sarama"
 	"github.com/google/uuid"
@@ -48,51 +49,50 @@ func (m *message) Nack() error {
 }
 
 // Offset defines the offset of messages inside a topic.
-type Offset int64
+type Offset string
 
 const (
-	// OffsetNewest starts consuming from the newest available message in the topic.
-	OffsetNewest Offset = -1
-	// OffsetOldest starts consuming from the oldest available message in the topic.
-	OffsetOldest Offset = -2
+	// OffsetSmallest smallest offset.
+	OffsetSmallest Offset = "smallest"
+	// OffsetEarliest earliest offset.
+	OffsetEarliest Offset = "earliest"
+	// OffsetBeginning beginning offset.
+	OffsetBeginning Offset = "beginning"
+	// OffsetLargest largest offset.
+	OffsetLargest Offset = "largest"
+	// OffsetLatest latest offset.
+	OffsetLatest Offset = "latest"
+	// OffsetEnd end offset.
+	OffsetEnd Offset = "end"
+	// OffsetError error offset.
+	OffsetError Offset = "error"
 )
-
-func (o Offset) String() string {
-	switch o {
-	case OffsetNewest:
-		return "OffsetNewest"
-	case OffsetOldest:
-		return "OffsetOldest"
-	default:
-		return strconv.FormatInt(int64(o), 10)
-	}
-}
 
 // Factory definition of a consumer factory.
 type Factory struct {
 	name    string
 	ct      string
-	topic   string
+	topics  []string
 	brokers []string
 	oo      []OptionFunc
 }
 
 // New constructor.
-func New(name, ct, topic string, brokers []string, oo ...OptionFunc) (*Factory, error) {
+func New(name, ct string, topics []string, brokers []string, oo ...OptionFunc) (*Factory, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
 
 	if len(brokers) == 0 {
-		return nil, errors.New("provide at least one broker")
+		return nil, errors.New("brokers are nil or empty")
 	}
 
-	if topic == "" {
-		return nil, errors.New("topic is required")
+	if len(topics) == 0 {
+		return nil, errors.New("topics are nil or empty")
 	}
 
-	return &Factory{name: name, ct: ct, topic: topic, brokers: brokers, oo: oo}, nil
+	return &Factory{name: name, ct: ct, topics: topics, brokers: brokers, oo: oo}, nil
 }
 
 // Create a new consumer.
@@ -103,19 +103,23 @@ func (f *Factory) Create() (async.Consumer, error) {
 		return nil, errors.New("failed to get hostname")
 	}
 
-	config := sarama.NewConfig()
-	config.ClientID = fmt.Sprintf("%s-%s", host, f.name)
-	config.Consumer.Return.Errors = true
-	config.Version = sarama.V0_11_0_0
+	cfg := &kafka.ConfigMap{
+		"client.id":                       fmt.Sprintf("%s-%s", host, f.name),
+		"bootstrap.servers":               strings.Join(f.brokers, ","),
+		"session.timeout.ms":              10000,
+		"go.events.channel.enable":        true,
+		"go.application.rebalance.enable": true,
+		"go.events.channel.size":          1000,
+		"auto.offset.reset":               OffsetLatest,
+	}
 
 	c := &consumer{
 		brokers:     f.brokers,
-		topic:       f.topic,
-		cfg:         config,
+		topics:      f.topics,
 		contentType: f.ct,
 		buffer:      1000,
-		start:       OffsetNewest,
 		info:        make(map[string]interface{}),
+		cfg:         cfg,
 	}
 
 	for _, o := range f.oo {
@@ -136,12 +140,13 @@ func (f *Factory) Create() (async.Consumer, error) {
 type consumer struct {
 	brokers     []string
 	topic       string
-	buffer      int
-	start       Offset
-	cfg         *sarama.Config
 	contentType string
 	cnl         context.CancelFunc
 	ms          sarama.Consumer
+	cns         *kafka.Consumer
+	cfg         *kafka.ConfigMap
+	buffer      int
+	topics      []string
 	info        map[string]interface{}
 }
 
@@ -155,33 +160,45 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	ctx, cnl := context.WithCancel(ctx)
 	c.cnl = cnl
 
-	pcs, err := c.consumers()
+	cns, err := kafka.NewConsumer(c.cfg)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to get partitions")
+		return nil, nil, errors.Wrap(err, "failed to create new consumer")
 	}
+	c.cns = cns
+
+	err = cns.SubscribeTopics(c.topics, nil)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to subscribe to topics")
+	}
+
 	log.Infof("consuming messages for topic '%s'", c.topic)
 	chMsg := make(chan async.Message, c.buffer)
-	chErr := make(chan error, c.buffer)
+	chErr := make(chan error)
 
-	for _, pc := range pcs {
-		go func(consumer sarama.PartitionConsumer) {
-			for {
-				select {
-				case <-ctx.Done():
-					log.Info("canceling consuming messages requested")
-					closeConsumer(consumer)
-					return
-				case consumerError := <-consumer.Errors():
-					closeConsumer(consumer)
-					chErr <- consumerError
-					return
-				case m := <-consumer.Messages():
-					log.Debugf("data received from topic %s", m.Topic)
-					topicPartitionOffsetDiffGaugeSet(m.Topic, m.Partition, consumer.HighWaterMarkOffset(), m.Offset)
-					go func(msg *sarama.ConsumerMessage) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Info("canceling consuming messages requested")
+				closeConsumer(cns)
+			case ev := <-cns.Events():
+				switch e := ev.(type) {
+				case kafka.AssignedPartitions:
+					log.Infof("assigned partitions: %v", e)
+					cns.Assign(e.Partitions)
+				case kafka.RevokedPartitions:
+					log.Infof("revoking partitions: %v", e)
+					cns.Unassign()
+				case kafka.Error:
+					// Errors should generally be considered as informational, the client will try to automatically recover
+					log.Errorf("failure in message consumption: %v", e)
+				case *kafka.Message:
+					log.Debugf("data received from topic %d", e.TopicPartition)
+					c.topicPartitionOffsetDiffGaugeSet(e.TopicPartition)
+					go func(msg *kafka.Message) {
 						sp, chCtx := trace.ConsumerSpan(
 							ctx,
-							trace.ComponentOpName(trace.KafkaConsumerComponent, msg.Topic),
+							trace.ComponentOpName(trace.KafkaConsumerComponent, *msg.TopicPartition.Topic),
 							trace.KafkaConsumerComponent,
 							mapHeader(msg.Headers),
 						)
@@ -212,11 +229,11 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 							span: sp,
 							val:  msg.Value,
 						}
-					}(m)
+					}(e)
 				}
 			}
-		}(pc)
-	}
+		}
+	}()
 
 	return chMsg, chErr, nil
 }
@@ -234,43 +251,26 @@ func (c *consumer) Close() error {
 	return errors.Wrap(c.ms.Close(), "failed to close consumer")
 }
 
-func (c *consumer) consumers() ([]sarama.PartitionConsumer, error) {
-
-	ms, err := sarama.NewConsumer(c.brokers, c.cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create consumer")
-	}
-	c.ms = ms
-
-	partitions, err := c.ms.Partitions(c.topic)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get partitions")
-	}
-
-	pcs := make([]sarama.PartitionConsumer, len(partitions))
-
-	for i, partition := range partitions {
-
-		pc, err := c.ms.ConsumePartition(c.topic, partition, int64(c.start))
-		if nil != err {
-			return nil, errors.Wrap(err, "failed to get partition consumer")
-		}
-		pcs[i] = pc
-	}
-
-	return pcs, nil
-}
-
 func (c *consumer) createInfo() {
 	c.info["type"] = "kafka-consumer"
 	c.info["brokers"] = strings.Join(c.brokers, ",")
-	c.info["topic"] = c.topic
+	c.info["topics"] = strings.Join(c.topics, ",")
 	c.info["buffer"] = c.buffer
-	c.info["default-content-type"] = c.contentType
-	c.info["start"] = c.start.String()
+	c.info["content-type"] = c.contentType
+	for k, v := range *c.cfg {
+		c.info[k] = v
+	}
 }
 
-func closeConsumer(cns io.Closer) {
+func (c *consumer) topicPartitionOffsetDiffGaugeSet(tp kafka.TopicPartition) {
+	_, high, err := c.cns.QueryWatermarkOffsets(*tp.Topic, tp.Partition, 10)
+	if err != nil {
+		log.Warnf("failed to query watermarks: %v", err)
+	}
+	topicPartitionOffsetDiff.WithLabelValues(*tp.Topic, strconv.FormatInt(int64(tp.Partition), 10)).Set(float64(high - int64(tp.Offset)))
+}
+
+func closeConsumer(cns *kafka.Consumer) {
 	if cns == nil {
 		return
 	}
@@ -280,7 +280,7 @@ func closeConsumer(cns io.Closer) {
 	}
 }
 
-func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
+func determineContentType(hdr []kafka.Header) (string, error) {
 	for _, h := range hdr {
 		if string(h.Key) == encoding.ContentTypeHeader {
 			return string(h.Value), nil
@@ -289,10 +289,10 @@ func determineContentType(hdr []*sarama.RecordHeader) (string, error) {
 	return "", errors.New("content type header is missing")
 }
 
-func mapHeader(hh []*sarama.RecordHeader) map[string]string {
+func mapHeader(hh []kafka.Header) map[string]string {
 	mp := make(map[string]string)
 	for _, h := range hh {
-		mp[string(h.Key)] = string(h.Value)
+		mp[h.Key] = string(h.Value)
 	}
 	return mp
 }
@@ -310,8 +310,4 @@ func setupMetrics() error {
 		return err
 	}
 	return nil
-}
-
-func topicPartitionOffsetDiffGaugeSet(topic string, partition int32, high, offset int64) {
-	topicPartitionOffsetDiff.WithLabelValues(topic, strconv.FormatInt(int64(partition), 10)).Set(float64(high - offset))
 }

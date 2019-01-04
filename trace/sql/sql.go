@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 type connInfo struct {

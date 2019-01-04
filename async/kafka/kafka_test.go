@@ -7,7 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
@@ -181,12 +181,7 @@ func Test_message(t *testing.T) {
 }
 
 func TestMapHeader(t *testing.T) {
-	hh := []*sarama.RecordHeader{
-		&sarama.RecordHeader{
-			Key:   []byte("key"),
-			Value: []byte("value"),
-		},
-	}
+	hh := []*sarama.RecordHeader{&sarama.RecordHeader{Key: []byte("key"), Value: []byte("value")}}
 	hdr := mapHeader(hh)
 	assert.Equal(t, "value", hdr["key"])
 }
