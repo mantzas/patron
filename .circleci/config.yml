@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: mantzas/patron-circleci:0.1
+      - image: mantzas/patron-circleci:latest
 
     environment:
       TEST_RESULTS: /tmp/test-results
