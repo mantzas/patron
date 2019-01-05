@@ -2,6 +2,7 @@ package confluent
 
 import (
 	"errors"
+	"fmt"
 )
 
 // OptionFunc definition for configuring the consumer in a functional way.
@@ -18,8 +19,13 @@ func Config(cfg map[string]interface{}) OptionFunc {
 			return errors.New("config is empty")
 		}
 
+		var err error
+
 		for k, v := range cfg {
-			c.cfg.SetKey(k, v)
+			err = c.cfg.SetKey(k, v)
+			if err != nil {
+				return fmt.Errorf("failed to set key %s: %v", k, err)
+			}
 		}
 		return nil
 	}
