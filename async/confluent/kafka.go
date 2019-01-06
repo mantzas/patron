@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-
-	"github.com/Shopify/sarama"
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
@@ -142,7 +140,6 @@ type consumer struct {
 	topic       string
 	contentType string
 	cnl         context.CancelFunc
-	ms          sarama.Consumer
 	cns         *kafka.Consumer
 	cfg         *kafka.ConfigMap
 	buffer      int
@@ -253,11 +250,11 @@ func (c *consumer) Close() error {
 		c.cnl()
 	}
 
-	if c.ms == nil {
+	if c.cns == nil {
 		return nil
 	}
 
-	return errors.Wrap(c.ms.Close(), "failed to close consumer")
+	return errors.Wrap(c.cns.Close(), "failed to close consumer")
 }
 
 func (c *consumer) createInfo() {
