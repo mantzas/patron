@@ -52,7 +52,6 @@ type KafkaProducer struct {
 	prod  *kafka.Producer
 	tag   opentracing.Tag
 	chErr chan error
-	cnl   context.CancelFunc
 }
 
 // NewProducer creates a new sync producer with default configuration.
@@ -194,7 +193,6 @@ func (kp *KafkaProducer) Close() {
 	if kp.chErr != nil {
 		close(kp.chErr)
 	}
-	return
 }
 
 type kafkaHeadersCarrier []kafka.Header
