@@ -2,6 +2,8 @@ package confluent
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,12 +49,15 @@ func ErrorOption() OptionFunc {
 
 func TestFactory_Create(t *testing.T) {
 
+	host, err := os.Hostname()
+	assert.NoError(t, err)
+
 	expInfo := map[string]interface{}{
 		"auto.offset.reset":               OffsetLatest,
 		"bootstrap.servers":               "broker",
 		"brokers":                         "broker",
 		"buffer":                          1000,
-		"client.id":                       "prometheus-name",
+		"client.id":                       fmt.Sprintf("%s-%s", host, "name"),
 		"content-type":                    "ct",
 		"go.application.rebalance.enable": true,
 		"go.events.channel.enable":        true,
