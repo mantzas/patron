@@ -20,16 +20,13 @@ jobs:
           name: Running with test coverage and send to codecov
           command: |
             mkdir -p $TEST_RESULTS
-            gotestsum --junitfile unit-tests.xml -- -coverprofile=coverage.txt ./...    
+            gotestsum --junitfile ${TEST_RESULTS}/unit-tests.xml -- -coverprofile=coverage.txt ./...    
             bash <(curl -s https://codecov.io/bash)
 
       - store_test_results:
           path: /tmp/test-results
 
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: raw-test-outputgo 
-
+      
       # - run:
       #     name: Running with test coverage and send to codecov
       #     command: |
