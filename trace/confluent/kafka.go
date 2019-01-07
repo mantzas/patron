@@ -4,12 +4,19 @@ import (
 	"context"
 	"strings"
 
+	"github.com/mantzas/patron/log"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+)
+
+var (
+	tracingTypeSync  = opentracing.Tag{Key: "type", Value: "sync"}
+	tracingTypeAsync = opentracing.Tag{Key: "type", Value: "async"}
 )
 
 // Message abstraction of a Kafka message.
@@ -19,24 +26,24 @@ type Message struct {
 }
 
 // NewMessage creates a new message.
-func NewMessage(t string, b []byte) *Message {
-	return &Message{topic: t, body: b}
+func NewMessage(topic string, body []byte) *Message {
+	return &Message{topic: topic, body: body}
 }
 
 // NewJSONMessage creates a new message with a JSON encoded body.
-func NewJSONMessage(t string, d interface{}) (*Message, error) {
+func NewJSONMessage(topic string, d interface{}) (*Message, error) {
 	b, err := json.Encode(d)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to JSON encode")
 	}
-	return &Message{topic: t, body: b}, nil
+	return &Message{topic: topic, body: b}, nil
 }
 
 // Producer interface for Kafka.
 type Producer interface {
 	Send(ctx context.Context, msg *Message) error
 	Error() <-chan error
-	Close() error
+	Close()
 }
 
 // KafkaProducer defines a async Kafka producer.
@@ -44,52 +51,56 @@ type KafkaProducer struct {
 	cfg   *kafka.ConfigMap
 	prod  *kafka.Producer
 	tag   opentracing.Tag
-	sync  bool
 	chErr chan error
+	cnl   context.CancelFunc
 }
 
-// NewSyncProducer creates a new sync producer with default configuration.
-func NewSyncProducer(brokers []string, oo ...OptionFunc) (*KafkaProducer, error) {
-	return newProducer(brokers, true, nil, oo...)
+// NewProducer creates a new sync producer with default configuration.
+func NewProducer(brokers []string, oo ...OptionFunc) (*KafkaProducer, error) {
+	return newProducer(brokers, tracingTypeSync, oo...)
 }
 
 // NewAsyncProducer creates a new async producer with default configuration.
-func NewAsyncProducer(brokers []string, ch chan error, oo ...OptionFunc) (*KafkaProducer, error) {
-	return newProducer(brokers, false, ch, oo...)
+func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*KafkaProducer, error) {
+	p, err := newProducer(brokers, tracingTypeAsync, oo...)
+	if err != nil {
+		return nil, err
+	}
+	p.chErr = make(chan error)
+	go p.monitorErrorEvents()
+	return p, nil
 }
 
-func newProducer(brokers []string, sync bool, chErr chan error, oo ...OptionFunc) (*KafkaProducer, error) {
+func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*KafkaProducer, error) {
 
-	if !sync && chErr == nil {
-		return nil, errors.New("error chan needed for async producer")
+	if len(brokers) == 0 {
+		return nil, errors.New("at least one broker must be provided")
 	}
 
 	cfg := &kafka.ConfigMap{
 		"bootstrap.servers": strings.Join(brokers, ","),
 	}
 
-	sp := KafkaProducer{cfg: cfg, tag: opentracing.Tag{Key: "type", Value: "sync"}, sync: sync, chErr: chErr}
+	kp := KafkaProducer{cfg: cfg, tag: tag}
 
 	for _, o := range oo {
-		err := o(&sp)
+		err := o(&kp)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	p, err := kafka.NewProducer(sp.cfg)
+	p, err := kafka.NewProducer(kp.cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create sync producer")
 	}
-	if !sync {
-
-	}
-	sp.prod = p
-	return &sp, nil
+	kp.prod = p
+	return &kp, nil
 }
 
 // Send a message to a topic.
 func (kp *KafkaProducer) Send(ctx context.Context, msg *Message) error {
+	var err error
 	csp, _ := trace.ChildSpan(
 		ctx,
 		trace.ComponentOpName(trace.KafkaAsyncProducerComponent, msg.topic),
@@ -104,7 +115,8 @@ func (kp *KafkaProducer) Send(ctx context.Context, msg *Message) error {
 		return err
 	}
 
-	if kp.sync {
+	// checking the channel to determine if the producer is sync or async.
+	if kp.chErr == nil {
 		err = kp.sendSync(pm)
 	} else {
 		err = kp.sendAsync(pm)
@@ -136,22 +148,8 @@ func (kp *KafkaProducer) sendSync(msg *kafka.Message) error {
 }
 
 func (kp *KafkaProducer) sendAsync(msg *kafka.Message) error {
+	kp.prod.ProduceChannel() <- msg
 	return nil
-}
-
-func (kp *KafkaProducer) monitorAsyncErrors(chErr chan error) {
-	go func() {
-		for e := range kp.prod.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				m := ev
-				if m.TopicPartition.Error == nil {
-					continue
-				}
-				chErr <- errors.Wrap(m.TopicPartition.Error, "failed to produce message")
-			}
-		}
-	}()
 }
 
 func createProducerMessage(msg *Message, sp opentracing.Span) (*kafka.Message, error) {
@@ -165,6 +163,38 @@ func createProducerMessage(msg *Message, sp opentracing.Span) (*kafka.Message, e
 		Value:          msg.body,
 		Headers:        c,
 	}, nil
+}
+
+func (kp *KafkaProducer) monitorErrorEvents() {
+	go func() {
+		for e := range kp.prod.Events() {
+			switch ev := e.(type) {
+			case *kafka.Message:
+				m := ev
+				if m.TopicPartition.Error == nil {
+					log.Debugf("delivered message to topic %s [%d] at offset %v\n", *m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+				}
+				kp.chErr <- m.TopicPartition.Error
+			}
+		}
+	}()
+}
+
+// Error returns a error channel for monitoring publishing errors.
+func (kp *KafkaProducer) Error() <-chan error {
+	return kp.chErr
+}
+
+// Close the producer.
+func (kp *KafkaProducer) Close() {
+	if kp.prod == nil {
+		return
+	}
+	kp.prod.Close()
+	if kp.chErr != nil {
+		close(kp.chErr)
+	}
+	return
 }
 
 type kafkaHeadersCarrier []kafka.Header
