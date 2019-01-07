@@ -46,26 +46,6 @@ func (m *message) Nack() error {
 	return nil
 }
 
-// Offset defines the offset of messages inside a topic.
-type Offset string
-
-const (
-	// OffsetSmallest smallest offset.
-	OffsetSmallest Offset = "smallest"
-	// OffsetEarliest earliest offset.
-	OffsetEarliest Offset = "earliest"
-	// OffsetBeginning beginning offset.
-	OffsetBeginning Offset = "beginning"
-	// OffsetLargest largest offset.
-	OffsetLargest Offset = "largest"
-	// OffsetLatest latest offset.
-	OffsetLatest Offset = "latest"
-	// OffsetEnd end offset.
-	OffsetEnd Offset = "end"
-	// OffsetError error offset.
-	OffsetError Offset = "error"
-)
-
 // Factory definition of a consumer factory.
 type Factory struct {
 	name    string
@@ -103,12 +83,13 @@ func (f *Factory) Create() (async.Consumer, error) {
 
 	cfg := &kafka.ConfigMap{
 		"client.id":                       fmt.Sprintf("%s-%s", host, f.name),
+		"group.id":                        f.name,
 		"bootstrap.servers":               strings.Join(f.brokers, ","),
 		"session.timeout.ms":              10000,
 		"go.events.channel.enable":        true,
 		"go.application.rebalance.enable": true,
 		"go.events.channel.size":          1000,
-		"auto.offset.reset":               OffsetLatest,
+		"auto.offset.reset":               "latest",
 	}
 
 	c := &consumer{
@@ -137,7 +118,6 @@ func (f *Factory) Create() (async.Consumer, error) {
 
 type consumer struct {
 	brokers     []string
-	topic       string
 	contentType string
 	cnl         context.CancelFunc
 	cns         *kafka.Consumer
@@ -168,7 +148,7 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 		return nil, nil, errors.Wrap(err, "failed to subscribe to topics")
 	}
 
-	log.Infof("consuming messages for topic '%s'", c.topic)
+	log.Infof("consuming messages for topic '%s'", strings.Join(c.topics, ","))
 	chMsg := make(chan async.Message, c.buffer)
 	chErr := make(chan error)
 
@@ -187,14 +167,12 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 					if err != nil {
 						chErr <- errors.Wrap(err, "failed to assign partitions")
 					}
-					return
 				case kafka.RevokedPartitions:
 					log.Infof("revoking partitions: %v", e)
 					err = cns.Unassign()
 					if err != nil {
 						chErr <- errors.Wrap(err, "failed to revoke partitions")
 					}
-					return
 				case kafka.Error:
 					// Errors should generally be considered as informational, the client will try to automatically recover
 					log.Errorf("failure in message consumption: %v", e)
@@ -257,6 +235,16 @@ func (c *consumer) Close() error {
 	return errors.Wrap(c.cns.Close(), "failed to close consumer")
 }
 
+func closeConsumer(cns *kafka.Consumer) {
+	if cns == nil {
+		return
+	}
+	err := cns.Close()
+	if err != nil {
+		log.Errorf("failed to close partition consumer: %v", err)
+	}
+}
+
 func (c *consumer) createInfo() {
 	c.info["type"] = "kafka-consumer"
 	c.info["brokers"] = strings.Join(c.brokers, ",")
@@ -274,16 +262,6 @@ func (c *consumer) topicPartitionOffsetDiffGaugeSet(tp kafka.TopicPartition) {
 		log.Warnf("failed to query watermarks: %v", err)
 	}
 	topicPartitionOffsetDiff.WithLabelValues(*tp.Topic, strconv.FormatInt(int64(tp.Partition), 10)).Set(float64(high - int64(tp.Offset)))
-}
-
-func closeConsumer(cns *kafka.Consumer) {
-	if cns == nil {
-		return
-	}
-	err := cns.Close()
-	if err != nil {
-		log.Errorf("failed to close partition consumer: %v", err)
-	}
 }
 
 func determineContentType(hdr []kafka.Header) (string, error) {

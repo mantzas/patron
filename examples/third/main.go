@@ -3,11 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/async"
-	"github.com/mantzas/patron/async/kafka"
+	"github.com/mantzas/patron/async/confluent"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
@@ -79,12 +78,12 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 
 	kafkaCmp := kafkaComponent{}
 
-	cf, err := kafka.New(name, json.Type, topic, []string{broker})
+	cf, err := confluent.New(name, json.Type, []string{topic}, []string{broker})
 	if err != nil {
 		return nil, err
 	}
 
-	cmp, err := async.New("kafka-cmp", kafkaCmp.Process, cf, async.ConsumerRetry(10, 5*time.Second))
+	cmp, err := async.New("kafka-cmp", kafkaCmp.Process, cf)
 	if err != nil {
 		return nil, err
 	}

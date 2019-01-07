@@ -53,10 +53,11 @@ func TestFactory_Create(t *testing.T) {
 	assert.NoError(t, err)
 
 	expInfo := map[string]interface{}{
-		"auto.offset.reset":               OffsetLatest,
+		"auto.offset.reset":               "latest",
 		"bootstrap.servers":               "broker",
 		"brokers":                         "broker",
 		"buffer":                          1000,
+		"group.id":                        "name",
 		"client.id":                       fmt.Sprintf("%s-%s", host, "name"),
 		"content-type":                    "ct",
 		"go.application.rebalance.enable": true,

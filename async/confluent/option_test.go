@@ -24,7 +24,7 @@ func TestConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &kafka.ConfigMap{
-				"auto.offset.reset": OffsetLatest,
+				"auto.offset.reset": "latest",
 			}
 			c := consumer{cfg: cfg}
 			err := Config(tt.args.cfg)(&c)
