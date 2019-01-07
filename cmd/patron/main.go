@@ -162,7 +162,7 @@ func goFormat() error {
 }
 
 func dockerfileContent(name string) []byte {
-	cnt := `FROM golang:latest as builder
+	cnt := `FROM mantzas/patron:0.1 as builder
 RUN cd ..
 RUN mkdir {{name}}
 WORKDIR {{name}}
