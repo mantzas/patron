@@ -9,6 +9,7 @@ import (
 type OptionFunc func(*consumer) error
 
 // Config option for configuring consumer.
+// See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md.
 func Config(cfg map[string]interface{}) OptionFunc {
 	return func(c *consumer) error {
 		if cfg == nil {

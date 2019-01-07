@@ -85,7 +85,6 @@ func (f *Factory) Create() (async.Consumer, error) {
 		"client.id":                       fmt.Sprintf("%s-%s", host, f.name),
 		"group.id":                        f.name,
 		"bootstrap.servers":               strings.Join(f.brokers, ","),
-		"session.timeout.ms":              10000,
 		"go.events.channel.enable":        true,
 		"go.application.rebalance.enable": true,
 		"go.events.channel.size":          1000,
@@ -157,7 +156,6 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 			select {
 			case <-ctx.Done():
 				log.Info("canceling consuming messages requested")
-				closeConsumer(cns)
 				return
 			case ev := <-cns.Events():
 				switch e := ev.(type) {
@@ -227,22 +225,7 @@ func (c *consumer) Close() error {
 	if c.cnl != nil {
 		c.cnl()
 	}
-
-	if c.cns == nil {
-		return nil
-	}
-
-	return errors.Wrap(c.cns.Close(), "failed to close consumer")
-}
-
-func closeConsumer(cns *kafka.Consumer) {
-	if cns == nil {
-		return
-	}
-	err := cns.Close()
-	if err != nil {
-		log.Errorf("failed to close partition consumer: %v", err)
-	}
+	return nil
 }
 
 func (c *consumer) createInfo() {
