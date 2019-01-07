@@ -38,27 +38,11 @@ func TestNewServer(t *testing.T) {
 	}
 }
 
-func TestServer_Run_Shutdown(t *testing.T) {
-	tests := []struct {
-		name       string
-		cp         Component
-		wantRunErr bool
-	}{
-		{"success", &testComponent{}, false},
-		{"failed to run", &testComponent{errorRunning: true}, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s, err := New("test", "", Components(tt.cp, tt.cp, tt.cp))
-			assert.NoError(t, err)
-			err = s.Run()
-			if tt.wantRunErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+func TestServer_Run_Error(t *testing.T) {
+	s, err := New("test", "", Components(&testComponent{errorRunning: true}))
+	assert.NoError(t, err)
+	err = s.Run()
+	assert.Error(t, err)
 }
 
 type testComponent struct {

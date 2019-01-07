@@ -20,7 +20,15 @@ jobs:
           name: Running with test coverage and send to codecov
           command: |
             mkdir -p $TEST_RESULTS
-            gotestsum --junitfile unit-tests.xml
+            gotestsum --junitfile unit-tests.xml -- -coverprofile=coverage.txt ./...    
+            bash <(curl -s https://codecov.io/bash)
+
+      - store_test_results:
+          path: /tmp/test-results
+
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-outputgo 
 
       # - run:
       #     name: Running with test coverage and send to codecov
@@ -30,11 +38,6 @@ jobs:
       #       go test ./... -cover -race -mod=vendor -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
       #       bash <(curl -s https://codecov.io/bash)
             
-      - store_test_results:
-          path: /tmp/test-results
-
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: raw-test-output
+      
 
       

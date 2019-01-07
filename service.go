@@ -114,8 +114,10 @@ func (s *Service) Run() error {
 	case sig := <-s.termSig:
 		log.Infof("signal %s received", sig.String())
 	case err := <-chErr:
-		log.Info("component error received")
-		ee = append(ee, err)
+		if err != nil {
+			log.Info("component error received")
+			ee = append(ee, err)
+		}
 	}
 	cnl()
 
