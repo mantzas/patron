@@ -8,4 +8,4 @@ RUN wget https://packages.confluent.io/deb/5.1/archive.key && \
     sudo apt-key add archive.key && rm archive.key && \
     echo "deb [arch=amd64] https://packages.confluent.io/deb/5.1 stable main" | sudo tee -a /etc/apt/sources.list && \
     sudo apt-get update && sudo apt-get install librdkafka-dev librdkafka1 librdkafka++1
-RUN go get -u golang.org/x/lint/golint && go get -u github.com/jstemmer/go-junit-report
+RUN go get -u golang.org/x/lint/golint
