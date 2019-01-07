@@ -25,16 +25,7 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results
-
-      
-      # - run:
-      #     name: Running with test coverage and send to codecov
-      #     command: |
-      #       mkdir -p $TEST_RESULTS
-      #       trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-      #       go test ./... -cover -race -mod=vendor -coverprofile=coverage.txt -covermode=atomic | tee ${TEST_RESULTS}/go-test.out
-      #       bash <(curl -s https://codecov.io/bash)
-            
-      
-
-      
+       
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
