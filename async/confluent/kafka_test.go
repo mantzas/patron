@@ -63,7 +63,6 @@ func TestFactory_Create(t *testing.T) {
 		"go.application.rebalance.enable": true,
 		"go.events.channel.enable":        true,
 		"go.events.channel.size":          1000,
-		"session.timeout.ms":              10000,
 		"topics":                          "topic",
 		"type":                            "kafka-consumer",
 	}
