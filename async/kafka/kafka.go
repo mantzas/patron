@@ -37,11 +37,13 @@ func (m *message) Decode(v interface{}) error {
 }
 
 func (m *message) Ack() error {
+	//TODO: consumer group confirm message
 	trace.SpanSuccess(m.span)
 	return nil
 }
 
 func (m *message) Nack() error {
+	//TODO: consumer group not confirm message
 	trace.SpanError(m.span)
 	return nil
 }
@@ -57,7 +59,6 @@ type Factory struct {
 
 // New constructor.
 func New(name, ct string, topics []string, brokers []string, oo ...OptionFunc) (*Factory, error) {
-
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
