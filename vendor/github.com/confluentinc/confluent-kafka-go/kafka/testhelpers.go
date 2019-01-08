@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 )
 
 /*
@@ -97,11 +96,8 @@ func (cm *ConfigMap) updateFromTestconf() error {
 func getMessageCountInTopic(topic string) (int, error) {
 
 	// Create consumer
-	config := &ConfigMap{"bootstrap.servers": testconf.Brokers,
-		"group.id": testconf.GroupID}
-	config.updateFromTestconf()
-
-	c, err := NewConsumer(config)
+	c, err := NewConsumer(&ConfigMap{"bootstrap.servers": testconf.Brokers,
+		"group.id": testconf.GroupID})
 	if err != nil {
 		return 0, err
 	}
@@ -128,52 +124,4 @@ func getMessageCountInTopic(topic string) (int, error) {
 	}
 
 	return cnt, nil
-}
-
-// getBrokerList returns a list of brokers (ids) in the cluster
-func getBrokerList(H Handle) (brokers []int32, err error) {
-	md, err := getMetadata(H, nil, true, 15*1000)
-	if err != nil {
-		return nil, err
-	}
-
-	brokers = make([]int32, len(md.Brokers))
-	for i, mdBroker := range md.Brokers {
-		brokers[i] = mdBroker.ID
-	}
-
-	return brokers, nil
-}
-
-// waitTopicInMetadata waits for the given topic to show up in metadata
-func waitTopicInMetadata(H Handle, topic string, timeoutMs int) error {
-	d, _ := time.ParseDuration(fmt.Sprintf("%dms", timeoutMs))
-	tEnd := time.Now().Add(d)
-
-	for {
-		remain := tEnd.Sub(time.Now()).Seconds()
-		if remain < 0.0 {
-			return newErrorFromString(ErrTimedOut,
-				fmt.Sprintf("Timed out waiting for topic %s to appear in metadata", topic))
-		}
-
-		md, err := getMetadata(H, nil, true, int(remain*1000))
-		if err != nil {
-			return err
-		}
-
-		for _, t := range md.Topics {
-			if t.Topic != topic {
-				continue
-			}
-			if t.Error.Code() != ErrNoError || len(t.Partitions) < 1 {
-				continue
-			}
-			// Proper topic found in metadata
-			return nil
-		}
-
-		time.Sleep(500 * 1000) // 500ms
-	}
-
 }

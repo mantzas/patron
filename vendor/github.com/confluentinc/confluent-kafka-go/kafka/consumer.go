@@ -370,11 +370,7 @@ func NewConsumer(conf *ConfigMap) (*Consumer, error) {
 		return nil, err
 	}
 
-	// before we do anything with the configuration, create a copy such that
-	// the original is not mutated.
-	confCopy := conf.clone()
-
-	groupid, _ := confCopy.get("group.id", nil)
+	groupid, _ := conf.get("group.id", nil)
 	if groupid == nil {
 		// without a group.id the underlying cgrp subsystem in librdkafka wont get started
 		// and without it there is no way to consume assigned partitions.
@@ -384,32 +380,32 @@ func NewConsumer(conf *ConfigMap) (*Consumer, error) {
 
 	c := &Consumer{}
 
-	v, err := confCopy.extract("go.application.rebalance.enable", false)
+	v, err := conf.extract("go.application.rebalance.enable", false)
 	if err != nil {
 		return nil, err
 	}
 	c.appRebalanceEnable = v.(bool)
 
-	v, err = confCopy.extract("go.events.channel.enable", false)
+	v, err = conf.extract("go.events.channel.enable", false)
 	if err != nil {
 		return nil, err
 	}
 	c.eventsChanEnable = v.(bool)
 
-	v, err = confCopy.extract("go.events.channel.size", 1000)
+	v, err = conf.extract("go.events.channel.size", 1000)
 	if err != nil {
 		return nil, err
 	}
 	eventsChanSize := v.(int)
 
-	cConf, err := confCopy.convert()
+	cConf, err := conf.convert()
 	if err != nil {
 		return nil, err
 	}
 	cErrstr := (*C.char)(C.malloc(C.size_t(256)))
 	defer C.free(unsafe.Pointer(cErrstr))
 
-	C.rd_kafka_conf_set_events(cConf, C.RD_KAFKA_EVENT_REBALANCE|C.RD_KAFKA_EVENT_OFFSET_COMMIT|C.RD_KAFKA_EVENT_STATS|C.RD_KAFKA_EVENT_ERROR)
+	C.rd_kafka_conf_set_events(cConf, C.RD_KAFKA_EVENT_REBALANCE|C.RD_KAFKA_EVENT_OFFSET_COMMIT|C.RD_KAFKA_EVENT_STATS)
 
 	c.handle.rk = C.rd_kafka_new(C.RD_KAFKA_CONSUMER, cConf, cErrstr, 256)
 	if c.handle.rk == nil {
@@ -477,7 +473,6 @@ out:
 // If topic is non-nil only information about that topic is returned, else if
 // allTopics is false only information about locally used topics is returned,
 // else information about all topics is returned.
-// GetMetadata is equivalent to listTopics, describeTopics and describeCluster in the Java API.
 func (c *Consumer) GetMetadata(topic *string, allTopics bool, timeoutMs int) (*Metadata, error) {
 	return getMetadata(c, topic, allTopics, timeoutMs)
 }

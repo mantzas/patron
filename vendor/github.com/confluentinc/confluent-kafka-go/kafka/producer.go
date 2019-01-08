@@ -35,7 +35,7 @@ import (
 //    tmphdr.size == 0:  value is considered empty (ignored)
 //    tmphdr.size > 0:   value is considered non-empty
 //
-// WARNING: The header keys and values will be freed by this function.
+// WARNING: The header values will be freed by this function.
 void tmphdrs_to_chdrs (tmphdr_t *tmphdrs, size_t tmphdrsCnt,
                        rd_kafka_headers_t **chdrs) {
    size_t i;
@@ -50,7 +50,6 @@ void tmphdrs_to_chdrs (tmphdr_t *tmphdrs, size_t tmphdrsCnt,
                           tmphdrs[i].size == -1 ? 0 : tmphdrs[i].size);
       if (tmphdrs[i].size > 0)
          free((void *)tmphdrs[i].val);
-      free((void *)tmphdrs[i].key);
    }
 }
 
@@ -60,7 +59,6 @@ void free_tmphdrs (tmphdr_t *tmphdrs, size_t tmphdrsCnt) {
    for (i = 0 ; i < tmphdrsCnt ; i++) {
       if (tmphdrs[i].size > 0)
          free((void *)tmphdrs[i].val);
-      free((void *)tmphdrs[i].key);
    }
 }
 #endif
@@ -76,11 +74,8 @@ rd_kafka_resp_err_t do_produce (rd_kafka_t *rk,
           uintptr_t cgoid) {
   void *valp = valIsNull ? NULL : val;
   void *keyp = keyIsNull ? NULL : key;
-#ifdef RD_KAFKA_V_TIMESTAMP
-rd_kafka_resp_err_t err;
 #ifdef RD_KAFKA_V_HEADERS
   rd_kafka_headers_t *hdrs = NULL;
-#endif
 #endif
 
 
@@ -95,7 +90,7 @@ rd_kafka_resp_err_t err;
 
 
 #ifdef RD_KAFKA_V_TIMESTAMP
-  err = rd_kafka_producev(rk,
+  return rd_kafka_producev(rk,
         RD_KAFKA_V_RKT(rkt),
         RD_KAFKA_V_PARTITION(partition),
         RD_KAFKA_V_MSGFLAGS(msgflags),
@@ -107,11 +102,6 @@ rd_kafka_resp_err_t err;
 #endif
         RD_KAFKA_V_OPAQUE((void *)cgoid),
         RD_KAFKA_V_END);
-#ifdef RD_KAFKA_V_HEADERS
-  if (err && hdrs)
-    rd_kafka_headers_destroy(hdrs);
-#endif
-  return err;
 #else
   if (timestamp)
       return RD_KAFKA_RESP_ERR__NOT_IMPLEMENTED;
@@ -228,9 +218,6 @@ func (p *Producer) produce(msg *Message, msgFlags int, deliveryChan chan Event) 
 		tmphdrs = make([]C.tmphdr_t, tmphdrsCnt)
 
 		for n, hdr := range msg.Headers {
-			// Make a copy of the key
-			// to avoid runtime panic with
-			// foreign Go pointers in cgo.
 			tmphdrs[n].key = C.CString(hdr.Key)
 			if hdr.Value != nil {
 				tmphdrs[n].size = C.ssize_t(len(hdr.Value))
@@ -386,45 +373,38 @@ func NewProducer(conf *ConfigMap) (*Producer, error) {
 
 	p := &Producer{}
 
-	// before we do anything with the configuration, create a copy such that
-	// the original is not mutated.
-	confCopy := conf.clone()
-
-	v, err := confCopy.extract("go.batch.producer", false)
+	v, err := conf.extract("go.batch.producer", false)
 	if err != nil {
 		return nil, err
 	}
 	batchProducer := v.(bool)
 
-	v, err = confCopy.extract("go.delivery.reports", true)
+	v, err = conf.extract("go.delivery.reports", true)
 	if err != nil {
 		return nil, err
 	}
 	p.handle.fwdDr = v.(bool)
 
-	v, err = confCopy.extract("go.events.channel.size", 1000000)
+	v, err = conf.extract("go.events.channel.size", 1000000)
 	if err != nil {
 		return nil, err
 	}
 	eventsChanSize := v.(int)
 
-	v, err = confCopy.extract("go.produce.channel.size", 1000000)
+	v, err = conf.extract("go.produce.channel.size", 1000000)
 	if err != nil {
 		return nil, err
 	}
 	produceChannelSize := v.(int)
 
-	if int(C.rd_kafka_version()) < 0x01000000 {
-		// produce.offset.report is no longer used in librdkafka >= v1.0.0
-		v, _ = confCopy.extract("{topic}.produce.offset.report", nil)
-		if v == nil {
-			// Enable offset reporting by default, unless overriden.
-			confCopy.SetKey("{topic}.produce.offset.report", true)
-		}
+	v, _ = conf.extract("{topic}.produce.offset.report", nil)
+	if v == nil {
+		// Enable offset reporting by default, unless overriden.
+		conf.SetKey("{topic}.produce.offset.report", true)
 	}
 
 	// Convert ConfigMap to librdkafka conf_t
-	cConf, err := confCopy.convert()
+	cConf, err := conf.convert()
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +412,7 @@ func NewProducer(conf *ConfigMap) (*Producer, error) {
 	cErrstr := (*C.char)(C.malloc(C.size_t(256)))
 	defer C.free(unsafe.Pointer(cErrstr))
 
-	C.rd_kafka_conf_set_events(cConf, C.RD_KAFKA_EVENT_DR|C.RD_KAFKA_EVENT_STATS|C.RD_KAFKA_EVENT_ERROR)
+	C.rd_kafka_conf_set_events(cConf, C.RD_KAFKA_EVENT_DR|C.RD_KAFKA_EVENT_STATS)
 
 	// Create librdkafka producer instance
 	p.handle.rk = C.rd_kafka_new(C.RD_KAFKA_PRODUCER, cConf, cErrstr, 256)
@@ -553,7 +533,6 @@ out:
 // If topic is non-nil only information about that topic is returned, else if
 // allTopics is false only information about locally used topics is returned,
 // else information about all topics is returned.
-// GetMetadata is equivalent to listTopics, describeTopics and describeCluster in the Java API.
 func (p *Producer) GetMetadata(topic *string, allTopics bool, timeoutMs int) (*Metadata, error) {
 	return getMetadata(p, topic, allTopics, timeoutMs)
 }

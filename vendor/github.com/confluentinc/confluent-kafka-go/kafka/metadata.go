@@ -94,7 +94,6 @@ func getMetadata(H Handle, topic *string, allTopics bool, timeoutMs int) (*Metad
 	}
 
 	m := Metadata{}
-	defer C.rd_kafka_metadata_destroy(cMd)
 
 	m.Brokers = make([]BrokerMetadata, cMd.broker_cnt)
 	for i := 0; i < int(cMd.broker_cnt); i++ {

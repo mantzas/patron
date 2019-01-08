@@ -4,7 +4,7 @@ github.com/Shopify/sarama
 github.com/beorn7/perks/quantile
 # github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
 github.com/codahale/hdrhistogram
-# github.com/confluentinc/confluent-kafka-go v0.11.6
+# github.com/confluentinc/confluent-kafka-go v0.11.4
 github.com/confluentinc/confluent-kafka-go/kafka
 # github.com/davecgh/go-spew v1.1.0
 github.com/davecgh/go-spew/spew

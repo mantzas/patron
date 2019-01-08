@@ -5,7 +5,7 @@ require (
 	github.com/Shopify/toxiproxy v2.1.3+incompatible // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
-	github.com/confluentinc/confluent-kafka-go v0.11.6
+	github.com/confluentinc/confluent-kafka-go v0.11.4
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/eapache/go-resiliency v1.1.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20160609142408-bb955e01b934 // indirect
