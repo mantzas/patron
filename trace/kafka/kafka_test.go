@@ -13,38 +13,6 @@ func ErrorOption() OptionFunc {
 	}
 }
 
-func TestNewMessage(t *testing.T) {
-	topic := "xxx"
-	body := []byte("Test")
-	msg := NewMessage(topic, body)
-	assert.Equal(t, topic, msg.topic)
-	assert.Equal(t, body, msg.body)
-}
-
-func TestNewJSONMessage(t *testing.T) {
-	topic := "xxx"
-	body := struct {
-		ID   int
-		Name string
-	}{
-		ID:   1,
-		Name: "Test",
-	}
-	expected := []byte(`{"ID":1,"Name":"Test"}`)
-	msg, err := NewJSONMessage(topic, body)
-	assert.NoError(t, err)
-	assert.Equal(t, topic, msg.topic)
-	assert.Equal(t, expected, msg.body)
-}
-
-func TestNewJSONMessageError(t *testing.T) {
-	topic := "xxx"
-	body := make(chan bool)
-	msg, err := NewJSONMessage(topic, body)
-	assert.Error(t, err)
-	assert.Nil(t, msg)
-}
-
 func TestNewProducer(t *testing.T) {
 	brokers := []string{"xxx"}
 	type args struct {

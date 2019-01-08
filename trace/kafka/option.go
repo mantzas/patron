@@ -3,6 +3,7 @@ package kafka
 import (
 	"fmt"
 
+	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/errors"
 )
 
@@ -28,6 +29,17 @@ func Config(cfg map[string]interface{}) OptionFunc {
 				return fmt.Errorf("failed to set key %s: %v", k, err)
 			}
 		}
+		return nil
+	}
+}
+
+// Encode option for body encoding.
+func Encode(enc encoding.EncodeFunc) OptionFunc {
+	return func(p *Producer) error {
+		if enc == nil {
+			return errors.New("encode function is nil")
+		}
+		p.enc = enc
 		return nil
 	}
 }

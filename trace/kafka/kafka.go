@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
@@ -17,26 +18,6 @@ var (
 	tracingTypeAsync = opentracing.Tag{Key: "type", Value: "async"}
 )
 
-// Message abstraction of a Kafka message.
-type Message struct {
-	topic string
-	body  []byte
-}
-
-// NewMessage creates a new message.
-func NewMessage(topic string, body []byte) *Message {
-	return &Message{topic: topic, body: body}
-}
-
-// NewJSONMessage creates a new message with a JSON encoded body.
-func NewJSONMessage(topic string, d interface{}) (*Message, error) {
-	b, err := json.Encode(d)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to JSON encode")
-	}
-	return &Message{topic: topic, body: b}, nil
-}
-
 // Result describes the result of a sent message.
 type Result struct {
 	Err       error
@@ -47,7 +28,8 @@ type Result struct {
 
 // Sender interface for Kafka.
 type Sender interface {
-	Send(ctx context.Context, msg *Message) error
+	Send(ctx context.Context, topic string, v interface{}) error
+	SendRaw(ctx context.Context, topic string, body []byte) error
 	Results() <-chan *Result
 	Close()
 }
@@ -55,17 +37,18 @@ type Sender interface {
 // Producer defines a async Kafka producer.
 type Producer struct {
 	cfg   *kafka.ConfigMap
+	enc   encoding.EncodeFunc
 	prod  *kafka.Producer
 	tag   opentracing.Tag
 	chRes chan *Result
 }
 
-// NewProducer creates a new sync producer with default configuration.
+// NewProducer creates a new sync producer with default configuration and JSON encoding.
 func NewProducer(brokers []string, oo ...OptionFunc) (*Producer, error) {
 	return newProducer(brokers, tracingTypeSync, oo...)
 }
 
-// NewAsyncProducer creates a new async producer with default configuration.
+// NewAsyncProducer creates a new async producer with default configuration and JSON encoding.
 func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*Producer, error) {
 	p, err := newProducer(brokers, tracingTypeAsync, oo...)
 	if err != nil {
@@ -86,7 +69,7 @@ func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*Prod
 		"bootstrap.servers": strings.Join(brokers, ","),
 	}
 
-	kp := Producer{cfg: cfg, tag: tag}
+	kp := Producer{cfg: cfg, tag: tag, enc: json.Encode}
 
 	for _, o := range oo {
 		err := o(&kp)
@@ -104,17 +87,27 @@ func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*Prod
 }
 
 // Send a message to a topic.
-func (p *Producer) Send(ctx context.Context, msg *Message) error {
+func (p *Producer) Send(ctx context.Context, topic string, v interface{}) error {
+	var err error
+	body, err := p.enc(v)
+	if err != nil {
+		return err
+	}
+	return p.SendRaw(ctx, topic, body)
+}
+
+// SendRaw message to a topic.
+func (p *Producer) SendRaw(ctx context.Context, topic string, body []byte) error {
 	var err error
 	csp, _ := trace.ChildSpan(
 		ctx,
-		trace.ComponentOpName(trace.KafkaAsyncProducerComponent, msg.topic),
+		trace.ComponentOpName(trace.KafkaAsyncProducerComponent, topic),
 		trace.KafkaAsyncProducerComponent,
 		ext.SpanKindProducer,
 		p.tag,
-		opentracing.Tag{Key: "topic", Value: msg.topic},
+		opentracing.Tag{Key: "topic", Value: topic},
 	)
-	pm, err := createProducerMessage(msg, csp)
+	pm, err := createProducerMessage(topic, body, csp)
 	if err != nil {
 		trace.SpanError(csp)
 		return err
@@ -157,15 +150,15 @@ func (p *Producer) sendAsync(msg *kafka.Message) error {
 	return nil
 }
 
-func createProducerMessage(msg *Message, sp opentracing.Span) (*kafka.Message, error) {
+func createProducerMessage(topic string, body []byte, sp opentracing.Span) (*kafka.Message, error) {
 	c := kafkaHeadersCarrier{}
 	err := sp.Tracer().Inject(sp.Context(), opentracing.TextMap, &c)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to inject tracing headers")
 	}
 	return &kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &msg.topic, Partition: kafka.PartitionAny},
-		Value:          msg.body,
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          body,
 		Headers:        c,
 	}, nil
 }

@@ -12,28 +12,41 @@ import (
 )
 
 func TestSend(t *testing.T) {
+	topic := "test-topic"
+	payload := "TEST"
+	brokers := []string{"localhost:9092"}
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
-	p, err := NewProducer([]string{"localhost:9092"})
+	p, err := NewProducer(brokers)
 	assert.NoError(t, err)
 	defer p.Close()
-	msg := NewMessage("test-topic", []byte("TEST"))
-	err = p.Send(context.Background(), msg)
+	err = p.Send(context.Background(), topic, payload)
+	assert.NoError(t, err)
+	err = p.SendRaw(context.Background(), topic, []byte(payload))
 	assert.NoError(t, err)
 }
 
 func TestAsyncSend(t *testing.T) {
+	topic := "test-topic"
+	payload := "TEST"
+	brokers := []string{"localhost:9092"}
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
-	p, err := NewAsyncProducer([]string{"localhost:9092"})
+	p, err := NewAsyncProducer(brokers)
 	assert.NoError(t, err)
 	defer p.Close()
-	msg := NewMessage("test-topic", []byte("TEST"))
-	err = p.Send(context.Background(), msg)
+	err = p.Send(context.Background(), topic, payload)
 	assert.NoError(t, err)
 	res := <-p.Results()
 	assert.NoError(t, res.Err)
-	assert.Equal(t, "test-topic", res.Topic)
+	assert.Equal(t, topic, res.Topic)
+	assert.Equal(t, int32(0), res.Partition)
+	assert.True(t, res.Offset > int64(0))
+	err = p.SendRaw(context.Background(), topic, []byte(payload))
+	assert.NoError(t, err)
+	res = <-p.Results()
+	assert.NoError(t, res.Err)
+	assert.Equal(t, topic, res.Topic)
 	assert.Equal(t, int32(0), res.Partition)
 	assert.True(t, res.Offset > int64(0))
 }
