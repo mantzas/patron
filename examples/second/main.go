@@ -13,8 +13,8 @@ import (
 	"github.com/mantzas/patron/sync"
 	patronhttp "github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/sync/http/auth/apikey"
-	"github.com/mantzas/patron/trace/confluent"
 	tracehttp "github.com/mantzas/patron/trace/http"
+	"github.com/mantzas/patron/trace/kafka"
 	"github.com/pkg/errors"
 )
 
@@ -83,12 +83,12 @@ func main() {
 }
 
 type httpComponent struct {
-	prd   confluent.Producer
+	prd   kafka.Producer
 	topic string
 }
 
 func newHTTPComponent(kafkaBroker, topic, url string) (*httpComponent, error) {
-	prd, err := confluent.NewProducer([]string{kafkaBroker})
+	prd, err := kafka.NewProducer([]string{kafkaBroker})
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (hc *httpComponent) second(ctx context.Context, req *sync.Request) (*sync.R
 		return nil, errors.Wrap(err, "failed to get www.google.com")
 	}
 
-	kafkaMsg, err := confluent.NewJSONMessage(hc.topic, &u)
+	kafkaMsg, err := kafka.NewJSONMessage(hc.topic, &u)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,7 @@ import (
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/async"
-	"github.com/mantzas/patron/async/confluent"
+	"github.com/mantzas/patron/async/kafka"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
@@ -78,7 +78,7 @@ func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComp
 
 	kafkaCmp := kafkaComponent{}
 
-	cf, err := confluent.New(name, json.Type, []string{topic}, []string{broker})
+	cf, err := kafka.New(name, json.Type, []string{topic}, []string{broker})
 	if err != nil {
 		return nil, err
 	}

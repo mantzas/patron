@@ -1,6 +1,6 @@
 // +build integration
 
-package confluent
+package kafka
 
 import (
 	"context"
