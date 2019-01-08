@@ -5,20 +5,15 @@ jobs:
       - image: mantzas/patron-circleci:0.4
 
       - image: confluentinc/cp-zookeeper:latest
-        name: "zookeeper"
         environment:
           ZOOKEEPER_CLIENT_PORT: "2181"
           ZOOKEEPER_TICK_TIME: "2000"
 
       - image: confluentinc/cp-kafka:latest
-        name: "kafka"
-        depends_on:
-          - zookeeper
-        ports:
-          - 9092:9092
+        name: "kafka"        
         environment:
           KAFKA_BROKER_ID: "1"
-          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
           KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
           KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
