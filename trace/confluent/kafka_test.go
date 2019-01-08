@@ -80,7 +80,7 @@ func TestNewProducer(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, got)
 				if tt.async {
-					assert.NotNil(t, got.Error())
+					assert.NotNil(t, got.Results())
 				}
 			}
 		})

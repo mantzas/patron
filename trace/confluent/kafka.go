@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/mantzas/patron/log"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
@@ -39,10 +37,18 @@ func NewJSONMessage(topic string, d interface{}) (*Message, error) {
 	return &Message{topic: topic, body: b}, nil
 }
 
+// Result describes the result of a sent message.
+type Result struct {
+	Err       error
+	Topic     string
+	Partition int32
+	Offset    int64
+}
+
 // Producer interface for Kafka.
 type Producer interface {
 	Send(ctx context.Context, msg *Message) error
-	Error() <-chan error
+	Results() <-chan *Result
 	Close()
 }
 
@@ -51,7 +57,7 @@ type KafkaProducer struct {
 	cfg   *kafka.ConfigMap
 	prod  *kafka.Producer
 	tag   opentracing.Tag
-	chErr chan error
+	chRes chan *Result
 }
 
 // NewProducer creates a new sync producer with default configuration.
@@ -65,7 +71,7 @@ func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*KafkaProducer, error
 	if err != nil {
 		return nil, err
 	}
-	p.chErr = make(chan error)
+	p.chRes = make(chan *Result)
 	go p.monitorErrorEvents()
 	return p, nil
 }
@@ -115,7 +121,7 @@ func (kp *KafkaProducer) Send(ctx context.Context, msg *Message) error {
 	}
 
 	// checking the channel to determine if the producer is sync or async.
-	if kp.chErr == nil {
+	if kp.chRes == nil {
 		err = kp.sendSync(pm)
 	} else {
 		err = kp.sendAsync(pm)
@@ -171,17 +177,22 @@ func (kp *KafkaProducer) monitorErrorEvents() {
 			case *kafka.Message:
 				m := ev
 				if m.TopicPartition.Error == nil {
-					log.Debugf("delivered message to topic %s [%d] at offset %v\n", *m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+					kp.chRes <- &Result{
+						Topic:     *m.TopicPartition.Topic,
+						Partition: m.TopicPartition.Partition,
+						Offset:    int64(m.TopicPartition.Offset),
+					}
+				} else {
+					kp.chRes <- &Result{Err: m.TopicPartition.Error}
 				}
-				kp.chErr <- m.TopicPartition.Error
 			}
 		}
 	}()
 }
 
-// Error returns a error channel for monitoring publishing errors.
-func (kp *KafkaProducer) Error() <-chan error {
-	return kp.chErr
+// Results returns a result channel for monitoring published messages.
+func (kp *KafkaProducer) Results() <-chan *Result {
+	return kp.chRes
 }
 
 // Close the producer.
@@ -190,8 +201,8 @@ func (kp *KafkaProducer) Close() {
 		return
 	}
 	kp.prod.Close()
-	if kp.chErr != nil {
-		close(kp.chErr)
+	if kp.chRes != nil {
+		close(kp.chRes)
 	}
 }
 
