@@ -4,22 +4,6 @@ jobs:
     docker:
       - image: mantzas/patron-circleci:0.4
 
-      - image: confluentinc/cp-zookeeper:latest
-        name: "zookeeper"
-        environment:
-          ZOOKEEPER_CLIENT_PORT: "2181"
-          ZOOKEEPER_TICK_TIME: "2000"
-
-      - image: confluentinc/cp-kafka:latest
-        name: "kafka"
-        environment:
-          KAFKA_BROKER_ID: "1"
-          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-          KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
-
     environment:
       TEST_RESULTS: /tmp/test-results
 
@@ -36,7 +20,7 @@ jobs:
           name: Running with test coverage and send to codecov
           command: |
             mkdir -p $TEST_RESULTS
-            gotestsum --junitfile ${TEST_RESULTS}/unit-tests.xml -- -tags=integration -coverprofile=coverage.txt ./...    
+            gotestsum --junitfile ${TEST_RESULTS}/unit-tests.xml -- -coverprofile=coverage.txt ./...    
             bash <(curl -s https://codecov.io/bash)
 
       - store_test_results:
