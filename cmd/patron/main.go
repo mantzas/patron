@@ -162,15 +162,17 @@ func goFormat() error {
 }
 
 func dockerfileContent(name string) []byte {
-	cnt := `FROM mantzas/patron:0.1 as builder
+	cnt := `FROM golang:1.11.4-alpine3.8 as builder
+RUN apk add librdkafka-dev build-base
 RUN cd ..
 RUN mkdir {{name}}
 WORKDIR {{name}}
 COPY . ./
 ARG version=dev
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags "-X main.version=$version" -o {{name}} ./cmd/{{name}}/main.go 
+RUN GOARCH=amd64 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags "-X main.version=$version" -o {{name}} ./cmd/{{name}}/main.go 
 
-FROM scratch
+FROM alpine:3.8
+RUN apk add librdkafka-dev
 COPY --from=builder /go/{{name}}/{{name}} .
 CMD ["./{{name}}"]
 `
