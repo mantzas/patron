@@ -6,9 +6,7 @@ require (
 	github.com/confluentinc/confluent-kafka-go v0.11.4
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/golang/protobuf v1.2.0
-	github.com/google/pprof v0.0.0-20190108002400-985cf9b4fdd2 // indirect
 	github.com/google/uuid v1.1.0
-	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
 	github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20180313041242-367231351874
@@ -27,10 +25,7 @@ require (
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	go.uber.org/atomic v1.3.2 // indirect
-	golang.org/x/arch v0.0.0-20181203225421-5a4828bb7045 // indirect
-	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc // indirect
 	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
-	golang.org/x/sys v0.0.0-20190108104531-7fbe1cd0fcc2 // indirect
 	gopkg.in/russross/blackfriday.v2 v2.0.0
 )
