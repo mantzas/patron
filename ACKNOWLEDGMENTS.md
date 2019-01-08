@@ -3,7 +3,7 @@
 The framework makes primarily use of the following OSS projects:
 
 * [blackfriday](https://github.com/russross/blackfriday)
-* [sarama](https://github.com/Shopify/sarama)
+* [confluent-kafka-go](https://github.com/confluentinc/confluent-kafka-go)
 * [httprouter](https://github.com/julienschmidt/httprouter)
 * [opentracing-go](https://github.com/opentracing/opentracing-go)
 * [errors](https://github.com/pkg/errors)

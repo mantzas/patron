@@ -1,5 +1,3 @@
-# github.com/Shopify/sarama v1.16.0
-github.com/Shopify/sarama
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
 # github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
@@ -8,16 +6,8 @@ github.com/codahale/hdrhistogram
 github.com/confluentinc/confluent-kafka-go/kafka
 # github.com/davecgh/go-spew v1.1.0
 github.com/davecgh/go-spew/spew
-# github.com/eapache/go-resiliency v1.1.0
-github.com/eapache/go-resiliency/breaker
-# github.com/eapache/go-xerial-snappy v0.0.0-20160609142408-bb955e01b934
-github.com/eapache/go-xerial-snappy
-# github.com/eapache/queue v1.1.0
-github.com/eapache/queue
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
-# github.com/golang/snappy v0.0.0-20170215233205-553a64147049
-github.com/golang/snappy
 # github.com/google/uuid v1.1.0
 github.com/google/uuid
 # github.com/julienschmidt/httprouter v0.0.0-20180411154501-adbc77eec0d9
@@ -31,10 +21,6 @@ github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
 github.com/opentracing/opentracing-go/mocktracer
-# github.com/pierrec/lz4 v0.0.0-20171218195038-2fcda4cb7018
-github.com/pierrec/lz4
-# github.com/pierrec/xxHash v0.1.1
-github.com/pierrec/xxHash/xxHash32
 # github.com/pkg/errors v0.8.0
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
@@ -53,8 +39,6 @@ github.com/prometheus/procfs
 github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
 github.com/prometheus/procfs/internal/util
-# github.com/rcrowley/go-metrics v0.0.0-20180406234716-d932a24a8ccb
-github.com/rcrowley/go-metrics
 # github.com/rs/zerolog v1.5.0
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/json
