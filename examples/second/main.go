@@ -52,7 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic, "http://localhost:50000/second")
+	httpCmp, err := newHTTPComponent(kafkaBroker, kafkaTopic)
 	if err != nil {
 		log.Fatalf("failed to create processor %v", err)
 	}
@@ -87,7 +87,7 @@ type httpComponent struct {
 	topic string
 }
 
-func newHTTPComponent(kafkaBroker, topic, url string) (*httpComponent, error) {
+func newHTTPComponent(kafkaBroker, topic string) (*httpComponent, error) {
 	prd, err := kafka.NewProducer([]string{kafkaBroker})
 	if err != nil {
 		return nil, err

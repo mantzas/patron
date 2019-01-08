@@ -24,8 +24,6 @@ const (
 	AMQPConsumerComponent = "amqp-consumer"
 	// AMQPPublisherComponent definition.
 	AMQPPublisherComponent = "amqp-publisher"
-	// HTTPComponent definition.
-	HTTPComponent = "http"
 	// HTTPClientComponent definition.
 	HTTPClientComponent = "http-client"
 	versionTag          = "version"

@@ -167,13 +167,12 @@ func (th testHandler) Process(ctx context.Context, req *sync.Request) (*sync.Res
 }
 
 func Test_handler(t *testing.T) {
-	require := require.New(t)
 	errReq, err := http.NewRequest(http.MethodGet, "/", nil)
 	errReq.Header.Set(encoding.ContentTypeHeader, "xml")
-	require.NoError(err)
+	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(err)
+	require.NoError(t, err)
 
 	req.Header.Set(encoding.ContentTypeHeader, json.Type)
 	req.Header.Set(encoding.AcceptHeader, json.Type)

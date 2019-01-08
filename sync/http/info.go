@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func infoHandler(w http.ResponseWriter, r *http.Request) {
+func infoHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Add(encoding.ContentTypeHeader, json.TypeCharset)
 
 	mm, err := prometheus.DefaultGatherer.Gather()

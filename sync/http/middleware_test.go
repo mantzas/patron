@@ -10,19 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func testHandle(w http.ResponseWriter, r *http.Request) {
+func testHandle(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(202)
 }
 
-func testPanicHandleString(w http.ResponseWriter, r *http.Request) {
+func testPanicHandleString(_ http.ResponseWriter, _ *http.Request) {
 	panic("test")
 }
 
-func testPanicHandleError(w http.ResponseWriter, r *http.Request) {
+func testPanicHandleError(_ http.ResponseWriter, _ *http.Request) {
 	panic(errors.New("TEST"))
 }
 
-func testPanicHandleInt(w http.ResponseWriter, r *http.Request) {
+func testPanicHandleInt(_ http.ResponseWriter, _ *http.Request) {
 	panic(1000)
 }
 
