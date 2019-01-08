@@ -8,7 +8,7 @@ import (
 )
 
 func ErrorOption() OptionFunc {
-	return func(k *KafkaProducer) error {
+	return func(p *Producer) error {
 		return errors.New("TEST")
 	}
 }
@@ -67,7 +67,7 @@ func TestNewProducer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var err error
-			var got *KafkaProducer
+			var got *Producer
 			if tt.async {
 				got, err = NewAsyncProducer(tt.args.brokers, tt.args.oo...)
 			} else {

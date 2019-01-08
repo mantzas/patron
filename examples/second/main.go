@@ -83,7 +83,7 @@ func main() {
 }
 
 type httpComponent struct {
-	prd   kafka.Producer
+	prd   *kafka.Producer
 	topic string
 }
 

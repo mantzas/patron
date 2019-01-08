@@ -45,15 +45,15 @@ type Result struct {
 	Offset    int64
 }
 
-// Producer interface for Kafka.
-type Producer interface {
+// Sender interface for Kafka.
+type Sender interface {
 	Send(ctx context.Context, msg *Message) error
 	Results() <-chan *Result
 	Close()
 }
 
-// KafkaProducer defines a async Kafka producer.
-type KafkaProducer struct {
+// Producer defines a async Kafka producer.
+type Producer struct {
 	cfg   *kafka.ConfigMap
 	prod  *kafka.Producer
 	tag   opentracing.Tag
@@ -61,12 +61,12 @@ type KafkaProducer struct {
 }
 
 // NewProducer creates a new sync producer with default configuration.
-func NewProducer(brokers []string, oo ...OptionFunc) (*KafkaProducer, error) {
+func NewProducer(brokers []string, oo ...OptionFunc) (*Producer, error) {
 	return newProducer(brokers, tracingTypeSync, oo...)
 }
 
 // NewAsyncProducer creates a new async producer with default configuration.
-func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*KafkaProducer, error) {
+func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*Producer, error) {
 	p, err := newProducer(brokers, tracingTypeAsync, oo...)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*KafkaProducer, error
 	return p, nil
 }
 
-func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*KafkaProducer, error) {
+func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*Producer, error) {
 
 	if len(brokers) == 0 {
 		return nil, errors.New("at least one broker must be provided")
@@ -86,7 +86,7 @@ func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*Kafk
 		"bootstrap.servers": strings.Join(brokers, ","),
 	}
 
-	kp := KafkaProducer{cfg: cfg, tag: tag}
+	kp := Producer{cfg: cfg, tag: tag}
 
 	for _, o := range oo {
 		err := o(&kp)
@@ -104,14 +104,14 @@ func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*Kafk
 }
 
 // Send a message to a topic.
-func (kp *KafkaProducer) Send(ctx context.Context, msg *Message) error {
+func (p *Producer) Send(ctx context.Context, msg *Message) error {
 	var err error
 	csp, _ := trace.ChildSpan(
 		ctx,
 		trace.ComponentOpName(trace.KafkaAsyncProducerComponent, msg.topic),
 		trace.KafkaAsyncProducerComponent,
 		ext.SpanKindProducer,
-		kp.tag,
+		p.tag,
 		opentracing.Tag{Key: "topic", Value: msg.topic},
 	)
 	pm, err := createProducerMessage(msg, csp)
@@ -121,10 +121,10 @@ func (kp *KafkaProducer) Send(ctx context.Context, msg *Message) error {
 	}
 
 	// checking the channel to determine if the producer is sync or async.
-	if kp.chRes == nil {
-		err = kp.sendSync(pm)
+	if p.chRes == nil {
+		err = p.sendSync(pm)
 	} else {
-		err = kp.sendAsync(pm)
+		err = p.sendAsync(pm)
 	}
 
 	if err != nil {
@@ -135,10 +135,10 @@ func (kp *KafkaProducer) Send(ctx context.Context, msg *Message) error {
 	return nil
 }
 
-func (kp *KafkaProducer) sendSync(msg *kafka.Message) error {
+func (p *Producer) sendSync(msg *kafka.Message) error {
 	deliveryChan := make(chan kafka.Event)
 	defer close(deliveryChan)
-	err := kp.prod.Produce(msg, deliveryChan)
+	err := p.prod.Produce(msg, deliveryChan)
 	if err != nil {
 		return errors.Wrap(err, "failed to produce message")
 	}
@@ -152,8 +152,8 @@ func (kp *KafkaProducer) sendSync(msg *kafka.Message) error {
 	return nil
 }
 
-func (kp *KafkaProducer) sendAsync(msg *kafka.Message) error {
-	kp.prod.ProduceChannel() <- msg
+func (p *Producer) sendAsync(msg *kafka.Message) error {
+	p.prod.ProduceChannel() <- msg
 	return nil
 }
 
@@ -170,39 +170,39 @@ func createProducerMessage(msg *Message, sp opentracing.Span) (*kafka.Message, e
 	}, nil
 }
 
-func (kp *KafkaProducer) monitorErrorEvents() {
+func (p *Producer) monitorErrorEvents() {
 	go func() {
-		for e := range kp.prod.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				m := ev
-				if m.TopicPartition.Error == nil {
-					kp.chRes <- &Result{
-						Topic:     *m.TopicPartition.Topic,
-						Partition: m.TopicPartition.Partition,
-						Offset:    int64(m.TopicPartition.Offset),
-					}
-				} else {
-					kp.chRes <- &Result{Err: m.TopicPartition.Error}
+		for e := range p.prod.Events() {
+			msg, ok := e.(*kafka.Message)
+			if !ok {
+				continue
+			}
+			if msg.TopicPartition.Error == nil {
+				p.chRes <- &Result{
+					Topic:     *msg.TopicPartition.Topic,
+					Partition: msg.TopicPartition.Partition,
+					Offset:    int64(msg.TopicPartition.Offset),
 				}
+			} else {
+				p.chRes <- &Result{Err: msg.TopicPartition.Error}
 			}
 		}
 	}()
 }
 
 // Results returns a result channel for monitoring published messages.
-func (kp *KafkaProducer) Results() <-chan *Result {
-	return kp.chRes
+func (p *Producer) Results() <-chan *Result {
+	return p.chRes
 }
 
 // Close the producer.
-func (kp *KafkaProducer) Close() {
-	if kp.prod == nil {
+func (p *Producer) Close() {
+	if p.prod == nil {
 		return
 	}
-	kp.prod.Close()
-	if kp.chRes != nil {
-		close(kp.chRes)
+	p.prod.Close()
+	if p.chRes != nil {
+		close(p.chRes)
 	}
 }
 

@@ -24,7 +24,7 @@ func TestConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &kafka.ConfigMap{}
-			c := KafkaProducer{cfg: cfg}
+			c := Producer{cfg: cfg}
 			err := Config(tt.args.cfg)(&c)
 			if tt.wantErr {
 				assert.EqualError(t, err, tt.errMsg)
