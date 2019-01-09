@@ -195,7 +195,7 @@ var (
 func main() {
 	name := "{{name}}"
 
-	err := patron.SetupLogging(name, version)
+	err := patron.Setup(name, version)
 	if err != nil {
 		fmt.Printf("failed to set up logging: %v", err)
 		os.Exit(1)
