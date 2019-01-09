@@ -50,12 +50,11 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 
 	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, termSig: make(chan os.Signal, 1)}
 
-	err := SetupLogging(name, version)
+	err := Setup(name, version)
 	if err != nil {
 		return nil, err
 	}
 
-	metric.Setup(name)
 	err = s.setupDefaultTracing(name, version)
 	if err != nil {
 		return nil, err
@@ -129,8 +128,10 @@ func (s *Service) Run() error {
 	return errors.Aggregate(ee...)
 }
 
-// SetupLogging set's up default logging.
-func SetupLogging(name, version string) error {
+// Setup set's up metrics and default logging.
+func Setup(name, version string) error {
+	metric.Setup(name)
+
 	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
 	if !ok {
 		lvl = string(log.InfoLevel)
