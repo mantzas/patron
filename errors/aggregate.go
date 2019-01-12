@@ -19,15 +19,12 @@ func (a aggregate) Error() string {
 
 // Aggregate errors into one error.
 func Aggregate(ee ...error) error {
-	if len(ee) == 0 {
-		return nil
-	}
-	agr := make(aggregate, len(ee))
-	for i := 0; i < len(ee); i++ {
-		if ee[i] == nil {
+	var agr aggregate
+	for _, e := range ee {
+		if e == nil {
 			continue
 		}
-		agr[i] = ee[i]
+		agr = append(agr, e)
 	}
 	if len(agr) == 0 {
 		return nil
