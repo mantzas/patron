@@ -23,7 +23,9 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Prerequisites
 
-//TODO add librdkafka section for development, docker etc
+A Kafka consumer is provided which is based on confluent-go and uses librdkafka.
+Due to that fact the system that runs (dev, prod, docker etc.)the application needs to have librdkafka installed.
+Refer to the the [documentation](https://github.com/confluentinc/confluent-kafka-go) for instructions.
 
 ## patron-cli
 
