@@ -70,29 +70,3 @@ func TestResponseWriter(t *testing.T) {
 	assert.True(t, rw.statusHeaderWritten, "expected to be true")
 	assert.Equal(t, "test", rc.Body.String(), "body expected to be test but was %s", rc.Body.String())
 }
-
-// func Test_authMiddleware(t *testing.T) {
-// 	r, err := http.NewRequest("POST", "/test", nil)
-// 	assert.NoError(t, err)
-
-// 	type args struct {
-// 		auth Authenticator
-// 		next http.HandlerFunc
-// 		resp *httptest.ResponseRecorder
-// 	}
-// 	tests := []struct {
-// 		name         string
-// 		args         args
-// 		expectedCode int
-// 	}{
-// 		{name: "authenticated", args: args{auth: &MockAuthenticator{success: true}}, expectedCode: 202},
-// 		{name: "unauthorized", args: args{auth: &MockAuthenticator{success: false}}, expectedCode: 401},
-// 		{name: "error", args: args{auth: &MockAuthenticator{err: errors.New("TEST")}}, expectedCode: 500},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			authMiddleware(tt.args.auth, testHandle)(tt.args.resp, r)
-// 			assert.Equal(t, tt.expectedCode, tt.args.resp.Code)
-// 		})
-// 	}
-// }
