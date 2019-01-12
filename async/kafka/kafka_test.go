@@ -10,6 +10,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	brokers := []string{"broker"}
+	topics := []string{"topic"}
 	type args struct {
 		name    string
 		topics  []string
@@ -21,11 +23,11 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "failed, missing name", args: args{name: "", topics: []string{"topic"}, brokers: []string{"broker"}}, wantErr: true},
-		{name: "failed, missing topic", args: args{name: "name", topics: []string{}, brokers: []string{"broker"}}, wantErr: true},
-		{name: "failed, nil topic", args: args{name: "name", topics: nil, brokers: []string{"broker"}}, wantErr: true},
-		{name: "failed, missing broker", args: args{name: "name", topics: []string{"topic"}, brokers: []string{}}, wantErr: true},
-		{name: "failed, nil broker", args: args{name: "name", topics: []string{"topic"}, brokers: nil}, wantErr: true},
+		{name: "failed, missing name", args: args{name: "", topics: topics, brokers: brokers}, wantErr: true},
+		{name: "failed, missing topic", args: args{name: "name", topics: []string{}, brokers: brokers}, wantErr: true},
+		{name: "failed, nil topic", args: args{name: "name", topics: nil, brokers: brokers}, wantErr: true},
+		{name: "failed, missing broker", args: args{name: "name", topics: topics, brokers: []string{}}, wantErr: true},
+		{name: "failed, nil broker", args: args{name: "name", topics: topics, brokers: nil}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

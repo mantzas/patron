@@ -245,7 +245,8 @@ func (c *consumer) topicPartitionOffsetDiffGaugeSet(tp kafka.TopicPartition) {
 	if err != nil {
 		log.Warnf("failed to query watermarks: %v", err)
 	}
-	topicPartitionOffsetDiff.WithLabelValues(*tp.Topic, strconv.FormatInt(int64(tp.Partition), 10)).Set(float64(high - int64(tp.Offset)))
+	topicPartitionOffsetDiff.WithLabelValues(*tp.Topic,
+		strconv.FormatInt(int64(tp.Partition), 10)).Set(float64(high - int64(tp.Offset)))
 }
 
 func determineContentType(hdr []kafka.Header) (string, error) {

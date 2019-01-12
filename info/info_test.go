@@ -23,7 +23,7 @@ func TestInfo(t *testing.T) {
 		Version:    "1.2.3",
 		Host:       "Host",
 		Metrics:    map[string]string{"Name": "[Counter] Description"},
-		Doc:        "<h1>Markdown: Syntax</h1>\n\n<p>This is the first paragraph.</p>\n\n<h2>Overview</h2>\n\n<p>This is the second paragraph.</p>\n",
+		Doc:        "<h1>Markdown: Syntax</h1>\n\n<p>This is the first paragraph.</p>\n\n<h2>Overview</h2>\n\n\n",
 		Configs:    map[string]interface{}{"Config": "Value"},
 		Components: []map[string]interface{}{{"test": "123"}},
 	}

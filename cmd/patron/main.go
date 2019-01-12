@@ -169,7 +169,8 @@ RUN mkdir {{name}}
 WORKDIR {{name}}
 COPY . ./
 ARG version=dev
-RUN GOARCH=amd64 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags "-X main.version=$version" -o {{name}} ./cmd/{{name}}/main.go 
+RUN GOARCH=amd64 GOOS=linux \
+	go build -mod=vendor -a -installsuffix cgo -ldflags "-X main.version=$version" -o {{name}} ./cmd/{{name}}/main.go 
 
 FROM alpine:3.8
 RUN apk add librdkafka-dev

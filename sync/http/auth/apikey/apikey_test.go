@@ -72,12 +72,48 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		want    bool
 		wantErr bool
 	}{
-		{name: "authenticated", fields: fields{val: &MockValidator{success: true}}, args: args{req: reqOk}, want: true, wantErr: false},
-		{name: "not authenticated, validation failed", fields: fields{val: &MockValidator{success: false}}, args: args{req: reqOk}, want: false, wantErr: false},
-		{name: "failed, validation returned err", fields: fields{val: &MockValidator{err: errors.New("TEST")}}, args: args{req: reqOk}, want: false, wantErr: true},
-		{name: "not authenticated, header missing", fields: fields{val: &MockValidator{success: false}}, args: args{req: reqMissingHeader}, want: false, wantErr: false},
-		{name: "not authenticated, missing key", fields: fields{val: &MockValidator{success: false}}, args: args{req: reqMissingKey}, want: false, wantErr: false},
-		{name: "not authenticated, invalid auth method", fields: fields{val: &MockValidator{success: false}}, args: args{req: reqInvalidAuthMethod}, want: false, wantErr: false},
+		{
+			name:    "authenticated",
+			fields:  fields{val: &MockValidator{success: true}},
+			args:    args{req: reqOk},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name:    "not authenticated, validation failed",
+			fields:  fields{val: &MockValidator{success: false}},
+			args:    args{req: reqOk},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "failed, validation returned err",
+			fields:  fields{val: &MockValidator{err: errors.New("TEST")}},
+			args:    args{req: reqOk},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name:    "not authenticated, header missing",
+			fields:  fields{val: &MockValidator{success: false}},
+			args:    args{req: reqMissingHeader},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "not authenticated, missing key",
+			fields:  fields{val: &MockValidator{success: false}},
+			args:    args{req: reqMissingKey},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "not authenticated, invalid auth method",
+			fields:  fields{val: &MockValidator{success: false}},
+			args:    args{req: reqInvalidAuthMethod},
+			want:    false,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

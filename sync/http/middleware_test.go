@@ -40,13 +40,41 @@ func TestMiddleware(t *testing.T) {
 		args         args
 		expectedCode int
 	}{
-		{"middleware success", args{next: testHandle, trace: false, auth: &MockAuthenticator{success: true}}, 202},
-		{"middleware trace success", args{next: testHandle, trace: true, auth: &MockAuthenticator{success: true}}, 202},
-		{"middleware panic string", args{next: testPanicHandleString, trace: true, auth: &MockAuthenticator{success: true}}, 500},
-		{"middleware panic error", args{next: testPanicHandleError, trace: true, auth: &MockAuthenticator{success: true}}, 500},
-		{"middleware panic other", args{next: testPanicHandleInt, trace: true, auth: &MockAuthenticator{success: true}}, 500},
-		{"middleware auth error", args{next: testPanicHandleInt, trace: true, auth: &MockAuthenticator{err: errors.New("TEST")}}, 500},
-		{"middleware auth failure", args{next: testPanicHandleInt, trace: true, auth: &MockAuthenticator{success: false}}, 401},
+		{
+			name:         "middleware success",
+			args:         args{next: testHandle, trace: false, auth: &MockAuthenticator{success: true}},
+			expectedCode: 202,
+		},
+		{
+			name:         "middleware trace success",
+			args:         args{next: testHandle, trace: true, auth: &MockAuthenticator{success: true}},
+			expectedCode: 202,
+		},
+		{
+			name:         "middleware panic string",
+			args:         args{next: testPanicHandleString, trace: true, auth: &MockAuthenticator{success: true}},
+			expectedCode: 500,
+		},
+		{
+			name:         "middleware panic error",
+			args:         args{next: testPanicHandleError, trace: true, auth: &MockAuthenticator{success: true}},
+			expectedCode: 500,
+		},
+		{
+			name:         "middleware panic other",
+			args:         args{next: testPanicHandleInt, trace: true, auth: &MockAuthenticator{success: true}},
+			expectedCode: 500,
+		},
+		{
+			name:         "middleware auth error",
+			args:         args{next: testPanicHandleInt, trace: true, auth: &MockAuthenticator{err: errors.New("TEST")}},
+			expectedCode: 500,
+		},
+		{
+			name:         "middleware auth failure",
+			args:         args{next: testPanicHandleInt, trace: true, auth: &MockAuthenticator{success: false}},
+			expectedCode: 401,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

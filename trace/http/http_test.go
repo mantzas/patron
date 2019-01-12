@@ -79,9 +79,21 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "success", args: args{oo: []OptionFunc{Timeout(time.Second), CircuitBreaker("test", circuitbreaker.Setting{})}}, wantErr: false},
-		{name: "failure, invalid timeout", args: args{oo: []OptionFunc{Timeout(0 * time.Second)}}, wantErr: true},
-		{name: "failure, invalid circuit breaker", args: args{[]OptionFunc{CircuitBreaker("", circuitbreaker.Setting{})}}, wantErr: true},
+		{
+			name:    "success",
+			args:    args{oo: []OptionFunc{Timeout(time.Second), CircuitBreaker("t", circuitbreaker.Setting{})}},
+			wantErr: false,
+		},
+		{
+			name:    "failure, invalid timeout",
+			args:    args{oo: []OptionFunc{Timeout(0 * time.Second)}},
+			wantErr: true,
+		},
+		{
+			name:    "failure, invalid circuit breaker",
+			args:    args{[]OptionFunc{CircuitBreaker("", circuitbreaker.Setting{})}},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

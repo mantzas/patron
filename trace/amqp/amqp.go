@@ -67,7 +67,7 @@ type TracedPublisher struct {
 }
 
 // NewPublisher creates a new publisher with the following defaults
-// - exchange type: fanout
+// - exchange type: fan-out
 // - notifications are not handled at this point TBD.
 func NewPublisher(url, exc string, oo ...OptionFunc) (*TracedPublisher, error) {
 

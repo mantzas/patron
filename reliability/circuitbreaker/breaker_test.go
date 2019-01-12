@@ -51,9 +51,27 @@ func TestCircuitBreaker_States(t *testing.T) {
 		wantClose    bool
 		wantHalfOpen bool
 	}{
-		{name: "closed", fields: fields{status: closed, nextRetry: tsFuture}, wantOpen: false, wantClose: true, wantHalfOpen: false},
-		{name: "open", fields: fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()}, wantOpen: true, wantClose: false, wantHalfOpen: false},
-		{name: "half open", fields: fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()}, wantOpen: false, wantClose: false, wantHalfOpen: true},
+		{
+			name:         "closed",
+			fields:       fields{status: closed, nextRetry: tsFuture},
+			wantOpen:     false,
+			wantClose:    true,
+			wantHalfOpen: false,
+		},
+		{
+			name:         "open",
+			fields:       fields{status: open, nextRetry: time.Now().Add(1 * time.Hour).UnixNano()},
+			wantOpen:     true,
+			wantClose:    false,
+			wantHalfOpen: false,
+		},
+		{
+			name:         "half open",
+			fields:       fields{status: open, nextRetry: time.Now().Add(-1 * time.Minute).UnixNano()},
+			wantOpen:     false,
+			wantClose:    false,
+			wantHalfOpen: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,7 +90,12 @@ func TestCircuitBreaker_Close_Open_HalfOpen_Open_HalfOpen_Close(t *testing.T) {
 	retryTimeout := 5 * time.Millisecond
 	waitRetryTimeout := 7 * time.Millisecond
 
-	set := Setting{FailureThreshold: uint(1), RetryTimeout: retryTimeout, RetrySuccessThreshold: 2, MaxRetryExecutionThreshold: 2}
+	set := Setting{
+		FailureThreshold:           uint(1),
+		RetryTimeout:               retryTimeout,
+		RetrySuccessThreshold:      2,
+		MaxRetryExecutionThreshold: 2,
+	}
 	cb, err := New("test", set)
 	assert.NoError(t, err)
 	_, err = cb.Execute(testSuccessAction)
@@ -136,7 +159,12 @@ func TestCircuitBreaker_Close_Open_HalfOpen_Open_HalfOpen_Close(t *testing.T) {
 var err error
 
 func BenchmarkCircuitBreaker_Execute(b *testing.B) {
-	set := Setting{FailureThreshold: uint(1), RetryTimeout: 1 * time.Second, RetrySuccessThreshold: uint(1), MaxRetryExecutionThreshold: 1}
+	set := Setting{
+		FailureThreshold:           uint(1),
+		RetryTimeout:               1 * time.Second,
+		RetrySuccessThreshold:      uint(1),
+		MaxRetryExecutionThreshold: 1,
+	}
 	var cb *CircuitBreaker
 	cb, err = New("test", set)
 	b.ReportAllocs()

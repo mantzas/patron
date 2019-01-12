@@ -14,6 +14,7 @@ func ErrorOption() OptionFunc {
 }
 
 func TestNewProducer(t *testing.T) {
+	options := []OptionFunc{ErrorOption()}
 	brokers := []string{"xxx"}
 	type args struct {
 		brokers []string
@@ -26,10 +27,10 @@ func TestNewProducer(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "sync failed, no brokers", args: args{}, wantErr: true},
-		{name: "sync failed, invalid option", args: args{brokers: brokers, oo: []OptionFunc{ErrorOption()}}, wantErr: true},
+		{name: "sync failed, invalid option", args: args{brokers: brokers, oo: options}, wantErr: true},
 		{name: "sync success", args: args{brokers: brokers}, wantErr: false},
 		{name: "async failed, no brokers", async: true, args: args{}, wantErr: true},
-		{name: "async failed, invalid option", async: true, args: args{brokers: brokers, oo: []OptionFunc{ErrorOption()}}, wantErr: true},
+		{name: "async failed, invalid option", async: true, args: args{brokers: brokers, oo: options}, wantErr: true},
 		{name: "async success", async: true, args: args{brokers: brokers}, wantErr: false},
 	}
 	for _, tt := range tests {

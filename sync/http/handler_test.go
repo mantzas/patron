@@ -32,22 +32,88 @@ func Test_determineEncoding(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		decode  encoding.DecodeFunc
-		encode  encoding.EncodeFunc
+		dec     encoding.DecodeFunc
+		enc     encoding.EncodeFunc
 		ct      string
 		wantErr bool
 	}{
-		{"success json", args{req: request(t, json.Type, json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
-		{"success json, missing accept", args{req: request(t, json.Type, "")}, json.Decode, json.Encode, json.TypeCharset, false},
-		{"success json, missing content type", args{req: request(t, "", json.Type)}, json.Decode, json.Encode, json.TypeCharset, false},
-		{"success protobuf", args{req: request(t, protobuf.Type, protobuf.TypeGoogle)}, protobuf.Decode, protobuf.Encode, protobuf.Type, false},
-		{"success protobuf, missing accept", args{req: request(t, protobuf.Type, "")}, protobuf.Decode, protobuf.Encode, protobuf.Type, false},
-		{"success protobuf, missing content type", args{req: request(t, "", protobuf.Type)}, protobuf.Decode, protobuf.Encode, protobuf.Type, false},
-		{"wrong accept", args{req: request(t, json.Type, "xxx")}, nil, nil, json.TypeCharset, true},
-		{"missing content header, defaults json", args{req: request(t, "", json.TypeCharset)}, json.Decode, json.Encode, json.TypeCharset, false},
-		{"missing headers, defaults json", args{req: request(t, "", "")}, json.Decode, json.Encode, json.TypeCharset, false},
-		{"accept */*, defaults to json", args{req: request(t, json.TypeCharset, "*/*")}, json.Decode, json.Encode, json.TypeCharset, false},
-		{"wrong content", args{req: request(t, "application/xml", json.TypeCharset)}, nil, nil, json.TypeCharset, true},
+		{
+			name:    "success json",
+			args:    args{req: request(t, json.Type, json.TypeCharset)},
+			dec:     json.Decode,
+			enc:     json.Encode,
+			ct:      json.TypeCharset,
+			wantErr: false},
+		{
+			name:    "success json, missing accept",
+			args:    args{req: request(t, json.Type, "")},
+			dec:     json.Decode,
+			enc:     json.Encode,
+			ct:      json.TypeCharset,
+			wantErr: false},
+		{
+			name:    "success json, missing content type",
+			args:    args{req: request(t, "", json.Type)},
+			dec:     json.Decode,
+			enc:     json.Encode,
+			ct:      json.TypeCharset,
+			wantErr: false},
+		{
+			name:    "success protobuf",
+			args:    args{req: request(t, protobuf.Type, protobuf.TypeGoogle)},
+			dec:     protobuf.Decode,
+			enc:     protobuf.Encode,
+			ct:      protobuf.Type,
+			wantErr: false},
+		{
+			name:    "success protobuf, missing accept",
+			args:    args{req: request(t, protobuf.Type, "")},
+			dec:     protobuf.Decode,
+			enc:     protobuf.Encode,
+			ct:      protobuf.Type,
+			wantErr: false},
+		{
+			name:    "success protobuf, missing content type",
+			args:    args{req: request(t, "", protobuf.Type)},
+			dec:     protobuf.Decode,
+			enc:     protobuf.Encode,
+			ct:      protobuf.Type,
+			wantErr: false},
+		{
+			name:    "wrong accept",
+			args:    args{req: request(t, json.Type, "xxx")},
+			dec:     nil,
+			enc:     nil,
+			ct:      json.TypeCharset,
+			wantErr: true},
+		{
+			name:    "missing content header, defaults json",
+			args:    args{req: request(t, "", json.TypeCharset)},
+			dec:     json.Decode,
+			enc:     json.Encode,
+			ct:      json.TypeCharset,
+			wantErr: false},
+		{
+			name:    "missing headers, defaults json",
+			args:    args{req: request(t, "", "")},
+			dec:     json.Decode,
+			enc:     json.Encode,
+			ct:      json.TypeCharset,
+			wantErr: false},
+		{
+			name:    "accept */*, defaults to json",
+			args:    args{req: request(t, json.TypeCharset, "*/*")},
+			dec:     json.Decode,
+			enc:     json.Encode,
+			ct:      json.TypeCharset,
+			wantErr: false},
+		{
+			name:    "wrong content",
+			args:    args{req: request(t, "application/xml", json.TypeCharset)},
+			dec:     nil,
+			enc:     nil,
+			ct:      json.TypeCharset,
+			wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
