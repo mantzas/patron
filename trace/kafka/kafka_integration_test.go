@@ -50,3 +50,22 @@ func TestAsyncSend(t *testing.T) {
 	assert.Equal(t, int32(0), res.Partition)
 	assert.True(t, res.Offset > int64(0))
 }
+
+var err error
+
+func BenchmarkProducer_Send(b *testing.B) {
+	topic := "test-topic"
+	payload := "TEST"
+	brokers := []string{"localhost:9092"}
+	p, err := NewProducer(brokers)
+	assert.NoError(b, err)
+	defer p.Close()
+	err = p.Send(context.Background(), topic, payload)
+	assert.NoError(b, err)
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		err = p.Send(context.Background(), topic, payload)
+	}
+}

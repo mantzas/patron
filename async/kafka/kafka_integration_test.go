@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	kafkaprod "github.com/mantzas/patron/trace/kafka"
+	"github.com/mantzas/patron/trace/kafka"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +31,7 @@ func TestConsume(t *testing.T) {
 	assert.NotNil(t, chMsg)
 	assert.NotNil(t, chErr)
 	// setup producer
-	p, err := kafkaprod.NewProducer(brokers)
+	p, err := kafka.NewProducer(brokers)
 	assert.NoError(t, err)
 	defer p.Close()
 	err = p.SendRaw(context.Background(), topics[0], []byte("TEST"))
@@ -43,6 +43,7 @@ func TestConsume(t *testing.T) {
 		//check send message
 		//m := <-chMsg
 		//assert.NotNil(t, m)
+		//TODO: tests
 	}()
 	wg.Wait()
 }
