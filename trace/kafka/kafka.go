@@ -30,7 +30,6 @@ type Result struct {
 type Sender interface {
 	Send(ctx context.Context, topic string, v interface{}) error
 	SendRaw(ctx context.Context, topic string, body []byte) error
-	Results() <-chan *Result
 	Close()
 }
 
@@ -40,7 +39,7 @@ type Producer struct {
 	enc   encoding.EncodeFunc
 	prod  *kafka.Producer
 	tag   opentracing.Tag
-	chRes chan *Result
+	chRes chan<- *Result
 }
 
 // NewProducer creates a new sync producer with default configuration and JSON encoding.
@@ -49,12 +48,15 @@ func NewProducer(brokers []string, oo ...OptionFunc) (*Producer, error) {
 }
 
 // NewAsyncProducer creates a new async producer with default configuration and JSON encoding.
-func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*Producer, error) {
+func NewAsyncProducer(brokers []string, ch chan<- *Result, oo ...OptionFunc) (*Producer, error) {
+	if ch == nil {
+		return nil, errors.New("result channel is nil")
+	}
 	p, err := newProducer(brokers, tracingTypeAsync, oo...)
 	if err != nil {
 		return nil, err
 	}
-	p.chRes = make(chan *Result)
+	p.chRes = ch
 	go p.monitorErrorEvents()
 	return p, nil
 }
@@ -181,11 +183,6 @@ func (p *Producer) monitorErrorEvents() {
 			}
 		}
 	}()
-}
-
-// Results returns a result channel for monitoring published messages.
-func (p *Producer) Results() <-chan *Result {
-	return p.chRes
 }
 
 // Close the producer.
