@@ -5,6 +5,7 @@ package kafka
 import (
 	"context"
 	"testing"
+	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -32,19 +33,20 @@ func TestAsyncSend(t *testing.T) {
 	brokers := []string{"localhost:9092"}
 	mtr := mocktracer.New()
 	opentracing.SetGlobalTracer(mtr)
-	p, err := NewAsyncProducer(brokers)
+	ch := make(chan *Result, 10)
+	p, err := NewAsyncProducer(brokers, ch)
 	assert.NoError(t, err)
 	defer p.Close()
 	err = p.Send(context.Background(), topic, payload)
 	assert.NoError(t, err)
-	res := <-p.Results()
+	res := <-ch
 	assert.NoError(t, res.Err)
 	assert.Equal(t, topic, res.Topic)
 	assert.Equal(t, int32(0), res.Partition)
 	assert.True(t, res.Offset > int64(0))
 	err = p.SendRaw(context.Background(), topic, []byte(payload))
 	assert.NoError(t, err)
-	res = <-p.Results()
+	res = <-ch
 	assert.NoError(t, res.Err)
 	assert.Equal(t, topic, res.Topic)
 	assert.Equal(t, int32(0), res.Partition)
@@ -64,6 +66,7 @@ func BenchmarkProducer_Send(b *testing.B) {
 	defer p.Close()
 	err = p.Send(context.Background(), topic, payload)
 	assert.NoError(b, err)
+	time.Sleep(10 * time.Second)
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -72,6 +75,8 @@ func BenchmarkProducer_Send(b *testing.B) {
 	}
 }
 
+var res *Result
+
 // TODO: this one never ends
 func BenchmarkProducer_AsyncSend(b *testing.B) {
 	mtr := mocktracer.New()
@@ -79,16 +84,17 @@ func BenchmarkProducer_AsyncSend(b *testing.B) {
 	topic := "test-topic"
 	payload := "TEST"
 	brokers := []string{"localhost:9092"}
-	p, err := NewAsyncProducer(brokers)
+	ch := make(chan *Result, 10000000)
+	go func() {
+		for r := range ch {
+			res = r
+		}
+	}()
+	p, err := NewAsyncProducer(brokers, ch)
 	assert.NoError(b, err)
 	defer p.Close()
 	err = p.Send(context.Background(), topic, payload)
 	assert.NoError(b, err)
-	go func() {
-		for res := range p.Results() {
-			assert.NotNil(b, res)
-		}
-	}()
 	b.ReportAllocs()
 	b.ResetTimer()
 
