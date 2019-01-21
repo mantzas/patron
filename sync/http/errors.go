@@ -1,4 +1,4 @@
-package sync
+package http
 
 // ValidationError defines a validation error.
 type ValidationError struct {

@@ -124,15 +124,15 @@ func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, e
 
 func handleError(w http.ResponseWriter, err error) {
 	switch err.(type) {
-	case *sync.ValidationError:
+	case *ValidationError:
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-	case *sync.UnauthorizedError:
+	case *UnauthorizedError:
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	case *sync.ForbiddenError:
+	case *ForbiddenError:
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-	case *sync.NotFoundError:
+	case *NotFoundError:
 		http.Error(w, "", http.StatusNotFound)
-	case *sync.ServiceUnavailableError:
+	case *ServiceUnavailableError:
 		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 	default:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
