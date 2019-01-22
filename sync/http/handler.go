@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -123,20 +124,14 @@ func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, e
 }
 
 func handleError(w http.ResponseWriter, err error) {
-	switch err.(type) {
-	case *ValidationError:
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-	case *UnauthorizedError:
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	case *ForbiddenError:
-		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-	case *NotFoundError:
-		http.Error(w, "", http.StatusNotFound)
-	case *ServiceUnavailableError:
-		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-	default:
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	// Assert error to type CustomError in order to leverage the code and payload values that such errors contain.
+	if err, ok := err.(*CustomError); ok {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(err.Code())
+		fmt.Fprintln(w, err.Payload())
+		return
 	}
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 func prepareResponse(w http.ResponseWriter, ct string) {

@@ -135,11 +135,11 @@ func Test_handleError(t *testing.T) {
 		args         args
 		expectedCode int
 	}{
-		{"bad request", args{err: &ValidationError{}}, http.StatusBadRequest},
-		{"unauthorized request", args{err: &UnauthorizedError{}}, http.StatusUnauthorized},
-		{"forbidden request", args{err: &ForbiddenError{}}, http.StatusForbidden},
-		{"not found error", args{err: &NotFoundError{}}, http.StatusNotFound},
-		{"service unavailable error", args{err: &ServiceUnavailableError{}}, http.StatusServiceUnavailable},
+		{"bad request", args{err: NewValidationError("", nil)}, http.StatusBadRequest},
+		{"unauthorized request", args{err: NewUnauthorizedError("", nil)}, http.StatusUnauthorized},
+		{"forbidden request", args{err: NewForbiddenError("", nil)}, http.StatusForbidden},
+		{"not found error", args{err: NewNotFoundError("", nil)}, http.StatusNotFound},
+		{"service unavailable error", args{err: NewServiceUnavailableError("", nil)}, http.StatusServiceUnavailable},
 		{"default error", args{err: errors.New("Test")}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
