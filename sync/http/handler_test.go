@@ -143,6 +143,7 @@ func Test_handleError(t *testing.T) {
 		{"service unavailable error", args{err: NewServiceUnavailableError(), enc: json.Encode}, http.StatusServiceUnavailable},
 		{"internal server error", args{err: NewError(), enc: json.Encode}, http.StatusInternalServerError},
 		{"default error", args{err: errors.New("Test"), enc: json.Encode}, http.StatusInternalServerError},
+		{"payload encoding error", args{err: NewErrorWithCodeAndPayload(http.StatusBadRequest, make(chan int)), enc: json.Encode}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
