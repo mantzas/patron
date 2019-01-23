@@ -4,57 +4,74 @@ import (
 	gohttp "net/http"
 )
 
-// CustomError defines an abstract struct that can represent several types of HTTP errors.
-type CustomError struct {
-	err     string
-	payload interface{}
+// Error defines an abstract struct that can represent several types of HTTP errors.
+type Error struct {
 	code    int
+	payload interface{}
 }
 
 // Error returns the actual message of the error.
-func (e *CustomError) Error() string {
-	return e.err
+func (e *Error) Error() string {
+	err, _ := e.payload.(string)
+	return err
 }
 
-// Payload returns the error payload, which cane be used as HTTP response content.
-func (e *CustomError) Payload() interface{} {
-	return e.payload
+// NewValidationError creates a new validation error with default payload.
+func NewValidationError() *Error {
+	return &Error{gohttp.StatusBadRequest, gohttp.StatusText(gohttp.StatusBadRequest)}
 }
 
-// Code returns the status code that corresponds to the specific error type.
-func (e *CustomError) Code() int {
-	return e.code
+// NewValidationErrorWithPayload creates a new validation error with the specified payload.
+func NewValidationErrorWithPayload(payload interface{}) *Error {
+	return &Error{gohttp.StatusBadRequest, payload}
 }
 
-// NewValidationError creates a new validation error.
-func NewValidationError(msg string, payload interface{}) *CustomError {
-	return &CustomError{err: msg, code: gohttp.StatusBadRequest, payload: getActualPayload(gohttp.StatusBadRequest, payload)}
+// NewUnauthorizedError creates a new validation error with default payload.
+func NewUnauthorizedError() *Error {
+	return &Error{gohttp.StatusUnauthorized, gohttp.StatusText(gohttp.StatusUnauthorized)}
 }
 
-// NewUnauthorizedError creates a new unauthorized error.
-func NewUnauthorizedError(msg string, payload interface{}) *CustomError {
-	return &CustomError{err: msg, code: gohttp.StatusUnauthorized, payload: getActualPayload(gohttp.StatusUnauthorized, payload)}
+// NewUnauthorizedErrorWithPayload creates a new unauthorized error with the specified payload.
+func NewUnauthorizedErrorWithPayload(payload interface{}) *Error {
+	return &Error{gohttp.StatusUnauthorized, payload}
 }
 
-// NewForbiddenError creates a new forbidden error.
-func NewForbiddenError(msg string, payload interface{}) *CustomError {
-	return &CustomError{err: msg, code: gohttp.StatusForbidden, payload: getActualPayload(gohttp.StatusForbidden, payload)}
+// NewForbiddenError creates a new forbidden error with default payload.
+func NewForbiddenError() *Error {
+	return &Error{gohttp.StatusForbidden, gohttp.StatusText(gohttp.StatusForbidden)}
 }
 
-// NewNotFoundError creates a new not found error.
-func NewNotFoundError(msg string, payload interface{}) *CustomError {
-	return &CustomError{err: msg, code: gohttp.StatusNotFound, payload: getActualPayload(gohttp.StatusNotFound, payload)}
+// NewForbiddenErrorWithPayload creates a new forbidden error with the specified payload.
+func NewForbiddenErrorWithPayload(payload interface{}) *Error {
+	return &Error{gohttp.StatusForbidden, payload}
 }
 
-// NewServiceUnavailableError creates a new service unavailable error.
-func NewServiceUnavailableError(msg string, payload interface{}) *CustomError {
-	return &CustomError{err: msg, code: gohttp.StatusServiceUnavailable, payload: getActualPayload(gohttp.StatusServiceUnavailable, payload)}
+// NewNotFoundError creates a new not found error with default payload.
+func NewNotFoundError() *Error {
+	return &Error{gohttp.StatusNotFound, gohttp.StatusText(gohttp.StatusNotFound)}
 }
 
-func getActualPayload(code int, payload interface{}) interface{} {
-	pl := payload
-	if pl == nil {
-		pl = gohttp.StatusText(code)
-	}
-	return pl
+// NewNotFoundErrorWithPayload creates a new not found error with the specified payload.
+func NewNotFoundErrorWithPayload(payload interface{}) *Error {
+	return &Error{gohttp.StatusNotFound, payload}
+}
+
+// NewServiceUnavailableError creates a new service unavailable error with default payload.
+func NewServiceUnavailableError() *Error {
+	return &Error{gohttp.StatusServiceUnavailable, gohttp.StatusText(gohttp.StatusServiceUnavailable)}
+}
+
+// NewServiceUnavailableErrorWithPayload creates a new service unavailable error with the specified payload.
+func NewServiceUnavailableErrorWithPayload(payload interface{}) *Error {
+	return &Error{gohttp.StatusServiceUnavailable, payload}
+}
+
+// NewError creates a new error with default Internal Server Error payload.
+func NewError() *Error {
+	return &Error{gohttp.StatusInternalServerError, gohttp.StatusText(gohttp.StatusInternalServerError)}
+}
+
+// NewErrorWithCodeAndPayload creates a fully customizable error with the specified status code and payload.
+func NewErrorWithCodeAndPayload(code int, payload interface{}) *Error {
+	return &Error{code, payload}
 }

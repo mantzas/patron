@@ -7,35 +7,30 @@ import (
 )
 
 func TestValidationError(t *testing.T) {
-	v := NewValidationError("TEST", "payload")
-	assert.Equal(t, "TEST", v.Error())
-	assert.Equal(t, 400, v.Code())
-	assert.Equal(t, "payload", v.Payload())
+	v := NewValidationError()
+	assert.Equal(t, "Bad Request", v.Error())
+	assert.Equal(t, 400, v.code)
 }
 func TestUnauthorizedError(t *testing.T) {
-	v := NewUnauthorizedError("TEST", "payload")
-	assert.Equal(t, "TEST", v.Error())
-	assert.Equal(t, 401, v.Code())
-	assert.Equal(t, "payload", v.Payload())
+	v := NewUnauthorizedError()
+	assert.Equal(t, "Unauthorized", v.Error())
+	assert.Equal(t, 401, v.code)
 }
 
 func TestForbiddenError(t *testing.T) {
-	v := NewForbiddenError("TEST", "payload")
-	assert.Equal(t, "TEST", v.Error())
-	assert.Equal(t, 403, v.Code())
-	assert.Equal(t, "payload", v.Payload())
+	v := NewForbiddenError()
+	assert.Equal(t, "Forbidden", v.Error())
+	assert.Equal(t, 403, v.code)
 }
 
 func TestNotFoundError(t *testing.T) {
-	v := NewNotFoundError("TEST", "payload")
-	assert.Equal(t, "TEST", v.Error())
-	assert.Equal(t, 404, v.Code())
-	assert.Equal(t, "payload", v.Payload())
+	v := NewNotFoundError()
+	assert.Equal(t, "Not Found", v.Error())
+	assert.Equal(t, 404, v.code)
 }
 
 func TestServiceUnavailableError(t *testing.T) {
-	v := NewServiceUnavailableError("TEST", "payload")
-	assert.Equal(t, "TEST", v.Error())
-	assert.Equal(t, 503, v.Code())
-	assert.Equal(t, "payload", v.Payload())
+	v := NewServiceUnavailableError()
+	assert.Equal(t, "Service Unavailable", v.Error())
+	assert.Equal(t, 503, v.code)
 }
