@@ -33,7 +33,7 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 		req := sync.NewRequest(f, r.Body, dec)
 		rsp, err := hnd(ctx, req)
 		if err != nil {
-			handleError(w, err)
+			handleError(w, enc, err)
 			return
 		}
 
@@ -122,21 +122,20 @@ func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, e
 	return err
 }
 
-func handleError(w http.ResponseWriter, err error) {
-	switch err.(type) {
-	case *sync.ValidationError:
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-	case *sync.UnauthorizedError:
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	case *sync.ForbiddenError:
-		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-	case *sync.NotFoundError:
-		http.Error(w, "", http.StatusNotFound)
-	case *sync.ServiceUnavailableError:
-		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-	default:
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+func handleError(w http.ResponseWriter, enc encoding.EncodeFunc, err error) {
+	// Assert error to type Error in order to leverage the code and payload values that such errors contain.
+	if err, ok := err.(*Error); ok {
+		p, encErr := enc(err.payload)
+		if encErr != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(err.code)
+		w.Write(p)
+		return
 	}
+	// Using http.Error helper hijacks the content type header of the response returning plain text payload.
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 func prepareResponse(w http.ResponseWriter, ct string) {

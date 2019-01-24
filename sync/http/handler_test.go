@@ -129,23 +129,26 @@ func Test_handleSuccess(t *testing.T) {
 func Test_handleError(t *testing.T) {
 	type args struct {
 		err error
+		enc encoding.EncodeFunc
 	}
 	tests := []struct {
 		name         string
 		args         args
 		expectedCode int
 	}{
-		{"bad request", args{err: &sync.ValidationError{}}, http.StatusBadRequest},
-		{"unauthorized request", args{err: &sync.UnauthorizedError{}}, http.StatusUnauthorized},
-		{"forbidden request", args{err: &sync.ForbiddenError{}}, http.StatusForbidden},
-		{"not found error", args{err: &sync.NotFoundError{}}, http.StatusNotFound},
-		{"service unavailable error", args{err: &sync.ServiceUnavailableError{}}, http.StatusServiceUnavailable},
-		{"default error", args{err: errors.New("Test")}, http.StatusInternalServerError},
+		{"bad request", args{err: NewValidationError(), enc: json.Encode}, http.StatusBadRequest},
+		{"unauthorized request", args{err: NewUnauthorizedError(), enc: json.Encode}, http.StatusUnauthorized},
+		{"forbidden request", args{err: NewForbiddenError(), enc: json.Encode}, http.StatusForbidden},
+		{"not found error", args{err: NewNotFoundError(), enc: json.Encode}, http.StatusNotFound},
+		{"service unavailable error", args{err: NewServiceUnavailableError(), enc: json.Encode}, http.StatusServiceUnavailable},
+		{"internal server error", args{err: NewError(), enc: json.Encode}, http.StatusInternalServerError},
+		{"default error", args{err: errors.New("Test"), enc: json.Encode}, http.StatusInternalServerError},
+		{"payload encoding error", args{err: NewErrorWithCodeAndPayload(http.StatusBadRequest, make(chan int)), enc: json.Encode}, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rsp := httptest.NewRecorder()
-			handleError(rsp, tt.args.err)
+			handleError(rsp, tt.args.enc, tt.args.err)
 			assert.Equal(t, tt.expectedCode, rsp.Code)
 		})
 	}
