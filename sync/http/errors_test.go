@@ -7,72 +7,78 @@ import (
 )
 
 func TestValidationError(t *testing.T) {
-	v := NewValidationError()
-	assert.Equal(t, "Bad Request", v.Error())
-	assert.Equal(t, 400, v.code)
+	err := NewValidationError()
+	assert.EqualError(t, err, "HTTP error with code: 400 payload: Bad Request")
+	assert.Equal(t, 400, err.code)
 }
 
 func TestValidationErrorWithPayload(t *testing.T) {
-	v := NewValidationErrorWithPayload("test")
-	assert.Equal(t, "test", v.Error())
-	assert.Equal(t, 400, v.code)
+	err := NewValidationErrorWithPayload("test")
+	assert.EqualError(t, err, "HTTP error with code: 400 payload: test")
+	assert.Equal(t, 400, err.code)
 }
 func TestUnauthorizedError(t *testing.T) {
-	v := NewUnauthorizedError()
-	assert.Equal(t, "Unauthorized", v.Error())
-	assert.Equal(t, 401, v.code)
+	err := NewUnauthorizedError()
+	assert.EqualError(t, err, "HTTP error with code: 401 payload: Unauthorized")
+	assert.Equal(t, 401, err.code)
 }
 
 func TestUnauthorizedErrorWithPayload(t *testing.T) {
-	v := NewUnauthorizedErrorWithPayload("test")
-	assert.Equal(t, "test", v.Error())
-	assert.Equal(t, 401, v.code)
+	err := NewUnauthorizedErrorWithPayload("test")
+	assert.EqualError(t, err, "HTTP error with code: 401 payload: test")
+	assert.Equal(t, 401, err.code)
 }
 
 func TestForbiddenError(t *testing.T) {
-	v := NewForbiddenError()
-	assert.Equal(t, "Forbidden", v.Error())
-	assert.Equal(t, 403, v.code)
+	err := NewForbiddenError()
+	assert.EqualError(t, err, "HTTP error with code: 403 payload: Forbidden")
+	assert.Equal(t, 403, err.code)
 }
 
 func TestForbiddenErrorWithPayload(t *testing.T) {
-	v := NewForbiddenErrorWithPayload("test")
-	assert.Equal(t, "test", v.Error())
-	assert.Equal(t, 403, v.code)
+	err := NewForbiddenErrorWithPayload("test")
+	assert.EqualError(t, err, "HTTP error with code: 403 payload: test")
+	assert.Equal(t, 403, err.code)
 }
 
 func TestNotFoundError(t *testing.T) {
-	v := NewNotFoundError()
-	assert.Equal(t, "Not Found", v.Error())
-	assert.Equal(t, 404, v.code)
+	err := NewNotFoundError()
+	assert.EqualError(t, err, "HTTP error with code: 404 payload: Not Found")
+	assert.Equal(t, 404, err.code)
 }
 
 func TestNotFoundErrorWithPayload(t *testing.T) {
-	v := NewNotFoundErrorWithPayload("test")
-	assert.Equal(t, "test", v.Error())
-	assert.Equal(t, 404, v.code)
+	err := NewNotFoundErrorWithPayload("test")
+	assert.EqualError(t, err, "HTTP error with code: 404 payload: test")
+	assert.Equal(t, 404, err.code)
 }
 
 func TestServiceUnavailableError(t *testing.T) {
-	v := NewServiceUnavailableError()
-	assert.Equal(t, "Service Unavailable", v.Error())
-	assert.Equal(t, 503, v.code)
+	err := NewServiceUnavailableError()
+	assert.EqualError(t, err, "HTTP error with code: 503 payload: Service Unavailable")
+	assert.Equal(t, 503, err.code)
 }
 
 func TestServiceUnavailableErrorWithPayload(t *testing.T) {
-	v := NewServiceUnavailableErrorWithPayload("test")
-	assert.Equal(t, "test", v.Error())
-	assert.Equal(t, 503, v.code)
+	err := NewServiceUnavailableErrorWithPayload("test")
+	assert.EqualError(t, err, "HTTP error with code: 503 payload: test")
+	assert.Equal(t, 503, err.code)
 }
 
 func TestNewError(t *testing.T) {
-	v := NewError()
-	assert.Equal(t, "Internal Server Error", v.Error())
-	assert.Equal(t, 500, v.code)
+	err := NewError()
+	assert.EqualError(t, err, "HTTP error with code: 500 payload: Internal Server Error")
+	assert.Equal(t, 500, err.code)
 }
 
 func TestNewErrorWithCodeAndPayload(t *testing.T) {
-	v := NewErrorWithCodeAndPayload(409, "Conflict")
-	assert.Equal(t, "Conflict", v.Error())
-	assert.Equal(t, 409, v.code)
+	err := NewErrorWithCodeAndPayload(409, "Conflict")
+	assert.EqualError(t, err, "HTTP error with code: 409 payload: Conflict")
+	assert.Equal(t, 409, err.code)
+}
+
+func TestNewErrorWithCodeAndNoPayload(t *testing.T) {
+	err := NewErrorWithCodeAndPayload(409, nil)
+	assert.EqualError(t, err, "HTTP error with code: 409")
+	assert.Equal(t, 409, err.code)
 }

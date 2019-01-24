@@ -1,7 +1,8 @@
 package http
 
 import (
-	gohttp "net/http"
+	"fmt"
+	"net/http"
 )
 
 // Error defines an abstract struct that can represent several types of HTTP errors.
@@ -12,63 +13,65 @@ type Error struct {
 
 // Error returns the actual message of the error.
 func (e *Error) Error() string {
-	err, _ := e.payload.(string)
-	return err
+	if e.payload == nil {
+		return fmt.Sprintf("HTTP error with code: %d", e.code)
+	}
+	return fmt.Sprintf("HTTP error with code: %d payload: %v", e.code, e.payload)
 }
 
 // NewValidationError creates a new validation error with default payload.
 func NewValidationError() *Error {
-	return &Error{gohttp.StatusBadRequest, gohttp.StatusText(gohttp.StatusBadRequest)}
+	return &Error{http.StatusBadRequest, http.StatusText(http.StatusBadRequest)}
 }
 
 // NewValidationErrorWithPayload creates a new validation error with the specified payload.
 func NewValidationErrorWithPayload(payload interface{}) *Error {
-	return &Error{gohttp.StatusBadRequest, payload}
+	return &Error{http.StatusBadRequest, payload}
 }
 
 // NewUnauthorizedError creates a new validation error with default payload.
 func NewUnauthorizedError() *Error {
-	return &Error{gohttp.StatusUnauthorized, gohttp.StatusText(gohttp.StatusUnauthorized)}
+	return &Error{http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized)}
 }
 
 // NewUnauthorizedErrorWithPayload creates a new unauthorized error with the specified payload.
 func NewUnauthorizedErrorWithPayload(payload interface{}) *Error {
-	return &Error{gohttp.StatusUnauthorized, payload}
+	return &Error{http.StatusUnauthorized, payload}
 }
 
 // NewForbiddenError creates a new forbidden error with default payload.
 func NewForbiddenError() *Error {
-	return &Error{gohttp.StatusForbidden, gohttp.StatusText(gohttp.StatusForbidden)}
+	return &Error{http.StatusForbidden, http.StatusText(http.StatusForbidden)}
 }
 
 // NewForbiddenErrorWithPayload creates a new forbidden error with the specified payload.
 func NewForbiddenErrorWithPayload(payload interface{}) *Error {
-	return &Error{gohttp.StatusForbidden, payload}
+	return &Error{http.StatusForbidden, payload}
 }
 
 // NewNotFoundError creates a new not found error with default payload.
 func NewNotFoundError() *Error {
-	return &Error{gohttp.StatusNotFound, gohttp.StatusText(gohttp.StatusNotFound)}
+	return &Error{http.StatusNotFound, http.StatusText(http.StatusNotFound)}
 }
 
 // NewNotFoundErrorWithPayload creates a new not found error with the specified payload.
 func NewNotFoundErrorWithPayload(payload interface{}) *Error {
-	return &Error{gohttp.StatusNotFound, payload}
+	return &Error{http.StatusNotFound, payload}
 }
 
 // NewServiceUnavailableError creates a new service unavailable error with default payload.
 func NewServiceUnavailableError() *Error {
-	return &Error{gohttp.StatusServiceUnavailable, gohttp.StatusText(gohttp.StatusServiceUnavailable)}
+	return &Error{http.StatusServiceUnavailable, http.StatusText(http.StatusServiceUnavailable)}
 }
 
 // NewServiceUnavailableErrorWithPayload creates a new service unavailable error with the specified payload.
 func NewServiceUnavailableErrorWithPayload(payload interface{}) *Error {
-	return &Error{gohttp.StatusServiceUnavailable, payload}
+	return &Error{http.StatusServiceUnavailable, payload}
 }
 
 // NewError creates a new error with default Internal Server Error payload.
 func NewError() *Error {
-	return &Error{gohttp.StatusInternalServerError, gohttp.StatusText(gohttp.StatusInternalServerError)}
+	return &Error{http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)}
 }
 
 // NewErrorWithCodeAndPayload creates a fully customizable error with the specified status code and payload.
