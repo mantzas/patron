@@ -26,6 +26,9 @@ type message struct {
 	ctx  context.Context
 	dec  encoding.DecodeRawFunc
 	val  []byte
+	ack  bool
+	msg  *kafka.Message
+	cns  *kafka.Consumer
 }
 
 func (m *message) Context() context.Context {
@@ -37,13 +40,14 @@ func (m *message) Decode(v interface{}) error {
 }
 
 func (m *message) Ack() error {
-	//TODO: consumer group confirm message
+	if m.ack {
+		m.cns.CommitMessage(m.msg)
+	}
 	trace.SpanSuccess(m.span)
 	return nil
 }
 
 func (m *message) Nack() error {
-	//TODO: consumer group not confirm message
 	trace.SpanError(m.span)
 	return nil
 }
@@ -124,6 +128,7 @@ type consumer struct {
 	cfg         *kafka.ConfigMap
 	buffer      int
 	topics      []string
+	ack         bool
 	info        map[string]interface{}
 }
 
@@ -211,6 +216,8 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 							dec:  dec,
 							span: sp,
 							val:  msg.Value,
+							ack:  c.ack,
+							cns:  cns,
 						}
 					}(e)
 				}

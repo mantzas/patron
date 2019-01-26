@@ -27,6 +27,13 @@ func Config(cfg map[string]interface{}) OptionFunc {
 			if err != nil {
 				return fmt.Errorf("failed to set key %s: %v", k, err)
 			}
+			if k == "enable.auto.commit" {
+				auto, ok := v.(bool)
+				if !ok {
+					return errors.New("enable.auto.commit should be boolean")
+				}
+				c.ack = !auto
+			}
 		}
 		return nil
 	}
