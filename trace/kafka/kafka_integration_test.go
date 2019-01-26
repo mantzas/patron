@@ -74,31 +74,3 @@ func BenchmarkProducer_Send(b *testing.B) {
 		err = p.Send(context.Background(), topic, payload)
 	}
 }
-
-var res *Result
-
-// TODO: this one never ends
-func BenchmarkProducer_AsyncSend(b *testing.B) {
-	mtr := mocktracer.New()
-	opentracing.SetGlobalTracer(mtr)
-	topic := "test-topic"
-	payload := "TEST"
-	brokers := []string{"localhost:9092"}
-	ch := make(chan *Result, 10000000)
-	go func() {
-		for r := range ch {
-			res = r
-		}
-	}()
-	p, err := NewAsyncProducer(brokers, ch)
-	assert.NoError(b, err)
-	defer p.Close()
-	err = p.Send(context.Background(), topic, payload)
-	assert.NoError(b, err)
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
-		err = p.Send(context.Background(), topic, payload)
-	}
-}
