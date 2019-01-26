@@ -25,7 +25,6 @@ type message struct {
 	span opentracing.Span
 	ctx  context.Context
 	dec  encoding.DecodeRawFunc
-	val  []byte
 	ack  bool
 	msg  *kafka.Message
 	cns  *kafka.Consumer
@@ -36,7 +35,7 @@ func (m *message) Context() context.Context {
 }
 
 func (m *message) Decode(v interface{}) error {
-	return m.dec(m.val, v)
+	return m.dec(m.msg.Value, v)
 }
 
 func (m *message) Ack() error {
@@ -194,22 +193,11 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 							trace.KafkaConsumerComponent,
 							mapHeader(msg.Headers),
 						)
-						var ct string
-						if c.contentType != "" {
-							ct = c.contentType
-						} else {
-							ct, err = determineContentType(msg.Headers)
-							if err != nil {
-								trace.SpanError(sp)
-								chErr <- errors.Wrap(err, "failed to determine content type")
-								return
-							}
-						}
 
-						dec, err := async.DetermineDecoder(ct)
+						dec, err := c.determineDecoder(msg)
 						if err != nil {
 							trace.SpanError(sp)
-							chErr <- errors.Wrapf(err, "failed to determine decoder for %s", ct)
+							chErr <- err
 							return
 						}
 
@@ -219,9 +207,9 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 							ctx:  chCtx,
 							dec:  dec,
 							span: sp,
-							val:  msg.Value,
 							ack:  c.ack,
 							cns:  cns,
+							msg:  msg,
 						}
 					}(e)
 				}
@@ -258,6 +246,26 @@ func (c *consumer) topicPartitionOffsetDiffGaugeSet(tp kafka.TopicPartition) {
 	}
 	topicPartitionOffsetDiff.WithLabelValues(*tp.Topic,
 		strconv.FormatInt(int64(tp.Partition), 10)).Set(float64(high - int64(tp.Offset)))
+}
+
+func (c *consumer) determineDecoder(msg *kafka.Message) (encoding.DecodeRawFunc, error) {
+	var ct string
+	var err error
+	if c.contentType != "" {
+		ct = c.contentType
+	} else {
+		ct, err = determineContentType(msg.Headers)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to determine content type")
+		}
+	}
+
+	dec, err := async.DetermineDecoder(ct)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to determine decoder for %s", ct)
+	}
+
+	return dec, nil
 }
 
 func determineContentType(hdr []kafka.Header) (string, error) {
