@@ -41,7 +41,11 @@ func (m *message) Decode(v interface{}) error {
 
 func (m *message) Ack() error {
 	if m.ack {
-		m.cns.CommitMessage(m.msg)
+		_, err := m.cns.CommitMessage(m.msg)
+		if err != nil {
+			trace.SpanError(m.span)
+			return err
+		}
 	}
 	trace.SpanSuccess(m.span)
 	return nil
