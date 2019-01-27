@@ -34,7 +34,7 @@ func TestConsume(t *testing.T) {
 	p, err := kafka.NewProducer(brokers)
 	assert.NoError(t, err)
 	defer p.Close()
-	err = p.SendRaw(context.Background(), topics[0], []byte("TEST"))
+	err = p.SendRaw(context.Background(), "", topics[0], []byte("TEST"))
 	assert.NoError(t, err)
 	wg := sync.WaitGroup{}
 	wg.Add(1)

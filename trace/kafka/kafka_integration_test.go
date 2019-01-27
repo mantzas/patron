@@ -23,7 +23,7 @@ func TestSend(t *testing.T) {
 	defer p.Close()
 	err = p.Send(context.Background(), topic, payload)
 	assert.NoError(t, err)
-	err = p.SendRaw(context.Background(), topic, []byte(payload))
+	err = p.SendRaw(context.Background(), "", topic, []byte(payload))
 	assert.NoError(t, err)
 }
 
@@ -44,7 +44,7 @@ func TestAsyncSend(t *testing.T) {
 	assert.Equal(t, topic, res.Topic)
 	assert.Equal(t, int32(0), res.Partition)
 	assert.True(t, res.Offset > int64(0))
-	err = p.SendRaw(context.Background(), topic, []byte(payload))
+	err = p.SendRaw(context.Background(), "", topic, []byte(payload))
 	assert.NoError(t, err)
 	res = <-ch
 	assert.NoError(t, res.Err)

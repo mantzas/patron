@@ -96,11 +96,11 @@ func (p *Producer) Send(ctx context.Context, topic string, v interface{}) error 
 	if err != nil {
 		return err
 	}
-	return p.SendRaw(ctx, topic, body)
+	return p.SendRaw(ctx, p.ct, topic, body)
 }
 
 // SendRaw message to a topic.
-func (p *Producer) SendRaw(ctx context.Context, topic string, body []byte) error {
+func (p *Producer) SendRaw(ctx context.Context, ct string, topic string, body []byte) error {
 	var err error
 	csp, _ := trace.ChildSpan(
 		ctx,
@@ -110,7 +110,7 @@ func (p *Producer) SendRaw(ctx context.Context, topic string, body []byte) error
 		p.tag,
 		opentracing.Tag{Key: "topic", Value: topic},
 	)
-	pm, err := createProducerMessage(topic, p.ct, body, csp)
+	pm, err := createProducerMessage(topic, ct, body, csp)
 	if err != nil {
 		trace.SpanError(csp)
 		return err
