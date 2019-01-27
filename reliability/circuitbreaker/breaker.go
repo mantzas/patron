@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/metric"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

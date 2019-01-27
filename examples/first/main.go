@@ -10,12 +10,12 @@ import (
 
 	"github.com/mantzas/patron"
 	"github.com/mantzas/patron/encoding/protobuf"
+	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync"
 	patronhttp "github.com/mantzas/patron/sync/http"
 	tracehttp "github.com/mantzas/patron/trace/http"
-	"github.com/pkg/errors"
 )
 
 func init() {
