@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/async/kafka"
-	"github.com/mantzas/patron/encoding/json"
 )
 
 const (
@@ -20,7 +19,7 @@ const (
 func main() {
 	termSig := make(chan os.Signal, 1)
 	signal.Notify(termSig, os.Interrupt, syscall.SIGTERM)
-	cf, err := kafka.New("test", json.Type, []string{kafkaTopic}, []string{kafkaBroker})
+	cf, err := kafka.New("test", []string{kafkaTopic}, []string{kafkaBroker})
 	if err != nil {
 		log.Fatal(err)
 	}

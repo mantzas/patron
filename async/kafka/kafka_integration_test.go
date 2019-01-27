@@ -19,7 +19,7 @@ func TestConsume(t *testing.T) {
 	brokers := []string{"localhost:9092"}
 	topics := []string{"test-topic"}
 	// setup consumer
-	f, err := New("test", "", topics, brokers)
+	f, err := New("test", topics, brokers)
 	assert.NoError(t, err)
 	cns, err := f.Create()
 	assert.NoError(t, err)

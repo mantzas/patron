@@ -31,7 +31,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, "ct", tt.args.topics, tt.args.brokers, tt.args.oo...)
+			got, err := New(tt.args.name, tt.args.topics, tt.args.brokers, tt.args.oo...)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -61,7 +61,7 @@ func TestFactory_Create(t *testing.T) {
 		"buffer":                          1000,
 		"group.id":                        "name",
 		"client.id":                       fmt.Sprintf("%s-%s", host, "name"),
-		"content-type":                    "ct",
+		"default-content-type":            "application/json",
 		"go.application.rebalance.enable": true,
 		"go.events.channel.enable":        true,
 		"go.events.channel.size":          1000,
@@ -82,7 +82,7 @@ func TestFactory_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f, err := New("name", "ct", []string{"topic"}, []string{"broker"}, tt.fields.oo...)
+			f, err := New("name", []string{"topic"}, []string{"broker"}, tt.fields.oo...)
 			assert.NoError(t, err)
 			got, err := f.Create()
 			if tt.wantErr {

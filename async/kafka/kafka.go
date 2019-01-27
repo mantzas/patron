@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mantzas/patron/encoding/json"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
@@ -58,14 +60,13 @@ func (m *message) Nack() error {
 // Factory definition of a consumer factory.
 type Factory struct {
 	name    string
-	ct      string
 	topics  []string
 	brokers []string
 	oo      []OptionFunc
 }
 
 // New constructor.
-func New(name, ct string, topics []string, brokers []string, oo ...OptionFunc) (*Factory, error) {
+func New(name string, topics []string, brokers []string, oo ...OptionFunc) (*Factory, error) {
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -78,7 +79,7 @@ func New(name, ct string, topics []string, brokers []string, oo ...OptionFunc) (
 		return nil, errors.New("topics are nil or empty")
 	}
 
-	return &Factory{name: name, ct: ct, topics: topics, brokers: brokers, oo: oo}, nil
+	return &Factory{name: name, topics: topics, brokers: brokers, oo: oo}, nil
 }
 
 // Create a new consumer.
@@ -100,12 +101,11 @@ func (f *Factory) Create() (async.Consumer, error) {
 	}
 
 	c := &consumer{
-		brokers:     f.brokers,
-		topics:      f.topics,
-		contentType: f.ct,
-		buffer:      1000,
-		info:        make(map[string]interface{}),
-		cfg:         cfg,
+		brokers: f.brokers,
+		topics:  f.topics,
+		buffer:  1000,
+		info:    make(map[string]interface{}),
+		cfg:     cfg,
 	}
 
 	for _, o := range f.oo {
@@ -124,15 +124,14 @@ func (f *Factory) Create() (async.Consumer, error) {
 }
 
 type consumer struct {
-	brokers     []string
-	contentType string
-	cnl         context.CancelFunc
-	cns         *kafka.Consumer
-	cfg         *kafka.ConfigMap
-	buffer      int
-	topics      []string
-	ack         bool
-	info        map[string]interface{}
+	brokers []string
+	cnl     context.CancelFunc
+	cns     *kafka.Consumer
+	cfg     *kafka.ConfigMap
+	buffer  int
+	topics  []string
+	ack     bool
+	info    map[string]interface{}
 }
 
 // Info return the information of the consumer.
@@ -233,7 +232,7 @@ func (c *consumer) createInfo() {
 	c.info["brokers"] = strings.Join(c.brokers, ",")
 	c.info["topics"] = strings.Join(c.topics, ",")
 	c.info["buffer"] = c.buffer
-	c.info["content-type"] = c.contentType
+	c.info["default-content-type"] = json.Type
 	for k, v := range *c.cfg {
 		c.info[k] = v
 	}
@@ -251,20 +250,15 @@ func (c *consumer) topicPartitionOffsetDiffGaugeSet(tp kafka.TopicPartition) {
 func (c *consumer) determineDecoder(msg *kafka.Message) (encoding.DecodeRawFunc, error) {
 	var ct string
 	var err error
-	if c.contentType != "" {
-		ct = c.contentType
-	} else {
-		ct, err = determineContentType(msg.Headers)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to determine content type")
-		}
-	}
 
+	ct, err = determineContentType(msg.Headers)
+	if err != nil {
+		return json.DecodeRaw, nil
+	}
 	dec, err := async.DetermineDecoder(ct)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to determine decoder for %s", ct)
 	}
-
 	return dec, nil
 }
 
