@@ -12,38 +12,34 @@ func TestSetup(t *testing.T) {
 	assert.Equal(t, expected, namespace)
 }
 
-func TestNewCounterDoubleRegister(t *testing.T) {
-	cnt, err := NewCounter("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
-	cnt, err = NewCounter("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
+func TestNewCounterDoubleRegisterPanics(t *testing.T) {
+	m1 := NewCounter("sub", "name", "help", "labels1", "label2")
+	m2 := NewCounter("sub", "name", "help", "labels1", "label2")
+	assert.Panics(t, func() {
+		MustRegister(m1, m2)
+	})
 }
 
-func TestNewGaugeDoubleRegister(t *testing.T) {
-	cnt, err := NewGauge("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
-	cnt, err = NewGauge("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
+func TestNewGaugeDoubleRegisterPanics(t *testing.T) {
+	m1 := NewGauge("sub", "name", "help", "labels1", "label2")
+	m2 := NewGauge("sub", "name", "help", "labels1", "label2")
+	assert.Panics(t, func() {
+		MustRegister(m1, m2)
+	})
 }
 
-func TestNewHistogramDoubleRegister(t *testing.T) {
-	cnt, err := NewHistogram("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
-	cnt, err = NewHistogram("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
+func TestNewHistogramDoubleRegisterPanics(t *testing.T) {
+	m1 := NewHistogram("sub", "name", "help", "labels1", "label2")
+	m2 := NewHistogram("sub", "name", "help", "labels1", "label2")
+	assert.Panics(t, func() {
+		MustRegister(m1, m2)
+	})
 }
 
-func TestNewSummaryDoubleRegister(t *testing.T) {
-	cnt, err := NewSummary("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
-	cnt, err = NewSummary("sub", "name", "help", "labels1", "label2")
-	assert.NoError(t, err)
-	assert.NotNil(t, cnt)
+func TestNewSummaryDoubleRegisterPanics(t *testing.T) {
+	m1 := NewSummary("sub", "name", "help", "labels1", "label2")
+	m2 := NewSummary("sub", "name", "help", "labels1", "label2")
+	assert.Panics(t, func() {
+		MustRegister(m1, m2)
+	})
 }

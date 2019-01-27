@@ -7,12 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mantzas/patron/encoding/json"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
+	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/metric"
@@ -22,6 +21,17 @@ import (
 )
 
 var topicPartitionOffsetDiff *prometheus.GaugeVec
+
+func init() {
+	topicPartitionOffsetDiff = metric.NewGauge(
+		"kafka_consumer",
+		"offset_diff",
+		"Message offset difference with high watermark, classified by topic and partition",
+		"topic",
+		"partition",
+	)
+	metric.MustRegister(topicPartitionOffsetDiff)
+}
 
 type message struct {
 	span opentracing.Span
@@ -84,7 +94,6 @@ func New(name string, topics []string, brokers []string, oo ...OptionFunc) (*Fac
 
 // Create a new consumer.
 func (f *Factory) Create() (async.Consumer, error) {
-
 	host, err := os.Hostname()
 	if err != nil {
 		return nil, errors.New("failed to get hostname")
@@ -115,10 +124,6 @@ func (f *Factory) Create() (async.Consumer, error) {
 		}
 	}
 
-	err = setupMetrics()
-	if err != nil {
-		return nil, err
-	}
 	c.createInfo()
 	return c, nil
 }
@@ -277,19 +282,4 @@ func mapHeader(hh []kafka.Header) map[string]string {
 		mp[h.Key] = string(h.Value)
 	}
 	return mp
-}
-
-func setupMetrics() error {
-	var err error
-	topicPartitionOffsetDiff, err = metric.NewGauge(
-		"kafka_consumer",
-		"offset_diff",
-		"Message offset difference with high watermark, classified by topic and partition",
-		"topic",
-		"partition",
-	)
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -32,6 +32,17 @@ var (
 	statusMap      = map[status]string{closed: "closed", open: "open"}
 )
 
+func init() {
+	breakerCounter = metric.NewCounter(
+		"reliability",
+		"circuit_breaker",
+		"Circuit breaker status, classified by name and status",
+		"name",
+		"status",
+	)
+	metric.MustRegister(breakerCounter)
+}
+
 func breakerCounterInc(name string, st status) {
 	breakerCounter.WithLabelValues(name, statusMap[st]).Inc()
 }
@@ -72,18 +83,6 @@ func New(name string, s Setting) (*CircuitBreaker, error) {
 
 	if s.MaxRetryExecutionThreshold < s.RetrySuccessThreshold {
 		return nil, errors.New("max retry has to be greater than the retry threshold")
-	}
-
-	var err error
-	breakerCounter, err = metric.NewCounter(
-		"reliability",
-		"circuit_breaker",
-		"Circuit breaker status, classified by name and status",
-		"name",
-		"status",
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to register breaker counter")
 	}
 
 	return &CircuitBreaker{

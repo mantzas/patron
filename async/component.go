@@ -12,6 +12,16 @@ import (
 
 var consumerErrors *prometheus.CounterVec
 
+func init() {
+	consumerErrors = metric.NewCounter(
+		"async_component",
+		"consumer_errors",
+		"Consumer errors, classified by name and type",
+		"name",
+	)
+	metric.MustRegister(consumerErrors)
+}
+
 // Component implementation of a async component.
 type Component struct {
 	name         string
@@ -57,11 +67,6 @@ func New(name string, p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*C
 	}
 
 	c.setupInfo()
-	err := setupMetrics()
-	if err != nil {
-		return nil, err
-	}
-
 	return c, nil
 }
 
@@ -172,20 +177,6 @@ func (c *Component) setupInfo() {
 	c.info["fail-strategy"] = c.failStrategy.String()
 	c.info["consumer-retries"] = c.retries
 	c.info["consumer-timeout"] = c.retryWait.String()
-}
-
-func setupMetrics() error {
-	var err error
-	consumerErrors, err = metric.NewCounter(
-		"async_component",
-		"consumer_errors",
-		"Consumer errors, classified by name and type",
-		"name",
-	)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (c *Component) consumerErrorsInc() {

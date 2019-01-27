@@ -1,7 +1,6 @@
 package metric
 
 import (
-	"github.com/mantzas/patron/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -15,8 +14,8 @@ func Setup(ns string) {
 }
 
 // NewCounter creates and registers a counter.
-func NewCounter(sub, name, help string, labels ...string) (*prometheus.CounterVec, error) {
-	cnt := prometheus.NewCounterVec(
+func NewCounter(sub, name, help string, labels ...string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: sub,
@@ -25,18 +24,11 @@ func NewCounter(sub, name, help string, labels ...string) (*prometheus.CounterVe
 		},
 		labels,
 	)
-
-	if err := prometheus.Register(cnt); err != nil {
-		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
-			return nil, errors.Wrap(err, "failed to register consumer error metrics")
-		}
-	}
-	return cnt, nil
 }
 
 // NewGauge creates and registers a gauge.
-func NewGauge(sub, name, help string, labels ...string) (*prometheus.GaugeVec, error) {
-	gau := prometheus.NewGaugeVec(
+func NewGauge(sub, name, help string, labels ...string) *prometheus.GaugeVec {
+	return prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: sub,
@@ -45,18 +37,11 @@ func NewGauge(sub, name, help string, labels ...string) (*prometheus.GaugeVec, e
 		},
 		labels,
 	)
-
-	if err := prometheus.Register(gau); err != nil {
-		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
-			return nil, errors.Wrap(err, "failed to register consumer error metrics")
-		}
-	}
-	return gau, nil
 }
 
 // NewHistogram creates and registers a histogram.
-func NewHistogram(sub, name, help string, labels ...string) (*prometheus.HistogramVec, error) {
-	gau := prometheus.NewHistogramVec(
+func NewHistogram(sub, name, help string, labels ...string) *prometheus.HistogramVec {
+	return prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: sub,
@@ -65,18 +50,11 @@ func NewHistogram(sub, name, help string, labels ...string) (*prometheus.Histogr
 		},
 		labels,
 	)
-
-	if err := prometheus.Register(gau); err != nil {
-		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
-			return nil, errors.Wrap(err, "failed to register consumer error metrics")
-		}
-	}
-	return gau, nil
 }
 
 // NewSummary creates and registers a summary.
-func NewSummary(sub, name, help string, labels ...string) (*prometheus.SummaryVec, error) {
-	gau := prometheus.NewSummaryVec(
+func NewSummary(sub, name, help string, labels ...string) *prometheus.SummaryVec {
+	return prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Namespace: namespace,
 			Subsystem: sub,
@@ -85,11 +63,9 @@ func NewSummary(sub, name, help string, labels ...string) (*prometheus.SummaryVe
 		},
 		labels,
 	)
+}
 
-	if err := prometheus.Register(gau); err != nil {
-		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
-			return nil, errors.Wrap(err, "failed to register consumer error metrics")
-		}
-	}
-	return gau, nil
+// MustRegister registers the collector, panics on error.
+func MustRegister(cs ...prometheus.Collector) {
+	prometheus.MustRegister(cs...)
 }

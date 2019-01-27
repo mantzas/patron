@@ -1,5 +1,3 @@
-// +build integration
-
 package kafka
 
 import (
@@ -30,20 +28,22 @@ func TestConsume(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, chMsg)
 	assert.NotNil(t, chErr)
-	// setup producer
-	p, err := kafka.NewProducer(brokers)
-	assert.NoError(t, err)
-	defer p.Close()
-	err = p.SendRaw(context.Background(), "", topics[0], []byte("TEST"))
-	assert.NoError(t, err)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		//check send message
-		//m := <-chMsg
-		//assert.NotNil(t, m)
-		//TODO: tests
+		m := <-chMsg
+		assert.NotNil(t, m)
+		assert.NotNil(t, m.Context())
+		assert.NoError(t, m.Ack())
+		assert.NoError(t, m.Nack())
 	}()
+	// setup producer
+	p, err := kafka.NewProducer(brokers)
+	assert.NoError(t, err)
+	defer p.Close()
+	err = p.Send(context.Background(), topics[0], "TEST")
+	assert.NoError(t, err)
 	wg.Wait()
 }
