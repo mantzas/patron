@@ -36,6 +36,7 @@ type Sender interface {
 // Producer defines a async Kafka producer.
 type Producer struct {
 	cfg   *kafka.ConfigMap
+	ct    string
 	enc   encoding.EncodeFunc
 	prod  *kafka.Producer
 	tag   opentracing.Tag
@@ -71,7 +72,7 @@ func newProducer(brokers []string, tag opentracing.Tag, oo ...OptionFunc) (*Prod
 		"bootstrap.servers": strings.Join(brokers, ","),
 	}
 
-	kp := Producer{cfg: cfg, tag: tag, enc: json.Encode}
+	kp := Producer{cfg: cfg, tag: tag, enc: json.Encode, ct: json.Type}
 
 	for _, o := range oo {
 		err := o(&kp)
@@ -109,7 +110,7 @@ func (p *Producer) SendRaw(ctx context.Context, topic string, body []byte) error
 		p.tag,
 		opentracing.Tag{Key: "topic", Value: topic},
 	)
-	pm, err := createProducerMessage(topic, body, csp)
+	pm, err := createProducerMessage(topic, p.ct, body, csp)
 	if err != nil {
 		trace.SpanError(csp)
 		return err
@@ -152,12 +153,13 @@ func (p *Producer) sendAsync(msg *kafka.Message) error {
 	return nil
 }
 
-func createProducerMessage(topic string, body []byte, sp opentracing.Span) (*kafka.Message, error) {
+func createProducerMessage(topic string, ct string, body []byte, sp opentracing.Span) (*kafka.Message, error) {
 	c := kafkaHeadersCarrier{}
 	err := sp.Tracer().Inject(sp.Context(), opentracing.TextMap, &c)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to inject tracing headers")
 	}
+	c = append(c, kafka.Header{Key: encoding.ContentTypeHeader, Value: []byte(ct)})
 	return &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          body,

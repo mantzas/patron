@@ -53,6 +53,7 @@ func TestConfig(t *testing.T) {
 
 func TestEncode(t *testing.T) {
 	type args struct {
+		ct  string
 		enc encoding.EncodeFunc
 	}
 	tests := []struct {
@@ -60,14 +61,15 @@ func TestEncode(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "failed, nil encoder", args: args{enc: nil}, wantErr: true},
-		{name: "success", args: args{enc: json.Encode}, wantErr: false},
+		{name: "failed, empty content type", args: args{ct: "", enc: json.Encode}, wantErr: true},
+		{name: "failed, nil encoder", args: args{ct: encoding.ContentTypeHeader, enc: nil}, wantErr: true},
+		{name: "success", args: args{ct: encoding.ContentTypeHeader, enc: json.Encode}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &kafka.ConfigMap{}
 			c := Producer{cfg: cfg}
-			err := Encode(tt.args.enc)(&c)
+			err := Encode(tt.args.ct, tt.args.enc)(&c)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

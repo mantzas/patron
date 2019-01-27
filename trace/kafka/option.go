@@ -34,8 +34,11 @@ func Config(cfg map[string]interface{}) OptionFunc {
 }
 
 // Encode option for body encoding.
-func Encode(enc encoding.EncodeFunc) OptionFunc {
+func Encode(ct string, enc encoding.EncodeFunc) OptionFunc {
 	return func(p *Producer) error {
+		if ct == "" {
+			return errors.New("content type has to be provided")
+		}
 		if enc == nil {
 			return errors.New("encode function is nil")
 		}
