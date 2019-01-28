@@ -50,6 +50,9 @@ func main() {
 				log.Print("starting")
 			}
 			count++
+			if count%1000 == 0 {
+				log.Printf("%d messages received", count)
+			}
 		case err = <-chErr:
 			log.Fatal(err)
 		}
