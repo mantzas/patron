@@ -3,8 +3,8 @@ package async
 import (
 	"testing"
 
-	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/encoding/protobuf"
+	"github.com/thebeatapp/patron/encoding/json"
+	"github.com/thebeatapp/patron/encoding/protobuf"
 	"github.com/stretchr/testify/assert"
 )
 

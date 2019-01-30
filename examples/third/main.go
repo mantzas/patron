@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/mantzas/patron"
-	"github.com/mantzas/patron/async"
-	"github.com/mantzas/patron/async/kafka"
-	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/examples"
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/trace/amqp"
+	"github.com/thebeatapp/patron/async"
+	"github.com/thebeatapp/patron/async/kafka"
+	"github.com/thebeatapp/patron/encoding/json"
+	"github.com/thebeatapp/patron/examples"
+	"github.com/thebeatapp/patron/log"
+	"github.com/thebeatapp/patron/trace/amqp"
 )
 
 const (

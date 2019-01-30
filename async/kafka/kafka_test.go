@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Shopify/sarama"
-	"github.com/mantzas/patron/encoding"
-	"github.com/mantzas/patron/encoding/json"
+	"github.com/thebeatapp/patron/encoding"
+	"github.com/thebeatapp/patron/encoding/json"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mantzas/patron/encoding/json"
+	"github.com/thebeatapp/patron/encoding/json"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/streadway/amqp"

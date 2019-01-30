@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Shopify/sarama"
-	"github.com/mantzas/patron/trace"
+	"github.com/thebeatapp/patron/trace"
 	"github.com/stretchr/testify/assert"
 	jaeger "github.com/uber/jaeger-client-go"
 )

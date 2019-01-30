@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/mantzas/patron/encoding/json"
+	"github.com/thebeatapp/patron/encoding/json"
 	"github.com/stretchr/testify/assert"
 )
 

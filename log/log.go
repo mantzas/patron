@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 
-	"github.com/mantzas/patron/errors"
+	"github.com/thebeatapp/patron/errors"
 )
 
 // The Level type definition.

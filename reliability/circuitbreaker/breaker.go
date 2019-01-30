@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mantzas/patron/log"
+	"github.com/thebeatapp/patron/log"
 
-	"github.com/mantzas/patron/metric"
+	"github.com/thebeatapp/patron/metric"
 
 	"github.com/prometheus/client_golang/prometheus"
 )

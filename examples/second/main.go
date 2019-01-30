@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/mantzas/patron"
-	"github.com/mantzas/patron/examples"
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/sync"
-	patronhttp "github.com/mantzas/patron/sync/http"
-	"github.com/mantzas/patron/sync/http/auth/apikey"
-	tracehttp "github.com/mantzas/patron/trace/http"
-	"github.com/mantzas/patron/trace/kafka"
+	"github.com/thebeatapp/patron/examples"
+	"github.com/thebeatapp/patron/log"
+	"github.com/thebeatapp/patron/sync"
+	patronhttp "github.com/thebeatapp/patron/sync/http"
+	"github.com/thebeatapp/patron/sync/http/auth/apikey"
+	tracehttp "github.com/thebeatapp/patron/trace/http"
+	"github.com/thebeatapp/patron/trace/kafka"
 	"github.com/pkg/errors"
 )
 

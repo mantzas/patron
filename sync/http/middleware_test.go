@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/sync/http/auth"
+	"github.com/thebeatapp/patron/errors"
+	"github.com/thebeatapp/patron/sync/http/auth"
 	"github.com/stretchr/testify/assert"
 )
 

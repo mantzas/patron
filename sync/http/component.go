@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/mantzas/patron/log"
+	"github.com/thebeatapp/patron/log"
 )
 
 const (

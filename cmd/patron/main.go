@@ -185,7 +185,7 @@ import (
 	"os"
 
 	"github.com/mantzas/patron"
-	"github.com/mantzas/patron/log"
+	"github.com/thebeatapp/patron/log"
 )
 
 var (

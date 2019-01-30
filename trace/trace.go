@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/log"
+	"github.com/thebeatapp/patron/errors"
+	"github.com/thebeatapp/patron/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/uber/jaeger-client-go/config"

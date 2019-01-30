@@ -1,7 +1,7 @@
 package metric
 
 import (
-	"github.com/mantzas/patron/errors"
+	"github.com/thebeatapp/patron/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

@@ -1,10 +1,10 @@
 package patron
 
 import (
-	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/info"
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/sync/http"
+	"github.com/thebeatapp/patron/errors"
+	"github.com/thebeatapp/patron/info"
+	"github.com/thebeatapp/patron/log"
+	"github.com/thebeatapp/patron/sync/http"
 )
 
 // OptionFunc definition for configuring the service in a functional way.

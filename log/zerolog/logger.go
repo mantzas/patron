@@ -3,7 +3,7 @@ package zerolog
 import (
 	"fmt"
 
-	"github.com/mantzas/patron/log"
+	"github.com/thebeatapp/patron/log"
 	"github.com/rs/zerolog"
 )
 

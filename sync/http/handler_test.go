@@ -7,11 +7,11 @@ import (
 	"testing"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/mantzas/patron/encoding"
-	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/encoding/protobuf"
-	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/sync"
+	"github.com/thebeatapp/patron/encoding"
+	"github.com/thebeatapp/patron/encoding/json"
+	"github.com/thebeatapp/patron/encoding/protobuf"
+	"github.com/thebeatapp/patron/errors"
+	"github.com/thebeatapp/patron/sync"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mantzas/patron/encoding"
-	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/info"
+	"github.com/thebeatapp/patron/encoding"
+	"github.com/thebeatapp/patron/encoding/json"
+	"github.com/thebeatapp/patron/info"
 	"github.com/stretchr/testify/assert"
 )
 

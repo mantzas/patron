@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mantzas/patron/reliability/circuitbreaker"
-	"github.com/mantzas/patron/trace"
+	"github.com/thebeatapp/patron/reliability/circuitbreaker"
+	"github.com/thebeatapp/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"

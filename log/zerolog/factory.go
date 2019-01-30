@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/mantzas/patron/log"
+	"github.com/thebeatapp/patron/log"
 	"github.com/rs/zerolog"
 )
 

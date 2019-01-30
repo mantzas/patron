@@ -3,7 +3,7 @@ package patron
 import (
 	"testing"
 
-	"github.com/mantzas/patron/sync/http"
+	"github.com/thebeatapp/patron/sync/http"
 	"github.com/stretchr/testify/assert"
 )
 

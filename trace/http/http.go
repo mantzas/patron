@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mantzas/patron/reliability/circuitbreaker"
-	"github.com/mantzas/patron/trace"
+	"github.com/thebeatapp/patron/reliability/circuitbreaker"
+	"github.com/thebeatapp/patron/trace"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

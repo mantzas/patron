@@ -6,7 +6,7 @@ import (
 	"database/sql/driver"
 	"time"
 
-	"github.com/mantzas/patron/trace"
+	"github.com/thebeatapp/patron/trace"
 	"github.com/opentracing/opentracing-go"
 )
 

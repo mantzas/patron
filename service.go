@@ -8,13 +8,13 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/info"
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/log/zerolog"
-	"github.com/mantzas/patron/metric"
-	"github.com/mantzas/patron/sync/http"
-	"github.com/mantzas/patron/trace"
+	"github.com/thebeatapp/patron/errors"
+	"github.com/thebeatapp/patron/info"
+	"github.com/thebeatapp/patron/log"
+	"github.com/thebeatapp/patron/log/zerolog"
+	"github.com/thebeatapp/patron/metric"
+	"github.com/thebeatapp/patron/sync/http"
+	"github.com/thebeatapp/patron/trace"
 	"github.com/uber/jaeger-client-go"
 )
 

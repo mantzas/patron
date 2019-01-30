@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
-	"github.com/mantzas/patron/async"
-	"github.com/mantzas/patron/encoding"
-	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/log"
-	"github.com/mantzas/patron/metric"
-	"github.com/mantzas/patron/trace"
+	"github.com/thebeatapp/patron/async"
+	"github.com/thebeatapp/patron/encoding"
+	"github.com/thebeatapp/patron/errors"
+	"github.com/thebeatapp/patron/log"
+	"github.com/thebeatapp/patron/metric"
+	"github.com/thebeatapp/patron/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 )

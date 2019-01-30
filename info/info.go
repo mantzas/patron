@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"github.com/mantzas/patron/encoding/json"
-	"github.com/mantzas/patron/errors"
+	"github.com/thebeatapp/patron/encoding/json"
+	"github.com/thebeatapp/patron/errors"
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 

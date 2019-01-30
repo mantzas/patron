@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/mantzas/patron/log"
+	"github.com/thebeatapp/patron/log"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
