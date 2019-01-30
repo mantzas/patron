@@ -9,17 +9,29 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/google/uuid"
+	"github.com/mantzas/patron/async"
+	"github.com/mantzas/patron/encoding"
+	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/thebeatapp/patron/async"
-	"github.com/thebeatapp/patron/encoding"
-	"github.com/thebeatapp/patron/errors"
-	"github.com/thebeatapp/patron/log"
-	"github.com/thebeatapp/patron/metric"
-	"github.com/thebeatapp/patron/trace"
 )
 
 var topicPartitionOffsetDiff *prometheus.GaugeVec
+
+func init() {
+	topicPartitionOffsetDiff = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "component",
+			Subsystem: "kafka_consumer",
+			Name:      "offset_diff",
+			Help:      "Message offset difference with high watermark, classified by topic and partition",
+		},
+		[]string{"topic", "partition"},
+	)
+	prometheus.MustRegister(topicPartitionOffsetDiff)
+}
 
 type message struct {
 	span opentracing.Span
@@ -124,10 +136,6 @@ func (f *Factory) Create() (async.Consumer, error) {
 		}
 	}
 
-	err = setupMetrics()
-	if err != nil {
-		return nil, err
-	}
 	c.createInfo()
 	return c, nil
 }
@@ -294,21 +302,6 @@ func mapHeader(hh []*sarama.RecordHeader) map[string]string {
 		mp[string(h.Key)] = string(h.Value)
 	}
 	return mp
-}
-
-func setupMetrics() error {
-	var err error
-	topicPartitionOffsetDiff, err = metric.NewGauge(
-		"kafka_consumer",
-		"offset_diff",
-		"Message offset difference with high watermark, classified by topic and partition",
-		"topic",
-		"partition",
-	)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func topicPartitionOffsetDiffGaugeSet(topic string, partition int32, high, offset int64) {

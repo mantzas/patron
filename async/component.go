@@ -4,13 +4,29 @@ import (
 	"context"
 	"time"
 
+	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/log"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/thebeatapp/patron/errors"
-	"github.com/thebeatapp/patron/log"
-	"github.com/thebeatapp/patron/metric"
 )
 
 var consumerErrors *prometheus.CounterVec
+
+func init() {
+	consumerErrors = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "component",
+			Subsystem: "async",
+			Name:      "consumer_errors",
+			Help:      "Consumer errors, classified by name and type",
+		},
+		[]string{"name"},
+	)
+	prometheus.MustRegister(consumerErrors)
+}
+
+func consumerErrorsInc(name string) {
+	consumerErrors.WithLabelValues(name).Inc()
+}
 
 // Component implementation of a async component.
 type Component struct {
@@ -26,7 +42,6 @@ type Component struct {
 // New returns a new async component. The default behavior is to return a error of failure.
 // Use options to change the default behavior.
 func New(name string, p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, error) {
-
 	if name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -57,11 +72,6 @@ func New(name string, p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*C
 	}
 
 	c.setupInfo()
-	err := setupMetrics()
-	if err != nil {
-		return nil, err
-	}
-
 	return c, nil
 }
 
@@ -83,7 +93,7 @@ func (c *Component) Run(ctx context.Context) error {
 		if ctx.Err() == context.Canceled {
 			break
 		}
-		c.consumerErrorsInc()
+		consumerErrorsInc(c.name)
 		if c.retries > 0 {
 			log.Errorf("failed run, retry %d/%d with %v wait: %v", i, c.retries, c.retryWait, err)
 			time.Sleep(c.retryWait)
@@ -167,22 +177,4 @@ func (c *Component) setupInfo() {
 	c.info["fail-strategy"] = c.failStrategy.String()
 	c.info["consumer-retries"] = c.retries
 	c.info["consumer-timeout"] = c.retryWait.String()
-}
-
-func setupMetrics() error {
-	var err error
-	consumerErrors, err = metric.NewCounter(
-		"async_component",
-		"consumer_errors",
-		"Consumer errors, classified by name and type",
-		"name",
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Component) consumerErrorsInc() {
-	consumerErrors.WithLabelValues(c.name).Inc()
 }
