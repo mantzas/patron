@@ -5,8 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/opentracing/opentracing-go"
-
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +87,7 @@ func TestHTTPStartFinishSpan(t *testing.T) {
 	assert.IsType(t, &mocktracer.MockSpan{}, sp)
 	jsp := sp.(*mocktracer.MockSpan)
 	assert.NotNil(t, jsp)
-	assert.Equal(t, "Server HTTP GET /", jsp.OperationName)
+	assert.Equal(t, "GET /", jsp.OperationName)
 	FinishHTTPSpan(jsp, 200)
 	assert.NotNil(t, jsp)
 	rawSpan := mtr.FinishedSpans()[0]
