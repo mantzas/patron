@@ -8,7 +8,7 @@ import (
 
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/rpcmetrics"
@@ -57,7 +57,7 @@ func Setup(name, ver, agent, typ string, prm float64) error {
 	metricsFactory := prometheus.New()
 	tr, clsTemp, err := cfg.NewTracer(
 		config.Logger(jaegerLoggerAdapter{}),
-		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace(name, nil), rpcmetrics.DefaultNameNormalizer)),
+		config.Observer(rpcmetrics.NewObserver(metricsFactory.Namespace("sync", nil), rpcmetrics.DefaultNameNormalizer)),
 	)
 	if err != nil {
 		return errors.Wrap(err, "cannot initialize jaeger tracer")
@@ -80,7 +80,7 @@ func HTTPSpan(path string, r *http.Request) (opentracing.Span, *http.Request) {
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
 		log.Errorf("failed to extract HTTP span: %v", err)
 	}
-	sp := opentracing.StartSpan(HTTPOpName("Server", r.Method, path), ext.RPCServerOption(ctx))
+	sp := opentracing.StartSpan(HTTPOpName(r.Method, path), ext.RPCServerOption(ctx))
 	ext.HTTPMethod.Set(sp, r.Method)
 	ext.HTTPUrl.Set(sp, r.URL.String())
 	ext.Component.Set(sp, "http")
@@ -161,8 +161,8 @@ func SQLSpan(
 }
 
 // HTTPOpName return a string representation of the HTTP request operation.
-func HTTPOpName(cmp, method, path string) string {
-	return cmp + " HTTP " + method + " " + path
+func HTTPOpName(method, path string) string {
+	return method + " " + path
 }
 
 type jaegerLoggerAdapter struct {
