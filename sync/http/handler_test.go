@@ -25,6 +25,20 @@ func Test_extractFields(t *testing.T) {
 	assert.Equal(t, "2", f["value2"])
 }
 
+func Test_extractHeaders(t *testing.T) {
+	r, err := http.NewRequest("GET", "/test", nil)
+	r.Header.Set("X-HEADER-1", "all caps")
+	r.Header.Set("x-header-2", "all lower")
+	r.Header.Set("X-hEadEr-3", "all mixed")
+	r.Header.Set("X-ACME", "")
+	assert.NoError(t, err)
+	h := extractHeaders(r)
+	assert.Len(t, h, 3)
+	assert.Equal(t, "all caps", h["X-HEADER-1"])
+	assert.Equal(t, "all lower", h["X-HEADER-2"])
+	assert.Equal(t, "all mixed", h["X-HEADER-3"])
+}
+
 func Test_determineEncoding(t *testing.T) {
 	type args struct {
 		req *http.Request

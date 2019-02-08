@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewRequest(t *testing.T) {
-	req := NewRequest(nil, nil, nil)
+	req := NewRequest(nil, nil, nil, nil)
 	assert.NotNil(t, req)
 }
 
@@ -17,7 +17,7 @@ func TestRequest_Decode(t *testing.T) {
 	j, err := json.Encode("string")
 	assert.NoError(t, err)
 	b := bytes.NewBuffer(j)
-	req := NewRequest(nil, b, json.Decode)
+	req := NewRequest(nil, b, nil, json.Decode)
 	assert.NotNil(t, req)
 	var data string
 	err = req.Decode(&data)
