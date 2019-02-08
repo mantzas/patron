@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/thebeatapp/patron/errors"
 	"github.com/thebeatapp/patron/log"
 	"github.com/thebeatapp/patron/metric"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var consumerErrors *prometheus.CounterVec

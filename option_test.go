@@ -3,8 +3,8 @@ package patron
 import (
 	"testing"
 
-	"github.com/thebeatapp/patron/sync/http"
 	"github.com/stretchr/testify/assert"
+	"github.com/thebeatapp/patron/sync/http"
 )
 
 func TestRoutes(t *testing.T) {

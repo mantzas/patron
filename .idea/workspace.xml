@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="6e1b3f36-f8ea-4a1f-bfe1-d2bba91459dc" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/async/amqp/amqp.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/amqp/amqp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/async/amqp/amqp_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/amqp/amqp_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/async/amqp/option.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/amqp/option.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/async/async_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/async_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/async/component.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/component.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/async/component_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/component_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/async/kafka/kafka.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/kafka/kafka.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/async/kafka/kafka_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/async/kafka/kafka_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/zerolog/factory.go" beforeDir="false" afterPath="$PROJECT_DIR$/log/zerolog/factory.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/zerolog/factory_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/log/zerolog/factory_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/zerolog/logger.go" beforeDir="false" afterPath="$PROJECT_DIR$/log/zerolog/logger.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/zerolog/logger_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/log/zerolog/logger_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metric/metric.go" beforeDir="false" afterPath="$PROJECT_DIR$/metric/metric.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/option_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/option_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/service_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync/http/component_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/sync/http/component_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync/http/handler_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/sync/http/handler_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync/http/info.go" beforeDir="false" afterPath="$PROJECT_DIR$/sync/http/info.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync/http/info_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/sync/http/info_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync/http/middleware_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/sync/http/middleware_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync/sync_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/sync/sync_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/amqp/amqp.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/amqp/amqp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/amqp/option.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/amqp/option.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/http/http.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/http/http.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/http/http_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/http/http_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/kafka/kafka.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/kafka/kafka.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/kafka/kafka_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/kafka/kafka_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/sql/sql.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/sql/sql.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trace/trace.go" beforeDir="false" afterPath="$PROJECT_DIR$/trace/trace.go" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/sync/http/handler.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="90">
+              <caret line="6" column="8" selection-start-line="6" selection-start-column="8" selection-end-line="6" selection-end-column="8" />
+              <folding>
+                <element signature="e#14#362#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="90">
+              <caret line="6" selection-start-line="6" selection-end-line="6" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/sync/http/handler_test.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="270">
+              <caret line="25" column="1" selection-start-line="25" selection-start-column="1" selection-end-line="25" selection-end-column="1" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/sync/sync.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="105">
+              <caret line="12" column="20" selection-start-line="12" selection-start-column="20" selection-end-line="12" selection-end-column="20" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/sync/sync_test.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="60">
+              <caret line="8" column="1" selection-start-line="8" selection-start-column="1" selection-end-line="8" selection-end-column="1" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>get(</find>
+    </findStrings>
+  </component>
+  <component name="GOROOT" path="/usr/local/Cellar/go/1.11.5/libexec" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/sync/sync_test.go" />
+        <option value="$PROJECT_DIR$/sync/http/handler_test.go" />
+        <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/sync/sync.go" />
+        <option value="$PROJECT_DIR$/sync/http/handler.go" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="35" />
+    <option name="y" value="23" />
+    <option name="width" value="1645" />
+    <option name="height" value="1027" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="patron" type="b2602c69:ProjectViewProjectNode" />
+              <item name="patron" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.gopath.indexing.explicitly.defined" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="go.vendoring.notification.had.been.shown" value="true" />
+    <property name="last_opened_file_path" value="$USER_HOME$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="settings.editor.selected.configurable" value="watcher.settings" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Go Test.go test patron">
+    <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="patron" />
+      <working_directory value="$PROJECT_DIR$/sync/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/thebeatapp/patron/sync/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^Test_extractHeaders$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go test patron" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="patron" />
+      <working_directory value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <kind value="DIRECTORY" />
+      <package value="github.com/thebeatapp/patron" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
+    <configuration name="handler_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="patron" />
+      <working_directory value="$PROJECT_DIR$/sync/http" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="github.com/thebeatapp/patron" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/sync/http/handler_test.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="sync_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="patron" />
+      <working_directory value="$PROJECT_DIR$/sync" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="github.com/thebeatapp/patron" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/sync/sync_test.go" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.go test patron" />
+        <item itemvalue="Go Test.Test_extractHeaders in github.com/thebeatapp/patron/sync/http" />
+        <item itemvalue="Go Test.handler_test.go" />
+        <item itemvalue="Go Test.sync_test.go" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TestHistory">
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 36m 48s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 37m 34s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 37m 44s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 38m 19s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 42m 08s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 42m 35s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 43m 58s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 48m 59s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="Test_extractHeaders_in_github_com_thebeatapp_patron_sync_http - 2019.02.08 at 14h 50m 05s.xml">
+      <configuration name="Test_extractHeaders in github.com/thebeatapp/patron/sync/http" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="go_test_patron - 2019.02.08 at 14h 53m 13s.xml">
+      <configuration name="go test patron" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="35" y="23" width="1645" height="1027" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.28134748" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.33903742" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Database Changes" order="8" />
+      <window_info anchor="bottom" id="Version Control" order="9" />
+      <window_info anchor="bottom" id="Terminal" order="10" />
+      <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file:///usr/local/Cellar/go/1.11.5/libexec/src/net/http/header.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="251">
+          <caret line="43" lean-forward="true" selection-start-line="43" selection-end-line="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/Cellar/go/1.11.5/libexec/src/net/http/request.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="11550">
+          <caret line="791" column="5" selection-start-line="791" selection-start-column="5" selection-end-line="791" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sync/http/handler.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" column="8" selection-start-line="6" selection-start-column="8" selection-end-line="6" selection-end-column="8" />
+          <folding>
+            <element signature="e#14#362#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" selection-start-line="6" selection-end-line="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sync/http/handler_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="25" column="1" selection-start-line="25" selection-start-column="1" selection-end-line="25" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sync/sync_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="8" column="1" selection-start-line="8" selection-start-column="1" selection-end-line="8" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sync/sync.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="12" column="20" selection-start-line="12" selection-start-column="20" selection-end-line="12" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/Shopify/sarama"
-	"github.com/thebeatapp/patron/encoding"
-	"github.com/thebeatapp/patron/encoding/json"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/thebeatapp/patron/encoding"
+	"github.com/thebeatapp/patron/encoding/json"
 )
 
 func TestOffset_String(t *testing.T) {

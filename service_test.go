@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/thebeatapp/patron/errors"
 	"github.com/thebeatapp/patron/sync/http"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewServer(t *testing.T) {
