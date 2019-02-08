@@ -27,6 +27,7 @@ func Test_extractFields(t *testing.T) {
 
 func Test_extractHeaders(t *testing.T) {
 	r, err := http.NewRequest("GET", "/test", nil)
+	r.Header.Set("X-HEADER-1", "all capsssss")
 	r.Header.Set("X-HEADER-1", "all caps")
 	r.Header.Set("x-header-2", "all lower")
 	r.Header.Set("X-hEadEr-3", "all mixed")

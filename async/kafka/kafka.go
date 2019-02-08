@@ -3,12 +3,12 @@ package kafka
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/Shopify/sarama"
+	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/thebeatapp/patron/async"
