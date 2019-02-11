@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"github.com/google/uuid"
 	"context"
 	"fmt"
 	"os"
@@ -9,14 +8,15 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
+	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/thebeatapp/patron/async"
 	"github.com/thebeatapp/patron/encoding"
 	"github.com/thebeatapp/patron/errors"
 	"github.com/thebeatapp/patron/log"
 	"github.com/thebeatapp/patron/metric"
 	"github.com/thebeatapp/patron/trace"
-	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var topicPartitionOffsetDiff *prometheus.GaugeVec

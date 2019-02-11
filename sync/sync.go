@@ -9,14 +9,15 @@ import (
 
 // Request definition of the sync request model.
 type Request struct {
-	Fields map[string]string
-	Raw    io.Reader
-	decode encoding.DecodeFunc
+	Fields  map[string]string
+	Raw     io.Reader
+	Headers map[string]string
+	decode  encoding.DecodeFunc
 }
 
 // NewRequest creates a new request.
-func NewRequest(f map[string]string, r io.Reader, d encoding.DecodeFunc) *Request {
-	return &Request{Fields: f, Raw: r, decode: d}
+func NewRequest(f map[string]string, r io.Reader, h map[string]string, d encoding.DecodeFunc) *Request {
+	return &Request{Fields: f, Raw: r, Headers: h, decode: d}
 }
 
 // Decode the raw data by using the provided decoder.

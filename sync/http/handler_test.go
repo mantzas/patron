@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/thebeatapp/patron/encoding"
 	"github.com/thebeatapp/patron/encoding/json"
 	"github.com/thebeatapp/patron/encoding/protobuf"
 	"github.com/thebeatapp/patron/errors"
 	"github.com/thebeatapp/patron/sync"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_extractFields(t *testing.T) {
@@ -23,6 +23,21 @@ func Test_extractFields(t *testing.T) {
 	assert.Len(t, f, 2)
 	assert.Equal(t, "1", f["value1"])
 	assert.Equal(t, "2", f["value2"])
+}
+
+func Test_extractHeaders(t *testing.T) {
+	r, err := http.NewRequest("GET", "/test", nil)
+	r.Header.Set("X-HEADER-1", "all capsssss")
+	r.Header.Set("X-HEADER-1", "all caps")
+	r.Header.Set("x-header-2", "all lower")
+	r.Header.Set("X-hEadEr-3", "all mixed")
+	r.Header.Set("X-ACME", "")
+	assert.NoError(t, err)
+	h := extractHeaders(r)
+	assert.Len(t, h, 3)
+	assert.Equal(t, "all caps", h["X-HEADER-1"])
+	assert.Equal(t, "all lower", h["X-HEADER-2"])
+	assert.Equal(t, "all mixed", h["X-HEADER-3"])
 }
 
 func Test_determineEncoding(t *testing.T) {

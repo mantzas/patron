@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/thebeatapp/patron/errors"
 	"github.com/thebeatapp/patron/sync/http/auth"
-	"github.com/stretchr/testify/assert"
 )
 
 func testHandle(w http.ResponseWriter, r *http.Request) {

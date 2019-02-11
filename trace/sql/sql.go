@@ -6,8 +6,8 @@ import (
 	"database/sql/driver"
 	"time"
 
-	"github.com/thebeatapp/patron/trace"
 	"github.com/opentracing/opentracing-go"
+	"github.com/thebeatapp/patron/trace"
 )
 
 type connInfo struct {

@@ -1,8 +1,8 @@
 package metric
 
 import (
-	"github.com/thebeatapp/patron/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/thebeatapp/patron/errors"
 )
 
 var (

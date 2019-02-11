@@ -3,9 +3,9 @@ package async
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/thebeatapp/patron/encoding/json"
 	"github.com/thebeatapp/patron/encoding/protobuf"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDetermineDecoder(t *testing.T) {
