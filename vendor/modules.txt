@@ -63,7 +63,7 @@ github.com/streadway/amqp
 # github.com/stretchr/testify v1.2.1
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/uber/jaeger-client-go v2.14.0+incompatible
+# github.com/uber/jaeger-client-go v2.15.0+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/config
 github.com/uber/jaeger-client-go/rpcmetrics
@@ -78,6 +78,7 @@ github.com/uber/jaeger-client-go/thrift-gen/zipkincore
 github.com/uber/jaeger-client-go/utils
 github.com/uber/jaeger-client-go/internal/baggage/remote
 github.com/uber/jaeger-client-go/internal/throttler/remote
+github.com/uber/jaeger-client-go/transport
 github.com/uber/jaeger-client-go/thrift-gen/agent
 github.com/uber/jaeger-client-go/thrift-gen/baggage
 # github.com/uber/jaeger-lib v1.5.0

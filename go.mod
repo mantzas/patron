@@ -20,8 +20,14 @@ require (
 	github.com/rs/zerolog v1.5.0
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/streadway/amqp v0.0.0-20180315184602-8e4aba63da9f
+<<<<<<< HEAD
 	github.com/stretchr/testify v1.2.2
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
+=======
+	github.com/stretchr/testify v1.2.1
+	github.com/uber-go/atomic v1.3.2 // indirect
+	github.com/uber/jaeger-client-go v2.15.0+incompatible
+>>>>>>> Mandatory jaeger update (#273)
 	github.com/uber/jaeger-lib v1.5.0
 	gopkg.in/russross/blackfriday.v2 v2.0.0
 )
