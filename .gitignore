@@ -4,6 +4,7 @@
 *.so
 *.dylib
 debug
+.idea/*
 
 # Test binary, build with `go test -c`
 *.test

@@ -178,4 +178,3 @@ func (c *Component) setupInfo() {
 	c.info["consumer-retries"] = c.retries
 	c.info["consumer-timeout"] = c.retryWait.String()
 }
-
