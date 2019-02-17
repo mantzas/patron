@@ -1,6 +1,6 @@
 # patron [![CircleCI](https://circleci.com/gh/mantzas/patron.svg?style=svg)](https://circleci.com/gh/mantzas/patron) [![codecov](https://codecov.io/gh/mantzas/patron/branch/master/graph/badge.svg)](https://codecov.io/gh/mantzas/patron) [![Go Report Card](https://goreportcard.com/badge/github.com/mantzas/patron)](https://goreportcard.com/report/github.com/mantzas/patron) [![GoDoc](https://godoc.org/github.com/mantzas/patron?status.svg)](https://godoc.org/github.com/mantzas/patron)
 
-Patron is a framework for creating microservices.
+Patron is a framework for creating microservices, originally created by Sotiris Mantzaris (https://github.com/mantzas). This fork is maintained by Beat Engineering (https://thebeat.co)
 
 `Patron` is french for `template` or `pattern`, but it means also `boss` which we found out later (no pun intended).
 

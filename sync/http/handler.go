@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
@@ -29,8 +30,10 @@ func handler(hnd sync.ProcessorFunc) http.HandlerFunc {
 			f[k] = v
 		}
 
+		h := extractHeaders(r)
+
 		ctx := log.WithContext(r.Context(), log.Sub(map[string]interface{}{"requestID": uuid.New().String()}))
-		req := sync.NewRequest(f, r.Body, dec)
+		req := sync.NewRequest(f, r.Body, h, dec)
 		rsp, err := hnd(ctx, req)
 		if err != nil {
 			handleError(w, enc, err)
@@ -101,6 +104,19 @@ func extractFields(r *http.Request) map[string]string {
 		f[name] = values[0]
 	}
 	return f
+}
+
+func extractHeaders(r *http.Request) map[string]string {
+	h := make(map[string]string)
+
+	for name, values := range r.Header {
+		for _, value := range values {
+			if len(value) > 0 {
+				h[strings.ToUpper(name)] = value
+			}
+		}
+	}
+	return h
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, rsp *sync.Response, enc encoding.EncodeFunc) error {
