@@ -11,10 +11,14 @@ Welcome to the patron framework project.
 
 <!-- REQUIRED A clear and concise description of what the problem is. -->
 
+## Is this a bug? Please provide steps to reproduce, a failing test etc.
+
+<!-- REQUIRED A clear and concise way to reproduce the bug. -->
+
 ## Describe the solution
 
 <!-- OPTIONAL A clear and concise description of what you want to happen. -->
 
-## Additional context**
+## Additional context
 
 <!-- OPTIONAL Add any other context or screenshots about the feature request here. -->
