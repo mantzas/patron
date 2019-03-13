@@ -12,10 +12,9 @@ import (
 	"github.com/thebeatapp/patron/info"
 	"github.com/thebeatapp/patron/log"
 	"github.com/thebeatapp/patron/log/zerolog"
-	"github.com/thebeatapp/patron/metric"
 	"github.com/thebeatapp/patron/sync/http"
 	"github.com/thebeatapp/patron/trace"
-	"github.com/uber/jaeger-client-go"
+	jaeger "github.com/uber/jaeger-client-go"
 )
 
 var logSetupOnce sync.Once
@@ -130,7 +129,6 @@ func (s *Service) Run() error {
 
 // Setup set's up metrics and default logging.
 func Setup(name, version string) error {
-	metric.Setup(name)
 
 	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
 	if !ok {

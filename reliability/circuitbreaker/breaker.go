@@ -6,10 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thebeatapp/patron/log"
-
-	"github.com/thebeatapp/patron/metric"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -36,17 +32,17 @@ var (
 )
 
 func init() {
-	var err error
-	breakerCounter, err = metric.NewCounter(
-		"reliability",
-		"circuit_breaker",
-		"Circuit breaker status, classified by name and status",
-		"name",
-		"status",
+	breakerCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "reliability",
+			Subsystem: "circuit_breaker",
+			Name:      "errors",
+			Help:      "Circuit breaker status, classified by name and status",
+		},
+		[]string{"name", "status"},
 	)
-	if err != nil {
-		log.Errorf("failed to register breaker counter: %v", err)
-	}
+
+	prometheus.MustRegister(breakerCounter)
 }
 
 func breakerCounterInc(name string, st status) {
