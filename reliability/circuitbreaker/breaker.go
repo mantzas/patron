@@ -119,10 +119,7 @@ func (cb *CircuitBreaker) isOpen() bool {
 func (cb *CircuitBreaker) isClose() bool {
 	cb.RLock()
 	defer cb.RUnlock()
-	if cb.status == close {
-		return true
-	}
-	return false
+	return cb.status == close
 }
 
 // Execute the function enclosed.

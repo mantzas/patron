@@ -151,7 +151,7 @@ func Benchmark_WithContext(b *testing.B) {
 var l Logger
 
 func Benchmark_FromContext(b *testing.B) {
-	l := Sub(map[string]interface{}{"subkey1": "subval1"})
+	l = Sub(map[string]interface{}{"subkey1": "subval1"})
 	ctx := WithContext(context.Background(), l)
 	b.ReportAllocs()
 	b.ResetTimer()
