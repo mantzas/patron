@@ -112,3 +112,29 @@ func TestDocs(t *testing.T) {
 		})
 	}
 }
+
+func TestSIGHUP(t *testing.T) {
+	type args struct {
+		handler func()
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{name: "nil handler", args: args{handler: nil}, wantErr: true},
+		{name: "success", args: args{handler: func() {}}, wantErr: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := New("test", "1.0.0")
+			assert.NoError(t, err)
+			err = SIGHUP(tt.args.handler)(s)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

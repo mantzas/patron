@@ -28,10 +28,11 @@ type Component interface {
 // Service is responsible for managing and setting up everything.
 // The service will start by default a HTTP component in order to host management endpoint.
 type Service struct {
-	cps     []Component
-	routes  []http.Route
-	hcf     http.HealthCheckFunc
-	termSig chan os.Signal
+	cps           []Component
+	routes        []http.Route
+	hcf           http.HealthCheckFunc
+	termSig       chan os.Signal
+	sighupHandler func()
 }
 
 // New creates a new named service and allows for customization through functional options.
@@ -47,7 +48,12 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 	info.UpdateName(name)
 	info.UpdateVersion(version)
 
-	s := Service{cps: []Component{}, hcf: http.DefaultHealthCheck, termSig: make(chan os.Signal, 1)}
+	s := Service{
+		cps:           []Component{},
+		hcf:           http.DefaultHealthCheck,
+		termSig:       make(chan os.Signal, 1),
+		sighupHandler: func() { log.Info("SIGHUP received: nothing setup") },
+	}
 
 	err := Setup(name, version)
 	if err != nil {
@@ -73,12 +79,12 @@ func New(name, version string, oo ...OptionFunc) (*Service, error) {
 
 	s.cps = append(s.cps, httpCp)
 	s.setupInfo()
-	s.setupTermSignal()
+	s.setupOSSignal()
 	return &s, nil
 }
 
-func (s *Service) setupTermSignal() {
-	signal.Notify(s.termSig, os.Interrupt, syscall.SIGTERM)
+func (s *Service) setupOSSignal() {
+	signal.Notify(s.termSig, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 }
 
 func (s *Service) setupInfo() {
@@ -109,13 +115,7 @@ func (s *Service) Run() error {
 	}
 
 	var ee []error
-	select {
-	case sig := <-s.termSig:
-		log.Infof("signal %s received", sig.String())
-	case err := <-chErr:
-		log.Info("component error received")
-		ee = append(ee, err)
-	}
+	ee = append(ee, s.waitTermination(chErr))
 	cnl()
 
 	wg.Wait()
@@ -214,3 +214,22 @@ func (s *Service) createHTTPComponent() (Component, error) {
 
 	return cp, nil
 }
+
+func (s *Service) waitTermination(chErr <-chan error) error {
+	for {
+		select {
+		case sig := <-s.termSig:
+			log.Infof("signal %s received", sig.String())
+			switch sig {
+			case syscall.SIGHUP:
+				s.sighupHandler()
+			default:
+				return nil
+			}
+		case err := <-chErr:
+			log.Info("component error received")
+			return err
+		}
+	}
+}
+

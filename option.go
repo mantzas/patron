@@ -57,3 +57,15 @@ func Docs(file string) OptionFunc {
 		return nil
 	}
 }
+
+// SIGHUP option for adding a handler when the service receives a SIGHUP.
+func SIGHUP(handler func()) OptionFunc {
+	return func(s *Service) error {
+		if handler == nil {
+			return errors.New("handler is nil")
+		}
+		s.sighupHandler = handler
+		log.Info("SIGHUP handler set")
+		return nil
+	}
+}
