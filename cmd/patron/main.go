@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -9,34 +10,83 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"text/template"
 )
+
+type component struct {
+	Import string
+	Code   string
+}
+
+type genData struct {
+	Name       string
+	Components []component
+	Module     string
+	Path       string
+	Vendor     bool
+}
 
 const (
 	nameTemplate = "{{name}}"
 )
 
+var patronPackages = map[string]component{
+	"http": component{
+		Import: "\"github.com/thebeatapp/patron/sync\"\n\tsync_http \"github.com/thebeatapp/patron/sync/http\"\n\t\"context\"\n\t\"net/http\"",
+		Code: `// Set up HTTP routes
+		routes := make([]sync_http.Route, 0)
+		// Append a GET route
+		routes = append(routes, sync_http.NewRoute("/", http.MethodGet, func(ctx context.Context, req *sync.Request) (*sync.Response, error) {
+		  return sync.NewResponse("Get data"), nil
+		}, true, nil))
+		
+		oo = append(oo, patron.Routes(routes))`,
+	},
+	"kafka": component{
+		Import: "\"github.com/thebeatapp/patron/async\"\n\t\"github.com/thebeatapp/patron/async/kafka\"",
+		Code: `kafkaCf, err := kafka.New(name, "json.Type", "TOPIC", []string{"BROKER"})
+		if err != nil {
+			log.Fatalf("failed to create kafka consumer factory: %v", err)
+		}
+	
+		kafkaCmp, err := async.New("RENAME", nil, kafkaCf)
+		if err != nil {
+			log.Fatalf("failed to create kafka async component: %v", err)
+		}
+		
+		oo = append(oo, patron.Components(kafkaCmp))`,
+	},
+	"amqp": component{
+		Import: "\"github.com/thebeatapp/patron/async\"\n\t\"github.com/thebeatapp/patron/async/amqp\"",
+		Code: `amqpCf, err := amqp.New("URL", "QUEUE", "EXCHANGE")
+		if err != nil {
+			log.Fatalf("failed to create amqp consumer factory: %v", err)
+		}
+		
+		amqpCmp, err := async.New("RENAME", nil, amqpCf)
+		if err != nil {
+			log.Fatalf("failed to create kafka async component: %v", err)
+		}
+		
+		oo = append(oo, patron.Components(amqpCmp))`,
+	},
+}
+
 func main() {
 	module := flag.String("m", "", `define the module name ("github.com/thebeatapp/patron")`)
 	path := flag.String("p", "", "define the project folder (defaults to current)")
-	vendor := flag.Bool("d", true, "define vendoring behavior")
+	vendor := flag.Bool("d", true, "define vendoring behavior (default true)")
+	packages := flag.String("r", "", "define additional packages comma separated (kafka,amqp,http)")
 	flag.Parse()
 
-	if *path == "" {
-		fmt.Print("path is required\n\n")
+	gd, err := getGenData(path, module, packages, vendor)
+	if err != nil {
+		fmt.Printf("error occurred. %v\n\n", err)
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	if *module == "" {
-		fmt.Print("module is required\n\n")
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	name := nameFromModule(*module)
-	log.Printf("assuming name: %s", name)
-
-	err := createPathAndChdir(*path)
+	err = createPathAndChdir(gd)
 	if err != nil {
 		log.Fatalf("failed to create path: %v", err)
 	}
@@ -46,22 +96,22 @@ func main() {
 		log.Fatalf("failed to create git: %v", err)
 	}
 
-	err = createMain(name)
+	err = createMain(gd)
 	if err != nil {
 		log.Fatalf("failed to create main: %v", err)
 	}
 
-	err = createDockerfile(name)
+	err = createDockerfile(gd)
 	if err != nil {
 		log.Fatalf("failed to create Dockerfile: %v", err)
 	}
 
-	err = createReadme(name)
+	err = createReadme(gd)
 	if err != nil {
 		log.Fatalf("failed to create README.md: %v", err)
 	}
 
-	err = goMod(*module, *vendor)
+	err = goMod(gd)
 	if err != nil {
 		log.Fatalf("failed to initialize go mod support: %v", err)
 	}
@@ -78,6 +128,32 @@ func main() {
 	log.Print("completed successful")
 }
 
+func getGenData(path, module, packages *string, vendor *bool) (*genData, error) {
+
+	if *path == "" {
+		return nil, errors.New("path is required")
+	}
+
+	if *module == "" {
+		return nil, errors.New("module is required")
+	}
+
+	var gd = &genData{
+		Path:   *path,
+		Vendor: *vendor,
+		Module: *module,
+		Name:   nameFromModule(*module),
+	}
+	var err error
+
+	gd.Components, err = packagesFromFlag(packages)
+	if err != nil {
+		return nil, err
+	}
+
+	return gd, nil
+}
+
 func nameFromModule(module string) string {
 	lst := strings.LastIndex(module, "/")
 	if lst == -1 {
@@ -87,27 +163,57 @@ func nameFromModule(module string) string {
 	return module[lst+1:]
 }
 
+func packagesFromFlag(packages *string) ([]component, error) {
+	var cs []component
+
+	if packages == nil || *packages == "" {
+		return cs, nil
+	}
+
+	ss := strings.Split(*packages, ",")
+
+	for _, s := range ss {
+		cmp, ok := patronPackages[s]
+		if !ok {
+			return nil, fmt.Errorf("package %s invalid/not supported", s)
+		}
+		cs = append(cs, cmp)
+	}
+
+	return cs, nil
+}
+
 func setupGit() error {
 	log.Printf("creating git repository")
 	return exec.Command("git", "init").Run()
 }
 
-func createDockerfile(name string) error {
-	return ioutil.WriteFile("Dockerfile", dockerfileContent(name), 0664)
+func createDockerfile(gd *genData) error {
+	buf, err := dockerfileContent(gd)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile("Dockerfile", buf, 0664)
 }
 
-func createReadme(name string) error {
-	return ioutil.WriteFile("README.md", readmeContent(name), 0664)
+func createReadme(gd *genData) error {
+	return ioutil.WriteFile("README.md", readmeContent(gd), 0664)
 }
 
-func goMod(module string, vendor bool) error {
+func goMod(gd *genData) error {
 	log.Print("setup go module support")
-	out, err := exec.Command("go", "mod", "init", module).CombinedOutput()
+	out, err := exec.Command("go", "mod", "init", gd.Module).CombinedOutput()
 	log.Print(string(out))
 	if err != nil {
 		return errors.New(string(out))
 	}
-	if vendor {
+	log.Print("go mod tidy")
+	out, err = exec.Command("go", "mod", "tidy").CombinedOutput()
+	log.Print(string(out))
+	if err != nil {
+		return errors.New(string(out))
+	}
+	if gd.Vendor {
 		log.Print("add vendoring")
 		out, err := exec.Command("go", "mod", "vendor").CombinedOutput()
 		log.Print(string(out))
@@ -118,19 +224,19 @@ func goMod(module string, vendor bool) error {
 	return nil
 }
 
-func createPathAndChdir(path string) error {
-	log.Printf("create folder: %s", path)
-	err := os.MkdirAll(path, 0775)
+func createPathAndChdir(gd *genData) error {
+	log.Printf("create folder: %s", gd.Path)
+	err := os.MkdirAll(gd.Path, 0775)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("cd into: %s", path)
-	return os.Chdir(path)
+	log.Printf("cd into: %s", gd.Path)
+	return os.Chdir(gd.Path)
 }
 
-func createMain(name string) error {
-	folder := fmt.Sprintf("cmd/%s", name)
+func createMain(gd *genData) error {
+	folder := fmt.Sprintf("cmd/%s", gd.Name)
 	log.Printf("create folder: %s", folder)
 	err := os.MkdirAll(folder, 0775)
 	if err != nil {
@@ -139,7 +245,11 @@ func createMain(name string) error {
 
 	file := fmt.Sprintf("%s/main.go", folder)
 	log.Printf("create file: %s", file)
-	return ioutil.WriteFile(file, mainContent(name), 0664)
+	buf, err := mainContent(gd)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(file, buf, 0664)
 }
 
 func gitCommit() error {
@@ -161,31 +271,40 @@ func goFormat() error {
 	return nil
 }
 
-func dockerfileContent(name string) []byte {
+func dockerfileContent(gd *genData) ([]byte, error) {
 	cnt := `FROM golang:latest as builder
 RUN cd ..
-RUN mkdir {{name}}
-WORKDIR {{name}}
+RUN mkdir {{ .Name}}
+WORKDIR {{ .Name}}
 COPY . ./
 ARG version=dev
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags "-X main.version=$version" -o {{name}} ./cmd/{{name}}/main.go 
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -ldflags "-X main.version=$version" -o {{ .Name}} ./cmd/{{ .Name}}/main.go 
 
 FROM scratch
-COPY --from=builder /go/{{name}}/{{name}} .
-CMD ["./{{name}}"]
+COPY --from=builder /go/{{ .Name}}/{{ .Name}} .
+CMD ["./{{ .Name}}"]
 `
-	return []byte(strings.Replace(cnt, nameTemplate, name, -1))
+	t := template.Must(template.New("docker").Parse(cnt))
+	b := new(bytes.Buffer)
+	err := t.ExecuteTemplate(b, "docker", gd)
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
-func mainContent(name string) []byte {
+func mainContent(gd *genData) ([]byte, error) {
 	cnt := `package main
 
 import (
 	"fmt"
 	"os"
-
+	
 	"github.com/thebeatapp/patron"
 	"github.com/thebeatapp/patron/log"
+	{{ range .Components -}}
+	{{- .Import }}
+	{{ end }}
 )
 
 var (
@@ -193,7 +312,7 @@ var (
 )
 
 func main() {
-	name := "{{name}}"
+	name := "{{ .Name}}"
 
 	err := patron.Setup(name, version)
 	if err != nil {
@@ -201,7 +320,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv, err := patron.New(name, version)
+	{{if .Components}}
+	var oo []patron.OptionFunc
+
+	{{ range .Components }}
+		{{ .Code }}
+	{{ end }}
+	{{end}}
+
+	srv, err := patron.New(name, version{{if .Components}}, oo...{{end}})
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
 	}
@@ -212,10 +339,15 @@ func main() {
 	}
 }
 `
-	return []byte(strings.Replace(cnt, nameTemplate, name, -1))
+	t := template.Must(template.New("main").Parse(cnt))
+	b := new(bytes.Buffer)
+	err := t.ExecuteTemplate(b, "main", gd)
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
-func readmeContent(name string) []byte {
-	cnt := `# {{name}}`
-	return []byte(strings.Replace(cnt, nameTemplate, name, -1))
+func readmeContent(gd *genData) []byte {
+	return []byte(fmt.Sprintf("# %s", gd.Name))
 }
