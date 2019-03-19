@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/Shopify/sarama"
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
@@ -14,7 +16,7 @@ import (
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

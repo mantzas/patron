@@ -14,7 +14,7 @@ import (
 	"github.com/mantzas/patron/log/zerolog"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
-	"github.com/uber/jaeger-client-go"
+	jaeger "github.com/uber/jaeger-client-go"
 )
 
 var logSetupOnce sync.Once

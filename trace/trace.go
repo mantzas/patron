@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/log"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
