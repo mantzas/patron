@@ -3,10 +3,10 @@ package async
 import (
 	"context"
 
-	"github.com/thebeatapp/patron/encoding"
-	"github.com/thebeatapp/patron/encoding/json"
-	"github.com/thebeatapp/patron/encoding/protobuf"
-	"github.com/thebeatapp/patron/errors"
+	"github.com/mantzas/patron/encoding"
+	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
+	"github.com/mantzas/patron/errors"
 )
 
 // ProcessorFunc definition of a async processor.

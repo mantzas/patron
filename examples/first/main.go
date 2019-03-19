@@ -8,14 +8,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/mantzas/patron"
+	"github.com/mantzas/patron/encoding/protobuf"
+	"github.com/mantzas/patron/examples"
+	"github.com/mantzas/patron/log"
+	"github.com/mantzas/patron/sync"
+	patronhttp "github.com/mantzas/patron/sync/http"
+	tracehttp "github.com/mantzas/patron/trace/http"
 	"github.com/pkg/errors"
-	"github.com/thebeatapp/patron"
-	"github.com/thebeatapp/patron/encoding/protobuf"
-	"github.com/thebeatapp/patron/examples"
-	"github.com/thebeatapp/patron/log"
-	"github.com/thebeatapp/patron/sync"
-	patronhttp "github.com/thebeatapp/patron/sync/http"
-	tracehttp "github.com/thebeatapp/patron/trace/http"
 )
 
 func init() {

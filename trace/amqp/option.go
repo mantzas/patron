@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/streadway/amqp"
-	"github.com/thebeatapp/patron/errors"
+	"github.com/mantzas/patron/errors"
 )
 
 // OptionFunc definition for configuring the publisher in a functional way.

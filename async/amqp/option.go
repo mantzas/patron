@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/mantzas/patron/errors"
 	"github.com/streadway/amqp"
-	"github.com/thebeatapp/patron/errors"
 )
 
 // OptionFunc definition for configuring the consumer in a functional way.

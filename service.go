@@ -12,7 +12,6 @@ import (
 	"github.com/mantzas/patron/info"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/log/zerolog"
-	"github.com/mantzas/patron/metric"
 	"github.com/mantzas/patron/sync/http"
 	"github.com/mantzas/patron/trace"
 	"github.com/uber/jaeger-client-go"

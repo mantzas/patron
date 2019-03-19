@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/thebeatapp/patron/encoding"
+	"github.com/mantzas/patron/encoding"
 )
 
 // Request definition of the sync request model.

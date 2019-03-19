@@ -6,9 +6,9 @@ import (
 	"github.com/Shopify/sarama"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/thebeatapp/patron/encoding/json"
-	"github.com/thebeatapp/patron/errors"
-	"github.com/thebeatapp/patron/trace"
+	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/errors"
+	"github.com/mantzas/patron/trace"
 )
 
 // Message abstraction of a Kafka message.

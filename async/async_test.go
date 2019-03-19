@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/thebeatapp/patron/encoding/json"
-	"github.com/thebeatapp/patron/encoding/protobuf"
+	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/encoding/protobuf"
 )
 
 func TestDetermineDecoder(t *testing.T) {

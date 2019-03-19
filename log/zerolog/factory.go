@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/thebeatapp/patron/log"
+	"github.com/mantzas/patron/log"
 )
 
 // Create creates a zerolog factory with default settings.

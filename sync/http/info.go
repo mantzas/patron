@@ -3,10 +3,10 @@ package http
 import (
 	"net/http"
 
+	"github.com/mantzas/patron/encoding"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/thebeatapp/patron/encoding"
-	"github.com/thebeatapp/patron/encoding/json"
-	"github.com/thebeatapp/patron/info"
+	"github.com/mantzas/patron/encoding/json"
+	"github.com/mantzas/patron/info"
 )
 
 func infoHandler(w http.ResponseWriter, r *http.Request) {

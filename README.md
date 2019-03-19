@@ -1,4 +1,4 @@
-# patron [![CircleCI](https://circleci.com/gh/thebeatapp/patron.svg?style=svg)](https://circleci.com/gh/thebeatapp/patron) [![codecov](https://codecov.io/gh/thebeatapp/patron/branch/master/graph/badge.svg)](https://codecov.io/gh/thebeatapp/patron) [![Go Report Card](https://goreportcard.com/badge/github.com/thebeatapp/patron)](https://goreportcard.com/report/github.com/thebeatapp/patron) [![GoDoc](https://godoc.org/github.com/thebeatapp/patron?status.svg)](https://godoc.org/github.com/thebeatapp/patron)
+# patron [![CircleCI](https://circleci.com/gh/mantzas/patron.svg?style=svg)](https://circleci.com/gh/mantzas/patron) [![codecov](https://codecov.io/gh/mantzas/patron/branch/master/graph/badge.svg)](https://codecov.io/gh/mantzas/patron) [![Go Report Card](https://goreportcard.com/badge/github.com/mantzas/patron)](https://goreportcard.com/report/github.com/mantzas/patron) [![GoDoc](https://godoc.org/github.com/mantzas/patron?status.svg)](https://godoc.org/github.com/mantzas/patron)
 
 Patron is a framework for creating microservices, originally created by Sotiris Mantzaris (https://github.com/mantzas). This fork is maintained by Beat Engineering (https://thebeat.co)
 
@@ -33,13 +33,13 @@ The framework supplies a cli in order to simplify repository generation with the
 The latest version can be installed with
 
 ```go
-go get github.com/thebeatapp/patron/cmd/patron
+go get github.com/mantzas/patron/cmd/patron
 ```
 
-The below is an example of a service created with the cli that has a module name `github.com/thebeatapp/test` and will be created in the test folder in the current directory.
+The below is an example of a service created with the cli that has a module name `github.com/mantzas/test` and will be created in the test folder in the current directory.
 
 ```go
-patron -m "github.com/thebeatapp/test" -p "test"
+patron -m "github.com/mantzas/test" -p "test"
 ```
 
 ## Service
