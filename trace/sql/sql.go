@@ -6,8 +6,8 @@ import (
 	"database/sql/driver"
 	"time"
 
-	"github.com/mantzas/patron/trace"
 	"github.com/opentracing/opentracing-go"
+	"github.com/mantzas/patron/trace"
 )
 
 type connInfo struct {

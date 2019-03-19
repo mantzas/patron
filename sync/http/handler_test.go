@@ -8,12 +8,12 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/mantzas/patron/encoding"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/encoding/protobuf"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/sync"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_extractFields(t *testing.T) {

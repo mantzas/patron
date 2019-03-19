@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/mantzas/patron/encoding"
+	"github.com/stretchr/testify/assert"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/info"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_Route(t *testing.T) {

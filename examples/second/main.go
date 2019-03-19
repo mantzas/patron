@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mantzas/patron"
+	"github.com/pkg/errors"
 	"github.com/mantzas/patron/examples"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/sync"
@@ -15,7 +16,6 @@ import (
 	"github.com/mantzas/patron/sync/http/auth/apikey"
 	tracehttp "github.com/mantzas/patron/trace/http"
 	"github.com/mantzas/patron/trace/kafka"
-	"github.com/pkg/errors"
 )
 
 const (

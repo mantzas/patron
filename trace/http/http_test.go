@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/mantzas/patron/reliability/circuitbreaker"
-	"github.com/mantzas/patron/trace"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/mantzas/patron/trace"
 )
 
 func TestTracedClient_Do(t *testing.T) {

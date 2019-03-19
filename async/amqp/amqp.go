@@ -10,12 +10,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/streadway/amqp"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
 	"github.com/mantzas/patron/trace"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/streadway/amqp"
 )
 
 var (

@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/mantzas/patron/encoding"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/info"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func infoHandler(w http.ResponseWriter, r *http.Request) {

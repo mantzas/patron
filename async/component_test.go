@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mantzas/patron/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/mantzas/patron/errors"
 )
 
 func TestNew(t *testing.T) {

@@ -1,6 +1,6 @@
 # patron [![CircleCI](https://circleci.com/gh/mantzas/patron.svg?style=svg)](https://circleci.com/gh/mantzas/patron) [![codecov](https://codecov.io/gh/mantzas/patron/branch/master/graph/badge.svg)](https://codecov.io/gh/mantzas/patron) [![Go Report Card](https://goreportcard.com/badge/github.com/mantzas/patron)](https://goreportcard.com/report/github.com/mantzas/patron) [![GoDoc](https://godoc.org/github.com/mantzas/patron?status.svg)](https://godoc.org/github.com/mantzas/patron)
 
-Patron is a framework for creating microservices.
+Patron is a framework for creating microservices, originally created by Sotiris Mantzaris (https://github.com/mantzas). This fork is maintained by Beat Engineering (https://thebeat.co)
 
 `Patron` is french for `template` or `pattern`, but it means also `boss` which we found out later (no pun intended).
 
@@ -127,6 +127,7 @@ The `Request` model contains the following properties (which are provided when c
 
 - Fields, which may contain any fields associated with the request
 - Raw, the raw request data (if any) in the form of a `io.Reader`
+- Headers, the request headers in the form of `map[string]string`
 - decode, which is a function of type `encoding.Decode` that decodes the raw reader
 
 A exported function exists for decoding the raw io.Reader in the form of

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mantzas/patron/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/mantzas/patron/log"
 )
 
 func TestDefaultFactory(t *testing.T) {

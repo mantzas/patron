@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/Shopify/sarama"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/mantzas/patron/encoding/json"
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/trace"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 )
 
 // Message abstraction of a Kafka message.

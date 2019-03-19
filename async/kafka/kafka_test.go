@@ -6,10 +6,10 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/mantzas/patron/encoding"
-	"github.com/mantzas/patron/encoding/json"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/mantzas/patron/encoding/json"
 )
 
 func TestOffset_String(t *testing.T) {

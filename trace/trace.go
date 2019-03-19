@@ -8,7 +8,7 @@ import (
 
 	"github.com/mantzas/patron/errors"
 	"github.com/mantzas/patron/log"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/rpcmetrics"

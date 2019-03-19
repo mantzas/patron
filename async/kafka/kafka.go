@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
-
 	"github.com/Shopify/sarama"
+	"github.com/google/uuid"
 	"github.com/mantzas/patron/async"
 	"github.com/mantzas/patron/encoding"
 	"github.com/mantzas/patron/errors"

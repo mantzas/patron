@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mantzas/patron/reliability/circuitbreaker"
-	"github.com/mantzas/patron/trace"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/mantzas/patron/reliability/circuitbreaker"
+	"github.com/mantzas/patron/trace"
 )
 
 // Client interface of a HTTP client.

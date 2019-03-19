@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/mantzas/patron/errors"
-	"github.com/mantzas/patron/sync/http/auth"
 	"github.com/stretchr/testify/assert"
+	"github.com/mantzas/patron/sync/http/auth"
 )
 
 func testHandle(w http.ResponseWriter, r *http.Request) {
