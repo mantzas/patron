@@ -33,12 +33,6 @@ func TestBuffer(t *testing.T) {
 	}
 }
 
-func TestStart(t *testing.T) {
-	c := consumer{}
-	err := Start(1000)(&c)
-	assert.NoError(t, err)
-}
-
 func TestTimeout(t *testing.T) {
 	c := consumer{cfg: sarama.NewConfig()}
 	err := Timeout(time.Second)(&c)
@@ -60,7 +54,7 @@ func TestVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f, err := New("test", "", "topic", []string{"test"})
+			f, err := New("test", "", "topic", "group", []string{"test"})
 			assert.NoError(t, err)
 			c, err := f.Create()
 			assert.NoError(t, err)

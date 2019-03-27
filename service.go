@@ -232,4 +232,3 @@ func (s *Service) waitTermination(chErr <-chan error) error {
 		}
 	}
 }
-

@@ -2,7 +2,9 @@ package kafka
 
 import (
 	"context"
+	"github.com/thebeatapp/patron/async"
 	"testing"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/opentracing/opentracing-go"
@@ -12,31 +14,13 @@ import (
 	"github.com/thebeatapp/patron/encoding/json"
 )
 
-func TestOffset_String(t *testing.T) {
-	tests := []struct {
-		name string
-		o    Offset
-		want string
-	}{
-		{name: "OffsetNewest", o: OffsetNewest, want: "OffsetNewest"},
-		{name: "OffsetOldest", o: OffsetOldest, want: "OffsetOldest"},
-		{name: "10", o: 10, want: "10"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.o.String(); got != tt.want {
-				t.Errorf("Offset.String() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestNew(t *testing.T) {
 	brokers := []string{"192.168.1.1"}
 	type args struct {
 		name    string
 		brokers []string
 		topic   string
+		group   string
 		options []OptionFunc
 	}
 	tests := []struct {
@@ -46,28 +30,33 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:    "fails with missing name",
-			args:    args{name: "", brokers: brokers, topic: "topic1"},
+			args:    args{name: "", brokers: brokers, topic: "topic1", group: "group1"},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing brokers",
-			args:    args{name: "test", brokers: []string{}, topic: "topic1"},
+			args:    args{name: "test", brokers: []string{}, topic: "topic1", group: "group1"},
 			wantErr: true,
 		},
 		{
 			name:    "fails with missing topics",
-			args:    args{name: "test", brokers: brokers, topic: ""},
+			args:    args{name: "test", brokers: brokers, topic: "", group: "group1"},
+			wantErr: true,
+		},
+		{
+			name:    "fails with missing group",
+			args:    args{name: "test", brokers: brokers, topic: "topic1", group: ""},
 			wantErr: true,
 		},
 		{
 			name:    "success",
-			args:    args{name: "test", brokers: brokers, topic: "topic1"},
+			args:    args{name: "test", brokers: brokers, topic: "topic1", group: "group1"},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, "", tt.args.topic, tt.args.brokers, tt.args.options...)
+			got, err := New(tt.args.name, "", tt.args.topic, tt.args.group, tt.args.brokers, tt.args.options...)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -146,7 +135,7 @@ func Test_determineContentType(t *testing.T) {
 }
 
 func TestConsumer_Info(t *testing.T) {
-	f, err := New("name", "application/json", "topic", []string{"1", "2"})
+	f, err := New("name", "application/json", "topic", "group", []string{"1", "2"})
 	assert.NoError(t, err)
 	c, err := f.Create()
 	assert.NoError(t, err)
@@ -154,9 +143,9 @@ func TestConsumer_Info(t *testing.T) {
 	expected["type"] = "kafka-consumer"
 	expected["brokers"] = "1,2"
 	expected["topic"] = "topic"
-	expected["buffer"] = 1000
+	expected["group"] = "group"
+	expected["buffer"] = 0
 	expected["default-content-type"] = "application/json"
-	expected["start"] = OffsetNewest.String()
 	assert.Equal(t, expected, c.Info())
 }
 
@@ -165,11 +154,16 @@ func Test_message(t *testing.T) {
 	opentracing.SetGlobalTracer(mtr)
 	sp := opentracing.StartSpan("test")
 	ctx := context.Background()
+	cm := &sarama.ConsumerMessage{
+		Value: []byte(`{"key":"value"}`),
+	}
+	sess := &mockConsumerSession{}
 	msg := message{
+		sess: sess,
 		ctx:  ctx,
 		dec:  json.DecodeRaw,
 		span: sp,
-		val:  []byte(`{"key":"value"}`),
+		msg:  cm,
 	}
 
 	assert.NotNil(t, msg.Context())
@@ -191,37 +185,115 @@ func TestMapHeader(t *testing.T) {
 	assert.Equal(t, "value", hdr["key"])
 }
 
-// func TestRun_Shutdown(t *testing.T) {
-// 	br := createSeedBroker(t, false)
-// 	c, err := New("test", "1", "12", []string{br.Addr()}, "TOPIC", 0)
-// 	assert.NoError(t,err)
-// 	assert.NotNil(t,c)
-// 	go func() {
-// 		c.Consume(context.Background())
-// 	}()
-// 	time.Sleep(100 * time.Millisecond)
-// 	assert.NoError(t,c.Close())
-// }
+type mockConsumerClaim struct{ msgs []*sarama.ConsumerMessage }
 
-// func createSeedBroker(t *testing.T, retError bool) *sarama.MockBroker {
-// 	seed := sarama.NewMockBroker(t, 1)
-// 	lead := sarama.NewMockBroker(t, 2)
+func (m *mockConsumerClaim) Messages() <-chan *sarama.ConsumerMessage {
+	ch := make(chan *sarama.ConsumerMessage, len(m.msgs))
+	for _, m := range m.msgs {
+		ch <- m
+	}
+	go func() {
+		close(ch)
+	}()
+	return ch
+}
+func (m *mockConsumerClaim) Topic() string              { return "" }
+func (m *mockConsumerClaim) Partition() int32           { return 0 }
+func (m *mockConsumerClaim) InitialOffset() int64       { return 0 }
+func (m *mockConsumerClaim) HighWaterMarkOffset() int64 { return 1 }
 
-// 	metadataResponse := new(sarama.MetadataResponse)
-// 	metadataResponse.AddBroker(lead.Addr(), lead.BrokerID())
-// 	metadataResponse.AddTopicPartition("TOPIC", 0, lead.BrokerID(), nil, nil, sarama.ErrNoError)
-// 	seed.Returns(metadataResponse)
+type mockConsumerSession struct{}
 
-// 	prodSuccess := new(sarama.ProduceResponse)
-// 	if retError {
-// 		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrDuplicateSequenceNumber)
-// 	} else {
-// 		prodSuccess.AddTopicPartition("TOPIC", 0, sarama.ErrNoError)
-// 	}
-// 	lead.Returns(prodSuccess)
+func (m *mockConsumerSession) Claims() map[string][]int32 { return nil }
+func (m *mockConsumerSession) MemberID() string           { return "" }
+func (m *mockConsumerSession) GenerationID() int32        { return 0 }
+func (m *mockConsumerSession) MarkOffset(topic string, partition int32, offset int64, metadata string) {
+}
+func (m *mockConsumerSession) ResetOffset(topic string, partition int32, offset int64, metadata string) {
+}
+func (m *mockConsumerSession) MarkMessage(msg *sarama.ConsumerMessage, metadata string) {}
+func (m *mockConsumerSession) Context() context.Context                                 { return nil }
 
-// 	config := sarama.NewConfig()
-// 	config.Producer.Flush.Messages = 10
-// 	config.Producer.Return.Successes = true
-// 	return seed
-// }
+func TestHandler_ConsumeClaim(t *testing.T) {
+	msgs := []*sarama.ConsumerMessage{
+		{
+			Topic:          "TEST_TOPIC",
+			Partition:      0,
+			Key:            []byte("key"),
+			Value:          []byte("value"),
+			Offset:         0,
+			Timestamp:      time.Now(),
+			BlockTimestamp: time.Now(),
+		},
+	}
+
+	tests := []struct {
+		name        string
+		msgs        []*sarama.ConsumerMessage
+		contentType string
+		error       string
+		wantErr     bool
+	}{
+		{"success", msgs, json.Type, "", false},
+		{"failure decoding", msgs, "mock", "failed to determine decoder for mock", true},
+		{"failure content", msgs, "", "failed to determine content type", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			chMsg := make(chan async.Message, 1)
+			h := handler{messages: chMsg, consumer: &consumer{contentType: tt.contentType}}
+			err := h.ConsumeClaim(&mockConsumerSession{}, &mockConsumerClaim{tt.msgs})
+
+			if tt.wantErr {
+				assert.Error(t, err, tt.error)
+			} else {
+				assert.NoError(t, err)
+				ch := <-chMsg
+				assert.NotNil(t, ch)
+			}
+		})
+	}
+}
+
+func TestConsumer_ConsumeFailedBroker(t *testing.T) {
+	f, err := New("name", "application/json", "topic", "group", []string{"1", "2"})
+	assert.NoError(t, err)
+	c, err := f.Create()
+	assert.NoError(t, err)
+	chMsg, chErr, err := c.Consume(context.Background())
+	assert.Nil(t, chMsg)
+	assert.Nil(t, chErr)
+	assert.Error(t, err)
+}
+
+func TestConsumer_Consume(t *testing.T) {
+	broker := sarama.NewMockBroker(t, 0)
+	broker.SetHandlerByMap(map[string]sarama.MockResponse{
+		"MetadataRequest": sarama.NewMockMetadataResponse(t).
+			SetBroker(broker.Addr(), broker.BrokerID()).
+			SetLeader("TOPIC", 0, broker.BrokerID()),
+		"OffsetRequest": sarama.NewMockOffsetResponse(t).
+			SetOffset("TOPIC", 0, sarama.OffsetNewest, 10).
+			SetOffset("TOPIC", 0, sarama.OffsetOldest, 7),
+		"FetchRequest": sarama.NewMockFetchResponse(t, 1).
+			SetMessage("TOPIC", 0, 9, sarama.StringEncoder("Foo")).
+			SetHighWaterMark("TOPIC", 0, 14),
+	})
+
+	f, err := New("name", "application/json", "TOPIC", "group", []string{broker.Addr()})
+	assert.NoError(t, err)
+	c, err := f.Create()
+	assert.NoError(t, err)
+	ctx := context.Background()
+	chMsg, chErr, err := c.Consume(ctx)
+	assert.NoError(t, err)
+	assert.NotNil(t, chMsg)
+	assert.NotNil(t, chErr)
+
+	err = c.Close()
+	assert.NoError(t, err)
+	broker.Close()
+
+	ctx.Done()
+}

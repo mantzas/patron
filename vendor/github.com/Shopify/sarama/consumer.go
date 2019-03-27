@@ -310,9 +310,12 @@ type partitionConsumer struct {
 
 	trigger, dying chan none
 	responseResult error
+	closeOnce      sync.Once
 
 	fetchSize int32
 	offset    int64
+
+	retries int32
 }
 
 var errTimedOut = errors.New("timed out feeding messages to the user") // not user-facing
@@ -331,12 +334,21 @@ func (child *partitionConsumer) sendError(err error) {
 	}
 }
 
+func (child *partitionConsumer) computeBackoff() time.Duration {
+	if child.conf.Consumer.Retry.BackoffFunc != nil {
+		retries := atomic.AddInt32(&child.retries, 1)
+		return child.conf.Consumer.Retry.BackoffFunc(int(retries))
+	} else {
+		return child.conf.Consumer.Retry.Backoff
+	}
+}
+
 func (child *partitionConsumer) dispatcher() {
 	for range child.trigger {
 		select {
 		case <-child.dying:
 			close(child.trigger)
-		case <-time.After(child.conf.Consumer.Retry.Backoff):
+		case <-time.After(child.computeBackoff()):
 			if child.broker != nil {
 				child.consumer.unrefBrokerConsumer(child.broker)
 				child.broker = nil
@@ -412,7 +424,9 @@ func (child *partitionConsumer) AsyncClose() {
 	// the dispatcher to exit its loop, which removes it from the consumer then closes its 'messages' and
 	// 'errors' channel (alternatively, if the child is already at the dispatcher for some reason, that will
 	// also just close itself)
-	close(child.dying)
+	child.closeOnce.Do(func() {
+		close(child.dying)
+	})
 }
 
 func (child *partitionConsumer) Close() error {
@@ -448,6 +462,10 @@ feederLoop:
 	for response := range child.feeder {
 		msgs, child.responseResult = child.parseResponse(response)
 
+		if child.responseResult == nil {
+			atomic.StoreInt32(&child.retries, 0)
+		}
+
 		for i, msg := range msgs {
 		messageSelect:
 			select {
@@ -461,7 +479,6 @@ feederLoop:
 						child.messages <- msg
 					}
 					child.broker.input <- child
-					expiryTicker.Stop()
 					continue feederLoop
 				} else {
 					// current message has not been sent, return to select
@@ -482,82 +499,63 @@ feederLoop:
 
 func (child *partitionConsumer) parseMessages(msgSet *MessageSet) ([]*ConsumerMessage, error) {
 	var messages []*ConsumerMessage
-	var incomplete bool
-	prelude := true
-
 	for _, msgBlock := range msgSet.Messages {
 		for _, msg := range msgBlock.Messages() {
 			offset := msg.Offset
+			timestamp := msg.Msg.Timestamp
 			if msg.Msg.Version >= 1 {
 				baseOffset := msgBlock.Offset - msgBlock.Messages()[len(msgBlock.Messages())-1].Offset
 				offset += baseOffset
+				if msg.Msg.LogAppendTime {
+					timestamp = msgBlock.Msg.Timestamp
+				}
 			}
-			if prelude && offset < child.offset {
+			if offset < child.offset {
 				continue
 			}
-			prelude = false
-
-			if offset >= child.offset {
-				messages = append(messages, &ConsumerMessage{
-					Topic:          child.topic,
-					Partition:      child.partition,
-					Key:            msg.Msg.Key,
-					Value:          msg.Msg.Value,
-					Offset:         offset,
-					Timestamp:      msg.Msg.Timestamp,
-					BlockTimestamp: msgBlock.Msg.Timestamp,
-				})
-				child.offset = offset + 1
-			} else {
-				incomplete = true
-			}
+			messages = append(messages, &ConsumerMessage{
+				Topic:          child.topic,
+				Partition:      child.partition,
+				Key:            msg.Msg.Key,
+				Value:          msg.Msg.Value,
+				Offset:         offset,
+				Timestamp:      timestamp,
+				BlockTimestamp: msgBlock.Msg.Timestamp,
+			})
+			child.offset = offset + 1
 		}
 	}
-
-	if incomplete || len(messages) == 0 {
-		return nil, ErrIncompleteResponse
+	if len(messages) == 0 {
+		child.offset++
 	}
 	return messages, nil
 }
 
 func (child *partitionConsumer) parseRecords(batch *RecordBatch) ([]*ConsumerMessage, error) {
 	var messages []*ConsumerMessage
-	var incomplete bool
-	prelude := true
-	originalOffset := child.offset
-
 	for _, rec := range batch.Records {
 		offset := batch.FirstOffset + rec.OffsetDelta
-		if prelude && offset < child.offset {
+		if offset < child.offset {
 			continue
 		}
-		prelude = false
-
-		if offset >= child.offset {
-			messages = append(messages, &ConsumerMessage{
-				Topic:     child.topic,
-				Partition: child.partition,
-				Key:       rec.Key,
-				Value:     rec.Value,
-				Offset:    offset,
-				Timestamp: batch.FirstTimestamp.Add(rec.TimestampDelta),
-				Headers:   rec.Headers,
-			})
-			child.offset = offset + 1
-		} else {
-			incomplete = true
+		timestamp := batch.FirstTimestamp.Add(rec.TimestampDelta)
+		if batch.LogAppendTime {
+			timestamp = batch.MaxTimestamp
 		}
+		messages = append(messages, &ConsumerMessage{
+			Topic:     child.topic,
+			Partition: child.partition,
+			Key:       rec.Key,
+			Value:     rec.Value,
+			Offset:    offset,
+			Timestamp: timestamp,
+			Headers:   rec.Headers,
+		})
+		child.offset = offset + 1
 	}
-
-	if incomplete {
-		return nil, ErrIncompleteResponse
+	if len(messages) == 0 {
+		child.offset++
 	}
-
-	child.offset = batch.FirstOffset + int64(batch.LastOffsetDelta) + 1
-	if child.offset <= originalOffset {
-		return nil, ErrConsumerOffsetNotAdvanced
-	}
-
 	return messages, nil
 }
 
@@ -604,22 +602,21 @@ func (child *partitionConsumer) parseResponse(response *FetchResponse) ([]*Consu
 
 	messages := []*ConsumerMessage{}
 	for _, records := range block.RecordsSet {
-		if control, err := records.isControl(); err != nil || control {
-			continue
-		}
-
 		switch records.recordsType {
 		case legacyRecords:
-			messageSetMessages, err := child.parseMessages(records.msgSet)
+			messageSetMessages, err := child.parseMessages(records.MsgSet)
 			if err != nil {
 				return nil, err
 			}
 
 			messages = append(messages, messageSetMessages...)
 		case defaultRecords:
-			recordBatchMessages, err := child.parseRecords(records.recordBatch)
+			recordBatchMessages, err := child.parseRecords(records.RecordBatch)
 			if err != nil {
 				return nil, err
+			}
+			if control, err := records.isControl(); err != nil || control {
+				continue
 			}
 
 			messages = append(messages, recordBatchMessages...)
@@ -812,6 +809,9 @@ func (bc *brokerConsumer) fetchNewMessages() (*FetchResponse, error) {
 	request := &FetchRequest{
 		MinBytes:    bc.consumer.conf.Consumer.Fetch.Min,
 		MaxWaitTime: int32(bc.consumer.conf.Consumer.MaxWaitTime / time.Millisecond),
+	}
+	if bc.consumer.conf.Version.IsAtLeast(V0_9_0_0) {
+		request.Version = 1
 	}
 	if bc.consumer.conf.Version.IsAtLeast(V0_10_0_0) {
 		request.Version = 2

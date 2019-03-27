@@ -19,6 +19,7 @@ const (
 	amqpExchange = "patron"
 	amqpQueue    = "patron"
 	kafkaTopic   = "patron-topic"
+	kafkaGroup   = "patron-group"
 	kafkaBroker  = "localhost:9092"
 )
 
@@ -50,7 +51,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	kafkaCmp, err := newKafkaComponent(name, kafkaBroker, kafkaTopic, amqpURL, amqpExchange)
+	kafkaCmp, err := newKafkaComponent(name, kafkaBroker, kafkaTopic, kafkaGroup, amqpURL, amqpExchange)
 	if err != nil {
 		log.Fatalf("failed to create processor %v", err)
 	}
@@ -75,11 +76,11 @@ type kafkaComponent struct {
 	pub amqp.Publisher
 }
 
-func newKafkaComponent(name, broker, topic, amqpURL, amqpExc string) (*kafkaComponent, error) {
+func newKafkaComponent(name, broker, topic, group, amqpURL, amqpExc string) (*kafkaComponent, error) {
 
 	kafkaCmp := kafkaComponent{}
 
-	cf, err := kafka.New(name, json.Type, topic, []string{broker})
+	cf, err := kafka.New(name, json.Type, topic, group, []string{broker})
 	if err != nil {
 		return nil, err
 	}

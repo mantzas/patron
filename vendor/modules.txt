@@ -1,4 +1,6 @@
-# github.com/Shopify/sarama v1.16.0
+# github.com/DataDog/zstd v1.3.5
+github.com/DataDog/zstd
+# github.com/Shopify/sarama v1.21.0
 github.com/Shopify/sarama
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile

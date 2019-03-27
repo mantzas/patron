@@ -38,14 +38,6 @@ func Buffer(buf int) OptionFunc {
 	}
 }
 
-// Start option for adjusting the start point in the topic.
-func Start(start Offset) OptionFunc {
-	return func(c *consumer) error {
-		c.start = start
-		return nil
-	}
-}
-
 // Timeout option for adjusting the timeout of the connection.
 func Timeout(timeout time.Duration) OptionFunc {
 	return func(c *consumer) error {
