@@ -58,6 +58,30 @@ func TestNewDeleteRoute(t *testing.T) {
 	assert.True(t, r.Trace)
 	assert.Nil(t, r.Auth)
 }
+
+func TestNewPatchRoute(t *testing.T) {
+	r := NewPatchRoute("/index", nil, true)
+	assert.Equal(t, "/index", r.Pattern)
+	assert.Equal(t, http.MethodPatch, r.Method)
+	assert.True(t, r.Trace)
+	assert.Nil(t, r.Auth)
+}
+
+func TestNewHeadRoute(t *testing.T) {
+	r := NewHeadRoute("/index", nil, true)
+	assert.Equal(t, "/index", r.Pattern)
+	assert.Equal(t, http.MethodHead, r.Method)
+	assert.True(t, r.Trace)
+	assert.Nil(t, r.Auth)
+}
+
+func TestNewOptionsRoute(t *testing.T) {
+	r := NewOptionsRoute("/index", nil, true)
+	assert.Equal(t, "/index", r.Pattern)
+	assert.Equal(t, http.MethodOptions, r.Method)
+	assert.True(t, r.Trace)
+	assert.Nil(t, r.Auth)
+}
 func TestNewRouteRaw(t *testing.T) {
 	r := NewRouteRaw("/index", http.MethodGet, nil, false)
 	assert.Equal(t, "/index", r.Pattern)

@@ -36,6 +36,21 @@ func NewDeleteRoute(p string, pr sync.ProcessorFunc, trace bool) Route {
 	return NewRoute(p, http.MethodDelete, pr, trace, nil)
 }
 
+// NewPatchRoute creates a new PATCH route from a generic handler.
+func NewPatchRoute(p string, pr sync.ProcessorFunc, trace bool) Route {
+	return NewRoute(p, http.MethodPatch, pr, trace, nil)
+}
+
+// NewHeadRoute creates a new HEAD route from a generic handler.
+func NewHeadRoute(p string, pr sync.ProcessorFunc, trace bool) Route {
+	return NewRoute(p, http.MethodHead, pr, trace, nil)
+}
+
+// NewOptionsRoute creates a new OPTIONS route from a generic handler.
+func NewOptionsRoute(p string, pr sync.ProcessorFunc, trace bool) Route {
+	return NewRoute(p, http.MethodOptions, pr, trace, nil)
+}
+
 // NewRoute creates a new route from a generic handler.
 func NewRoute(p string, m string, pr sync.ProcessorFunc, trace bool, auth auth.Authenticator) Route {
 	return Route{Pattern: p, Method: m, Handler: handler(pr), Trace: trace, Auth: auth}
