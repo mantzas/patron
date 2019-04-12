@@ -123,7 +123,7 @@ Detailed examples can be found in the [examples](/examples) folder with the foll
 - [HTTP Component, HTTP Tracing](/examples/first/main.go)
 - [Kafka Component, HTTP Component, HTTP Authentication, Kafka Tracing](/examples/second/main.go)
 - [Kafka Component, AMQP Tracing](/examples/third/main.go)
-- [AMQP Component](/examples/third/main.go)
+- [AMQP Component](/examples/fourth/main.go)
 
 ## Processors
 
