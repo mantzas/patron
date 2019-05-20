@@ -3,33 +3,40 @@ package patron
 import (
 	"context"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thebeatapp/patron/errors"
-	"github.com/thebeatapp/patron/sync/http"
+	phttp "github.com/thebeatapp/patron/sync/http"
 )
 
 func TestNewServer(t *testing.T) {
-	route := http.NewRoute("/", "GET", nil, true, nil)
+	route := phttp.NewRoute("/", "GET", nil, true, nil)
+	middleware := func(h http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			h(w, r)
+		}
+	}
 	type args struct {
 		name string
-		opt  OptionFunc
+		opt  []OptionFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success", args{name: "test", opt: Routes([]http.Route{route})}, false},
-		{"failed missing name", args{name: "", opt: Routes([]http.Route{route})}, true},
-		{"failed missing routes", args{name: "test", opt: Routes([]http.Route{})}, true},
+		{"success", args{name: "test", opt: []OptionFunc{Routes([]phttp.Route{route}), Middlewares(middleware)}}, false},
+		{"failed empty middlewares", args{name: "test", opt: []OptionFunc{Routes([]phttp.Route{route}), Middlewares([]phttp.MiddlewareFunc{}...)}}, true},
+		{"failed missing name", args{name: "", opt: []OptionFunc{Routes([]phttp.Route{route})}}, true},
+		{"failed missing routes", args{name: "test", opt: []OptionFunc{Routes([]phttp.Route{})}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.name, "", tt.args.opt)
+			got, err := New(tt.args.name, "", tt.args.opt...)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
