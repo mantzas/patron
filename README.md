@@ -122,15 +122,15 @@ A `MiddlewareFunc` preserves the default net/http middleware pattern.
 You can create new middleware functions and pass them to Service to be chained on all routes in the default Http Component.
 
 ```go
-type MiddlewareFunc func(next http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(next http.Handler) http.Handler
 
 // Setup a simple middleware for CORS
-newMiddleware := func(h http.HandlerFunc) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
+newMiddleware := func(h http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         w.Header().Add("Access-Control-Allow-Origin", "*")
         // Next
-        h(w, r)
-    }
+        h.ServeHTTP(w, r)
+    })
 }
 ```
 
@@ -171,6 +171,18 @@ Decode(v interface{}) error
 The `Response` model contains the following properties (which are provided when calling the "constructor" `NewResponse`)
 
 - Payload, which may hold a struct of type `interface{}`
+
+### Middlewares per Route
+
+Middlewares can also run per routes using the processor as Handler.
+So using the `Route` helpers:
+
+```go
+// A route with ...MiddlewareFunc that will run for this route only + tracing
+route := NewRoute("/index", "GET" ProcessorFunc, true, ...MiddlewareFunc)
+// A route with ...MiddlewareFunc that will run for this route only + auth + tracing
+routeWithAuth := NewAuthRoute("/index", "GET" ProcessorFunc, true, Authendicator, ...MiddlewareFunc)
+```
 
 ### Asynchronous
 
