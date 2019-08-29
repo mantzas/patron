@@ -30,7 +30,9 @@ const (
 	HTTPClientComponent = "http-client"
 	// SQSConsumerComponent definition.
 	SQSConsumerComponent = "sqs-consumer"
-	versionTag           = "version"
+	// SNSPublisherComponent definition.
+	SNSPublisherComponent = "sns-publisher"
+	versionTag            = "version"
 )
 
 var (

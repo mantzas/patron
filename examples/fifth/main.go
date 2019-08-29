@@ -8,21 +8,22 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/beatlabs/patron"
 	"github.com/beatlabs/patron/async"
 	patronsqs "github.com/beatlabs/patron/async/sqs"
-	"github.com/beatlabs/patron/examples"
 	"github.com/beatlabs/patron/log"
 )
 
 const (
-	awsRegion   = "eu-west-1"
-	awsID       = "test"
-	awsSecret   = "test"
-	awsToken    = "token"
-	awsEndpoint = "http://localhost:4576"
-	awsQueue    = "patron"
+	awsRegion      = "eu-west-1"
+	awsID          = "test"
+	awsSecret      = "test"
+	awsToken       = "token"
+	awsSQSEndpoint = "http://localhost:4576"
+	awsSQSQueue    = "patron"
 )
 
 func init() {
@@ -53,11 +54,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	sqsCmp, err := newSQSComponent()
+	// Initialise SQS
+	sqsAPI := sqs.New(
+		session.Must(
+			session.NewSession(
+				&aws.Config{
+					Region:      aws.String(awsRegion),
+					Credentials: credentials.NewStaticCredentials(awsID, awsSecret, awsToken),
+				},
+				&aws.Config{Endpoint: aws.String(awsSQSEndpoint)},
+			),
+		),
+	)
+	sqsCmp, err := createSQSComponent(sqsAPI)
 	if err != nil {
 		log.Fatalf("failed to create sqs component: %v", err)
 	}
 
+	// Run the server
 	srv, err := patron.New(name, version, patron.Components(sqsCmp.cmp))
 	if err != nil {
 		log.Fatalf("failed to create service: %v", err)
@@ -73,20 +87,10 @@ type sqsComponent struct {
 	cmp patron.Component
 }
 
-func newSQSComponent() (*sqsComponent, error) {
-
+func createSQSComponent(api sqsiface.SQSAPI) (*sqsComponent, error) {
 	sqsCmp := sqsComponent{}
 
-	ses, err := session.NewSession(&aws.Config{
-		Region:      aws.String(awsRegion),
-		Credentials: credentials.NewStaticCredentials(awsID, awsSecret, awsToken),
-		Endpoint:    aws.String(awsEndpoint),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	cf, err := patronsqs.NewFactory(sqs.New(ses), awsQueue)
+	cf, err := patronsqs.NewFactory(api, awsSQSQueue)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +105,13 @@ func newSQSComponent() (*sqsComponent, error) {
 }
 
 func (ac *sqsComponent) Process(msg async.Message) error {
-	var u examples.User
+	var got sns.PublishInput
 
-	err := msg.Decode(&u)
+	err := msg.Decode(&got)
 	if err != nil {
 		return err
 	}
 
-	log.FromContext(msg.Context()).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
+	log.FromContext(msg.Context()).Infof("request processed: %v", got.Message)
 	return nil
 }

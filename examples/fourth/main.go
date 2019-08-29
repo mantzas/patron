@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -8,13 +9,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/beatlabs/patron"
 	"github.com/beatlabs/patron/async"
 	"github.com/beatlabs/patron/async/amqp"
 	"github.com/beatlabs/patron/encoding/json"
 	"github.com/beatlabs/patron/examples"
 	"github.com/beatlabs/patron/log"
+	patronsns "github.com/beatlabs/patron/trace/sns"
 	oamqp "github.com/streadway/amqp"
 )
 
@@ -23,16 +28,20 @@ const (
 	amqpQueue        = "patron"
 	amqpExchangeName = "patron"
 	amqpExchangeType = oamqp.ExchangeFanout
-	awsRegion        = "eu-west-1"
-	awsID            = "test"
-	awsSecret        = "test"
-	awsToken         = "token"
-	awsEndpoint      = "http://localhost:4576"
-	awsQueue         = "patron"
-)
 
-var (
-	amqpBindings = []string{"bind.one.*", "bind.two.*"}
+	// Shared AWS config
+	awsRegion = "eu-west-1"
+	awsID     = "test"
+	awsSecret = "test"
+	awsToken  = "token"
+
+	// SQS config
+	awsSQSEndpoint = "http://localhost:4576"
+	awsSQSQueue    = "patron"
+
+	// SNS config
+	awsSNSEndpoint = "http://localhost:4575"
+	awsSNSTopic    = "patron-topic"
 )
 
 func init() {
@@ -63,7 +72,43 @@ func main() {
 		os.Exit(1)
 	}
 
-	amqpCmp, err := newAmqpComponent(amqpURL, amqpQueue, amqpExchangeName, amqpExchangeType, amqpBindings)
+	// Programmatically create an empty SQS queue for the sake of the example
+	sqsAPI := sqs.New(getAWSSession(awsSQSEndpoint))
+	sqsQueueArn, err := createSQSQueue(sqsAPI)
+	if err != nil {
+		log.Fatalf("failed to create sqs queue: %v", err)
+	}
+
+	// Programmatically create an SNS topic for the sake of the example
+	snsAPI := sns.New(getAWSSession(awsSNSEndpoint))
+	snsTopicArn, err := createSNSTopic(snsAPI)
+	if err != nil {
+		log.Fatalf("failed to create sns topic: %v", err)
+	}
+
+	// Route the SNS topic to the SQS queue, so that any message received on the SNS topic
+	// will be automatically sent to the SQS queue.
+	err = routeSNSTOpicToSQSQueue(snsAPI, sqsQueueArn, snsTopicArn)
+	if err != nil {
+		log.Fatalf("failed to route sns to sqs: %v", err)
+	}
+
+	// Create an SNS publisher
+	snsPub, err := patronsns.NewPublisher(snsAPI)
+	if err != nil {
+		log.Fatalf("failed to create sns publisher: %v", err)
+	}
+
+	// Initialise the AMQP component
+	amqpCmp, err := newAmqpComponent(
+		amqpURL,
+		amqpQueue,
+		amqpExchangeName,
+		amqpExchangeType,
+		[]string{"bind.one.*", "bind.two.*"},
+		snsTopicArn,
+		snsPub,
+	)
 	if err != nil {
 		log.Fatalf("failed to create processor %v", err)
 	}
@@ -83,13 +128,65 @@ func main() {
 	}
 }
 
-type amqpComponent struct {
-	cmp patron.Component
+func getAWSSession(endpoint string) *session.Session {
+	return session.Must(
+		session.NewSession(
+			&aws.Config{
+				Region:      aws.String(awsRegion),
+				Credentials: credentials.NewStaticCredentials(awsID, awsSecret, awsToken),
+			},
+			&aws.Config{Endpoint: aws.String(endpoint)},
+		),
+	)
 }
 
-func newAmqpComponent(url, queue, exchangeName, exchangeType string, bindings []string) (*amqpComponent, error) {
+func createSQSQueue(api sqsiface.SQSAPI) (string, error) {
+	out, err := api.CreateQueue(&sqs.CreateQueueInput{
+		QueueName: aws.String(awsSQSQueue),
+	})
+	if out.QueueUrl == nil {
+		return "", errors.New("could not create the queue")
+	}
+	return *out.QueueUrl, err
+}
 
-	amqpCmp := amqpComponent{}
+func createSNSTopic(snsAPI snsiface.SNSAPI) (string, error) {
+	out, err := snsAPI.CreateTopic(&sns.CreateTopicInput{
+		Name: aws.String(awsSNSTopic),
+	})
+	if err != nil {
+		return "", err
+	}
+	return *out.TopicArn, nil
+}
+
+func routeSNSTOpicToSQSQueue(snsAPI snsiface.SNSAPI, sqsQueueArn, topicArn string) error {
+	_, err := snsAPI.Subscribe(&sns.SubscribeInput{
+		Protocol: aws.String("sqs"),
+		TopicArn: aws.String(topicArn),
+		Endpoint: aws.String(sqsQueueArn),
+		Attributes: map[string]*string{
+			// Set the RawMessageDelivery to "true" in order to be able to pass the MessageAttributes from SNS
+			// to SQS, and therefore to propagate the trace.
+			// See https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html for more information.
+			"RawMessageDelivery": aws.String("true"),
+		},
+	})
+
+	return err
+}
+
+type amqpComponent struct {
+	cmp         patron.Component
+	snsTopicArn string
+	snsPub      patronsns.Publisher
+}
+
+func newAmqpComponent(url, queue, exchangeName, exchangeType string, bindings []string, snsTopicArn string, snsPub patronsns.Publisher) (*amqpComponent, error) {
+	amqpCmp := amqpComponent{
+		snsTopicArn: snsTopicArn,
+		snsPub:      snsPub,
+	}
 
 	exchange, err := amqp.NewExchange(exchangeName, exchangeType)
 
@@ -119,35 +216,22 @@ func (ac *amqpComponent) Process(msg async.Message) error {
 		return err
 	}
 
-	ses, err := session.NewSession(&aws.Config{
-		Region:      aws.String(awsRegion),
-		Credentials: credentials.NewStaticCredentials(awsID, awsSecret, awsToken),
-		Endpoint:    aws.String(awsEndpoint),
-	})
+	payload, err := json.Encode(u)
 	if err != nil {
 		return err
 	}
 
-	q := sqs.New(ses)
-
-	qURL, err := q.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: aws.String(awsQueue),
-	})
+	snsMsg, err := patronsns.NewMessageBuilder().
+		Message(string(payload)).
+		TopicArn(ac.snsTopicArn).
+		Build()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create message: %v", err)
 	}
 
-	b, err := json.Encode(u)
+	_, err = ac.snsPub.Publish(msg.Context(), *snsMsg)
 	if err != nil {
-		return err
-	}
-
-	_, err = q.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(string(b)),
-		QueueUrl:    qURL.QueueUrl,
-	})
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to publish message: %v", err)
 	}
 
 	log.FromContext(msg.Context()).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
