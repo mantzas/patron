@@ -7,7 +7,7 @@ import (
 	"github.com/beatlabs/patron/encoding/json"
 	"github.com/beatlabs/patron/errors"
 	"github.com/beatlabs/patron/trace"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -15,11 +15,19 @@ import (
 type Message struct {
 	topic string
 	body  []byte
+	key   *string
 }
 
 // NewMessage creates a new message.
 func NewMessage(t string, b []byte) *Message {
 	return &Message{topic: t, body: b}
+}
+
+func NewMessageWithKey(t string, b []byte, k string) (*Message, error) {
+	if k == "" {
+		return nil, errors.New("key string can not be null")
+	}
+	return &Message{topic: t, body: b, key: &k}, nil
 }
 
 // NewJSONMessage creates a new message with a JSON encoded body.
@@ -29,6 +37,18 @@ func NewJSONMessage(t string, d interface{}) (*Message, error) {
 		return nil, errors.Wrap(err, "failed to JSON encode")
 	}
 	return &Message{topic: t, body: b}, nil
+}
+
+// NewJSONMessageWithKey creates a new message with a JSON encoded body and a message key
+func NewJSONMessageWithKey(t string, d interface{}, k string) (*Message, error) {
+	if k == "" {
+		return nil, errors.New("key string can not be null")
+	}
+	b, err := json.Encode(d)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to JSON encode")
+	}
+	return &Message{topic: t, body: b, key: &k}, nil
 }
 
 // Producer interface for Kafka.
@@ -112,9 +132,13 @@ func createProducerMessage(msg *Message, sp opentracing.Span) (*sarama.ProducerM
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to inject tracing headers")
 	}
+	var saramaKey sarama.Encoder
+	if msg.key != nil {
+		saramaKey = sarama.ByteEncoder(*msg.key)
+	}
 	return &sarama.ProducerMessage{
 		Topic:   msg.topic,
-		Key:     nil,
+		Key:     saramaKey,
 		Value:   sarama.ByteEncoder(msg.body),
 		Headers: c,
 	}, nil
