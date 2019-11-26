@@ -151,8 +151,8 @@ func Test_message(t *testing.T) {
 }
 
 func Test_getCorrelationID(t *testing.T) {
-	withID := map[string]*sqs.MessageAttributeValue{correlation.HeaderID: &sqs.MessageAttributeValue{StringValue: aws.String("123")}}
-	withoutID := map[string]*sqs.MessageAttributeValue{correlation.HeaderID: &sqs.MessageAttributeValue{}}
+	withID := map[string]*sqs.MessageAttributeValue{correlation.HeaderID: {StringValue: aws.String("123")}}
+	withoutID := map[string]*sqs.MessageAttributeValue{correlation.HeaderID: {}}
 	missingHeader := map[string]*sqs.MessageAttributeValue{}
 	type args struct {
 		ma map[string]*sqs.MessageAttributeValue
@@ -286,6 +286,7 @@ func (s stubQueue) GetQueueAttributesRequest(*sqs.GetQueueAttributesInput) (*req
 	panic("implement me")
 }
 
+//nolint:golint
 func (s stubQueue) GetQueueUrl(*sqs.GetQueueUrlInput) (*sqs.GetQueueUrlOutput, error) {
 	if s.getQueueURLErr != nil {
 		return nil, s.getQueueURLErr
@@ -295,10 +296,12 @@ func (s stubQueue) GetQueueUrl(*sqs.GetQueueUrlInput) (*sqs.GetQueueUrlOutput, e
 	}, nil
 }
 
+//nolint:golint
 func (s stubQueue) GetQueueUrlWithContext(aws.Context, *sqs.GetQueueUrlInput, ...request.Option) (*sqs.GetQueueUrlOutput, error) {
 	panic("implement me")
 }
 
+//nolint:golint
 func (s stubQueue) GetQueueUrlRequest(*sqs.GetQueueUrlInput) (*request.Request, *sqs.GetQueueUrlOutput) {
 	panic("implement me")
 }
