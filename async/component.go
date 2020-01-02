@@ -2,12 +2,15 @@ package async
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/beatlabs/patron/errors"
 	"github.com/beatlabs/patron/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+const propSetMSG = "property '%s' set for '%s'"
 
 var consumerErrors *prometheus.CounterVec
 
@@ -38,36 +41,86 @@ type Component struct {
 	retryWait    time.Duration
 }
 
-// New returns a new async component. The default behavior is to return a error of failure.
-// Use options to change the default behavior.
-func New(name string, p ProcessorFunc, cf ConsumerFactory, oo ...OptionFunc) (*Component, error) {
+// Builder gathers all required properties in order to construct a component
+type Builder struct {
+	errors       []error
+	name         string
+	proc         ProcessorFunc
+	failStrategy FailStrategy
+	cf           ConsumerFactory
+	retries      uint
+	retryWait    time.Duration
+}
 
+// New initializes a new builder for a component with the given name
+// by default the failStrategy will be NackExitStrategy.
+func New(name string, cf ConsumerFactory, proc ProcessorFunc) *Builder {
+	var errs []error
 	if name == "" {
-		return nil, errors.New("name is required")
+		errs = append(errs, errors.New("name is required"))
 	}
-
-	if p == nil {
-		return nil, errors.New("work processor is required")
-	}
-
 	if cf == nil {
-		return nil, errors.New("consumer is required")
+		errs = append(errs, errors.New("consumer is required"))
+	}
+	if proc == nil {
+		errs = append(errs, errors.New("work processor is required"))
+	}
+	return &Builder{
+		name:   name,
+		cf:     cf,
+		proc:   proc,
+		errors: errs,
+	}
+}
+
+// WithFailureStrategy defines the failure strategy to be used
+// default value is NackExitStrategy
+// it will append an error to the builder if the strategy is not one of the pre-defined ones.
+func (cb *Builder) WithFailureStrategy(fs FailStrategy) *Builder {
+	if fs > AckStrategy || fs < NackExitStrategy {
+		cb.errors = append(cb.errors, errors.New("invalid strategy provided"))
+	} else {
+		log.Infof(propSetMSG, "failure strategy", cb.name)
+		cb.failStrategy = fs
+	}
+	return cb
+}
+
+// WithRetries specifies the retry events number for the component
+// default value is '0'.
+func (cb *Builder) WithRetries(retries uint) *Builder {
+	log.Infof(propSetMSG, "retries", cb.name)
+	cb.retries = retries
+	return cb
+}
+
+// WithRetryWait specifies the duration for the component to wait between retries
+// default value is '0'
+// it will append an error to the builder if the value is smaller than '0'.
+func (cb *Builder) WithRetryWait(retryWait time.Duration) *Builder {
+	if retryWait < 0 {
+		cb.errors = append(cb.errors, errors.New("invalid retry wait provided"))
+	} else {
+		log.Infof(propSetMSG, "retryWait", cb.name)
+		cb.retryWait = retryWait
+	}
+	return cb
+}
+
+// Create constructs the Component applying
+func (cb *Builder) Create() (*Component, error) {
+
+	if len(cb.errors) > 0 {
+		return nil, errors.Aggregate(cb.errors...)
 	}
 
 	c := &Component{
-		name:         name,
-		proc:         p,
-		cf:           cf,
-		failStrategy: NackExitStrategy,
-		retries:      0,
-		retryWait:    0,
-	}
-
-	for _, o := range oo {
-		err := o(c)
-		if err != nil {
-			return nil, err
-		}
+		name:         cb.name,
+		proc:         cb.proc,
+		cf:           cb.cf,
+		failStrategy: cb.failStrategy,
+		retries:      int(cb.retries),
+		retryWait:    cb.retryWait,
 	}
 
 	return c, nil
@@ -148,7 +201,10 @@ func (c *Component) processMessage(msg Message, ch chan error) {
 	}
 }
 
+var errInvalidFS = errors.New("invalid failure strategy")
+
 func (c *Component) executeFailureStrategy(msg Message, err error) error {
+	const failureStrategyErrorMSG = "%s failed when executing failure strategy"
 	log.FromContext(msg.Context()).Errorf("failed to process message, failure strategy executed: %v", err)
 	switch c.failStrategy {
 	case NackExitStrategy:
@@ -156,15 +212,15 @@ func (c *Component) executeFailureStrategy(msg Message, err error) error {
 	case NackStrategy:
 		err := msg.Nack()
 		if err != nil {
-			return errors.Wrap(err, "nack failed when executing failure strategy")
+			return errors.Wrap(err, fmt.Sprintf(failureStrategyErrorMSG, "nack"))
 		}
 	case AckStrategy:
 		err := msg.Ack()
 		if err != nil {
-			return errors.Wrap(err, "ack failed when executing failure strategy")
+			return errors.Wrap(err, fmt.Sprintf(failureStrategyErrorMSG, "ack"))
 		}
 	default:
-		return errors.New("invalid failure strategy")
+		return errInvalidFS
 	}
 	return nil
 }
