@@ -187,27 +187,25 @@ func (s *Service) createHTTPComponent() (Component, error) {
 	port = strconv.FormatInt(portVal, 10)
 	log.Infof("creating default HTTP component at port %s", port)
 
-	options := []http.OptionFunc{
-		http.Port(int(portVal)),
-	}
+	b := http.NewBuilder().WithPort(int(portVal))
 
 	if s.acf != nil {
-		options = append(options, http.AliveCheck(s.acf))
+		b.WithAliveCheckFunc(s.acf)
 	}
 
 	if s.rcf != nil {
-		options = append(options, http.ReadyCheck(s.rcf))
+		b.WithReadyCheckFunc(s.rcf)
 	}
 
 	if s.routes != nil {
-		options = append(options, http.Routes(s.routes))
+		b.WithRoutes(s.routes)
 	}
 
 	if s.middlewares != nil && len(s.middlewares) > 0 {
-		options = append(options, http.Middlewares(s.middlewares...))
+		b.WithMiddlewares(s.middlewares...)
 	}
 
-	cp, err := http.New(options...)
+	cp, err := b.Create()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create default HTTP component")
 	}
