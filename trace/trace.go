@@ -120,6 +120,12 @@ func ConsumerSpan(ctx context.Context, opName, cmp, corID string, hdr map[string
 	return sp, opentracing.ContextWithSpan(ctx, sp)
 }
 
+// SpanComplete finishes a span with or without a error indicator.
+func SpanComplete(sp opentracing.Span, err error) {
+	ext.Error.Set(sp, err != nil)
+	sp.Finish()
+}
+
 // SpanSuccess finishes a span with a success indicator.
 func SpanSuccess(sp opentracing.Span) {
 	ext.Error.Set(sp, false)
