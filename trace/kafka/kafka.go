@@ -72,30 +72,6 @@ type AsyncProducer struct {
 	contentType string
 }
 
-// NewAsyncProducer creates a new async producer with default configuration.
-func NewAsyncProducer(brokers []string, oo ...OptionFunc) (*AsyncProducer, error) {
-
-	cfg := sarama.NewConfig()
-	cfg.Version = sarama.V0_11_0_0
-
-	ap := AsyncProducer{cfg: cfg, chErr: make(chan error), tag: opentracing.Tag{Key: "type", Value: "async"}, enc: json.Encode, contentType: json.Type}
-
-	for _, o := range oo {
-		err := o(&ap)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	prod, err := sarama.NewAsyncProducer(brokers, ap.cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create async producer: %w", err)
-	}
-	ap.prod = prod
-	go ap.propagateError()
-	return &ap, nil
-}
-
 // Send a message to a topic.
 func (ap *AsyncProducer) Send(ctx context.Context, msg *Message) error {
 	sp, _ := trace.ChildSpan(ctx, trace.ComponentOpName(trace.KafkaAsyncProducerComponent, msg.topic),
