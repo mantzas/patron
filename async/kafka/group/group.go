@@ -16,13 +16,13 @@ import (
 type Factory struct {
 	name    string
 	group   string
-	topic   string
+	topics  []string
 	brokers []string
 	oo      []kafka.OptionFunc
 }
 
 // New constructor.
-func New(name, group, topic string, brokers []string, oo ...kafka.OptionFunc) (*Factory, error) {
+func New(name, group string, topics, brokers []string, oo ...kafka.OptionFunc) (*Factory, error) {
 
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -36,11 +36,11 @@ func New(name, group, topic string, brokers []string, oo ...kafka.OptionFunc) (*
 		return nil, errors.New("provide at least one broker")
 	}
 
-	if topic == "" {
-		return nil, errors.New("topic is required")
+	if len(topics) == 0 {
+		return nil, errors.New("at least one topic is required")
 	}
 
-	return &Factory{name: name, group: group, topic: topic, brokers: brokers, oo: oo}, nil
+	return &Factory{name: name, group: group, topics: topics, brokers: brokers, oo: oo}, nil
 }
 
 // Create a new consumer.
@@ -59,7 +59,7 @@ func (f *Factory) Create() (async.Consumer, error) {
 	}
 
 	c := &consumer{
-		topic:    f.topic,
+		topics:   f.topics,
 		group:    f.group,
 		traceTag: opentracing.Tag{Key: "group", Value: f.group},
 		config:   cc,
@@ -77,7 +77,7 @@ func (f *Factory) Create() (async.Consumer, error) {
 
 // consumer members can be injected or overwritten with the usage of OptionFunc arguments.
 type consumer struct {
-	topic    string
+	topics   []string
 	group    string
 	traceTag opentracing.Tag
 	cnl      context.CancelFunc
@@ -109,7 +109,7 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 		return nil, nil, fmt.Errorf("failed to create consumer: %w", err)
 	}
 	c.cg = cg
-	log.Infof("consuming messages from topic '%s' using group '%s'", c.topic, c.group)
+	log.Infof("consuming messages from topics '%#v' using group '%s'", c.topics, c.group)
 
 	chMsg := make(chan async.Message, c.config.Buffer)
 	chErr := make(chan error, c.config.Buffer)
@@ -133,7 +133,7 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	go func() {
 		hnd := handler{consumer: c, messages: chMsg}
 		for {
-			err := c.cg.Consume(ctx, []string{c.topic}, hnd)
+			err := c.cg.Consume(ctx, c.topics, hnd)
 			if err != nil {
 				chErr <- err
 			}
@@ -149,7 +149,7 @@ func closeConsumer(cns sarama.ConsumerGroup) {
 	}
 	err := cns.Close()
 	if err != nil {
-		log.Errorf("failed to close partition consumer: %v", err)
+		log.Errorf("failed to close consumer group: %v", err)
 	}
 }
 

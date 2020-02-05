@@ -146,6 +146,7 @@ func Test_message(t *testing.T) {
 			var mp map[string]string
 			assert.NoError(t, m.Decode(&mp))
 			assert.Equal(t, map[string]string{"key": "value"}, mp)
+			assert.Equal(t, "queueName", m.Source())
 		})
 	}
 }

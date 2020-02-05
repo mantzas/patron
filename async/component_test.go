@@ -446,6 +446,10 @@ func (mm *mockMessage) Nack() error {
 	return nil
 }
 
+func (mm *mockMessage) Source() string {
+	return ""
+}
+
 type mockProcessor struct {
 	errReturn bool
 	execs     int

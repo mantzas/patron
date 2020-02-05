@@ -73,6 +73,11 @@ func (m *message) Ack() error {
 	return nil
 }
 
+// Source returns the kafka topic where the message arrived.
+func (m *message) Source() string {
+	return m.msg.Topic
+}
+
 // Nack signals the producing side an erroring condition or inconsistency.
 func (m *message) Nack() error {
 	trace.SpanError(m.span)

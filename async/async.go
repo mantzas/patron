@@ -30,6 +30,7 @@ type Message interface {
 	Decode(v interface{}) error
 	Ack() error
 	Nack() error
+	Source() string
 }
 
 // ConsumerFactory interface for creating consumers.

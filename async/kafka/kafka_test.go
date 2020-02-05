@@ -66,6 +66,7 @@ func Test_message(t *testing.T) {
 	sp := opentracing.StartSpan("test")
 	ctx := context.Background()
 	cm := &sarama.ConsumerMessage{
+		Topic: "topicone",
 		Value: []byte(`{"key":"value"}`),
 	}
 	msg := message{
@@ -82,6 +83,7 @@ func Test_message(t *testing.T) {
 	m := make(map[string]string)
 	assert.NoError(t, msg.Decode(&m))
 	assert.Equal(t, "value", m["key"])
+	assert.Equal(t, "topicone", msg.Source())
 }
 
 func TestMapHeader(t *testing.T) {

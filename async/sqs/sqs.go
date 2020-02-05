@@ -117,6 +117,11 @@ func (m *message) Nack() error {
 	return nil
 }
 
+// Source returns the queue's name where the message arrived.
+func (m *message) Source() string {
+	return m.queueName
+}
+
 // Factory for creating SQS consumers.
 type Factory struct {
 	queueName         string

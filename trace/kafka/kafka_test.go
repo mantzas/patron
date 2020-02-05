@@ -43,52 +43,6 @@ func TestNewMessageWithKey(t *testing.T) {
 		})
 	}
 }
-func TestNewJSONMessage(t *testing.T) {
-	tests := []struct {
-		name    string
-		data    interface{}
-		wantErr bool
-	}{
-		{name: "failure due to invalid data", data: make(chan bool), wantErr: true},
-		{name: "success", data: "TEST"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewJSONMessage("TOPIC", tt.data)
-			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, got)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-			}
-		})
-	}
-}
-func TestNewJSONMessageWithKey(t *testing.T) {
-	tests := []struct {
-		name    string
-		data    interface{}
-		key     string
-		wantErr bool
-	}{
-		{name: "failure due to invalid data", data: make(chan bool), key: "TEST", wantErr: true},
-		{name: "success", data: "TEST", key: "TEST"},
-		{name: "failure due to empty message key", data: "TEST", key: "", wantErr: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewJSONMessageWithKey("TOPIC", tt.data, tt.key)
-			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, got)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-			}
-		})
-	}
-}
 
 func TestNewSyncProducer_Failure(t *testing.T) {
 	got, err := NewBuilder([]string{}).Create()
@@ -110,8 +64,7 @@ func TestNewSyncProducer_Success(t *testing.T) {
 }
 
 func TestAsyncProducer_SendMessage_Close(t *testing.T) {
-	msg, err := NewJSONMessage("TOPIC", "TEST")
-	assert.NoError(t, err)
+	msg := NewMessage("TOPIC", "TEST")
 	seed := createKafkaBroker(t, true)
 	ap, err := NewBuilder([]string{seed.Addr()}).WithVersion(sarama.V0_8_2_0.String()).Create()
 	assert.NoError(t, err)
@@ -127,7 +80,7 @@ func TestAsyncProducer_SendMessage_Close(t *testing.T) {
 
 func TestAsyncProducer_SendMessage_WithKey(t *testing.T) {
 	testKey := "TEST"
-	msg, err := NewJSONMessageWithKey("TOPIC", "TEST", testKey)
+	msg, err := NewMessageWithKey("TOPIC", "TEST", testKey)
 	assert.Equal(t, testKey, *msg.key)
 	assert.NoError(t, err)
 	seed := createKafkaBroker(t, true)

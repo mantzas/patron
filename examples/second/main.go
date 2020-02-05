@@ -116,10 +116,7 @@ func (hc *httpComponent) second(ctx context.Context, req *sync.Request) (*sync.R
 		return nil, fmt.Errorf("failed to get www.google.com: %w", err)
 	}
 
-	kafkaMsg, err := kafka.NewJSONMessage(hc.topic, &u)
-	if err != nil {
-		return nil, err
-	}
+	kafkaMsg := kafka.NewMessage(hc.topic, &u)
 
 	err = hc.prd.Send(ctx, kafkaMsg)
 	if err != nil {

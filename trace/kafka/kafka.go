@@ -8,7 +8,6 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/beatlabs/patron/correlation"
 	"github.com/beatlabs/patron/encoding"
-	"github.com/beatlabs/patron/encoding/json"
 	"github.com/beatlabs/patron/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -30,27 +29,6 @@ func NewMessage(t string, b interface{}) *Message {
 func NewMessageWithKey(t string, b interface{}, k string) (*Message, error) {
 	if k == "" {
 		return nil, errors.New("key string can not be null")
-	}
-	return &Message{topic: t, body: b, key: &k}, nil
-}
-
-// NewJSONMessage creates a new message with a JSON encoded body.
-func NewJSONMessage(t string, d interface{}) (*Message, error) {
-	b, err := json.Encode(d)
-	if err != nil {
-		return nil, fmt.Errorf("failed to JSON encode: %w", err)
-	}
-	return &Message{topic: t, body: b}, nil
-}
-
-// NewJSONMessageWithKey creates a new message with a JSON encoded body and a message key.
-func NewJSONMessageWithKey(t string, d interface{}, k string) (*Message, error) {
-	if k == "" {
-		return nil, errors.New("key string can not be null")
-	}
-	b, err := json.Encode(d)
-	if err != nil {
-		return nil, fmt.Errorf("failed to JSON encode: %w", err)
 	}
 	return &Message{topic: t, body: b, key: &k}, nil
 }
