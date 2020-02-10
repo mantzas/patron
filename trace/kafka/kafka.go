@@ -13,6 +13,10 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+const (
+	producerComponent = "kafka-async-producer"
+)
+
 // Message abstraction of a Kafka message.
 type Message struct {
 	topic string
@@ -52,8 +56,8 @@ type AsyncProducer struct {
 
 // Send a message to a topic.
 func (ap *AsyncProducer) Send(ctx context.Context, msg *Message) error {
-	sp, _ := trace.ChildSpan(ctx, trace.ComponentOpName(trace.KafkaAsyncProducerComponent, msg.topic),
-		trace.KafkaAsyncProducerComponent, ext.SpanKindProducer, ap.tag,
+	sp, _ := trace.ChildSpan(ctx, trace.ComponentOpName(producerComponent, msg.topic),
+		producerComponent, ext.SpanKindProducer, ap.tag,
 		opentracing.Tag{Key: "topic", Value: msg.topic})
 	pm, err := ap.createProducerMessage(ctx, msg, sp)
 	if err != nil {

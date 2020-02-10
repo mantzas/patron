@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
-	"github.com/beatlabs/patron/trace"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,7 +43,7 @@ func Test_NewPublisher(t *testing.T) {
 				assert.EqualError(t, err, tC.expectedErr.Error())
 			} else {
 				assert.Equal(t, tC.api, p.api)
-				assert.Equal(t, p.component, trace.SNSPublisherComponent)
+				assert.Equal(t, p.component, publisherComponent)
 				assert.Equal(t, p.tag, ext.SpanKindProducer)
 			}
 		})
