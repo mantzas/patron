@@ -9,13 +9,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/beatlabs/patron"
 	"github.com/beatlabs/patron/async"
 	patronsqs "github.com/beatlabs/patron/async/sqs"
+	patrongrpc "github.com/beatlabs/patron/client/grpc"
+	"github.com/beatlabs/patron/component/grpc/greeter"
+	"github.com/beatlabs/patron/examples"
 	"github.com/beatlabs/patron/log"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -55,6 +58,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	cc, err := patrongrpc.Dial("localhost:50006", grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("failed to dial grpc connection: %v", err)
+	}
+	defer cc.Close()
+
+	greeter := greeter.NewGreeterClient(cc)
+
 	// Initialise SQS
 	sqsAPI := sqs.New(
 		session.Must(
@@ -67,7 +78,7 @@ func main() {
 			),
 		),
 	)
-	sqsCmp, err := createSQSComponent(sqsAPI)
+	sqsCmp, err := createSQSComponent(sqsAPI, greeter)
 	if err != nil {
 		log.Fatalf("failed to create sqs component: %v", err)
 	}
@@ -86,10 +97,11 @@ func main() {
 }
 
 type sqsComponent struct {
-	cmp patron.Component
+	cmp     patron.Component
+	greeter greeter.GreeterClient
 }
 
-func createSQSComponent(api sqsiface.SQSAPI) (*sqsComponent, error) {
+func createSQSComponent(api sqsiface.SQSAPI, greeter greeter.GreeterClient) (*sqsComponent, error) {
 	sqsCmp := sqsComponent{}
 
 	cf, err := patronsqs.NewFactory(api, awsSQSQueue)
@@ -105,18 +117,27 @@ func createSQSComponent(api sqsiface.SQSAPI) (*sqsComponent, error) {
 		return nil, err
 	}
 	sqsCmp.cmp = cmp
+	sqsCmp.greeter = greeter
 
 	return &sqsCmp, nil
 }
 
 func (ac *sqsComponent) Process(msg async.Message) error {
-	var got sns.PublishInput
+	var u examples.User
 
-	err := msg.Decode(&got)
+	err := msg.Decode(&u)
 	if err != nil {
 		return err
 	}
 
-	log.FromContext(msg.Context()).Infof("request processed: %v", got.Message)
+	logger := log.FromContext(msg.Context())
+	logger.Infof("request processed: %v, sending request to sixth service", u.String())
+
+	reply, err := ac.greeter.SayHello(msg.Context(), &greeter.HelloRequest{Firstname: u.GetFirstname(), Lastname: u.GetLastname()})
+	if err != nil {
+		logger.Errorf("failed to send request: %v", err)
+	}
+
+	logger.Infof("Reply from sixth service: %s", reply.GetMessage())
 	return nil
 }
