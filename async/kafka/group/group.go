@@ -8,6 +8,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/beatlabs/patron/async"
 	"github.com/beatlabs/patron/async/kafka"
+	"github.com/beatlabs/patron/internal/validation"
 	"github.com/beatlabs/patron/log"
 	"github.com/opentracing/opentracing-go"
 )
@@ -32,12 +33,12 @@ func New(name, group string, topics, brokers []string, oo ...kafka.OptionFunc) (
 		return nil, errors.New("group is required")
 	}
 
-	if len(brokers) == 0 {
-		return nil, errors.New("provide at least one broker")
+	if validation.IsStringSliceEmpty(brokers) {
+		return nil, errors.New("brokers are empty or have an empty value")
 	}
 
-	if len(topics) == 0 {
-		return nil, errors.New("at least one topic is required")
+	if validation.IsStringSliceEmpty(topics) {
+		return nil, errors.New("topics are empty or have an empty value")
 	}
 
 	return &Factory{name: name, group: group, topics: topics, brokers: brokers, oo: oo}, nil

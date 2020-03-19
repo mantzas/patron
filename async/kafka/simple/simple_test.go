@@ -36,6 +36,16 @@ func TestNew(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "fails with one empty broker",
+			args:    args{name: "test", brokers: []string{""}, topic: "topic1"},
+			wantErr: true,
+		},
+		{
+			name:    "fails with two brokers - one of the is empty",
+			args:    args{name: "test", brokers: []string{" ", "broker2"}, topic: "topic1"},
+			wantErr: true,
+		},
+		{
 			name:    "fails with missing topics",
 			args:    args{name: "test", brokers: brokers, topic: ""},
 			wantErr: true,
