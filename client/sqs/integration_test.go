@@ -88,7 +88,6 @@ func Test_Publish_Message(t *testing.T) {
 }
 
 func createAPI(t *testing.T) sqsiface.SQSAPI {
-
 	sess, err := session.NewSession(
 		aws.NewConfig().
 			WithEndpoint(testSqsEndpoint).

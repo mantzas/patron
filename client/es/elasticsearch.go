@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/beatlabs/patron/trace"
-	trace_http "github.com/beatlabs/patron/trace/http"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/elastic/go-elasticsearch/v8/estransport"
@@ -73,7 +72,9 @@ func endSpan(sp opentracing.Span, rsp *http.Response) {
 	// In cases where more than one host is given, the selected one is only known at this time
 	sp.SetTag(respondentTag, rsp.Request.URL.Host)
 
-	trace_http.FinishSpan(sp, rsp.StatusCode)
+	ext.HTTPStatusCode.Set(sp, uint16(rsp.StatusCode))
+	ext.Error.Set(sp, rsp.StatusCode >= http.StatusInternalServerError)
+	sp.Finish()
 }
 
 type transportClient struct {
