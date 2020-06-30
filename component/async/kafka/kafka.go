@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/beatlabs/patron/component/async"
@@ -31,6 +32,9 @@ const (
 var topicPartitionOffsetDiff *prometheus.GaugeVec
 var messageStatus *prometheus.CounterVec
 var messageConfirmation *prometheus.CounterVec
+
+// TimeExtractor defines a function extracting a time from a Kafka message.
+type TimeExtractor func(*sarama.ConsumerMessage) (time.Time, error)
 
 // TopicPartitionOffsetDiffGaugeSet creates a new Gauge that measures partition offsets.
 func TopicPartitionOffsetDiffGaugeSet(group, topic string, partition int32, high, offset int64) {
@@ -84,10 +88,13 @@ func init() {
 
 // ConsumerConfig is the common configuration of patron kafka consumers.
 type ConsumerConfig struct {
-	Brokers      []string
-	Buffer       int
-	DecoderFunc  encoding.DecodeRawFunc
-	SaramaConfig *sarama.Config
+	Brokers               []string
+	Buffer                int
+	DecoderFunc           encoding.DecodeRawFunc
+	DurationBasedConsumer bool
+	DurationOffset        time.Duration
+	TimeExtractor         func(*sarama.ConsumerMessage) (time.Time, error)
+	SaramaConfig          *sarama.Config
 }
 
 type message struct {

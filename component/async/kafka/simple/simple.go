@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/beatlabs/patron/component/async"
@@ -56,6 +57,7 @@ func (f *Factory) Create() (async.Consumer, error) {
 		topic:  f.topic,
 		config: cc,
 	}
+	c.partitions = c.partitionsFromOffset
 
 	for _, o := range f.oo {
 		err = o(&c.config)
@@ -64,15 +66,20 @@ func (f *Factory) Create() (async.Consumer, error) {
 		}
 	}
 
+	if c.config.DurationBasedConsumer {
+		c.partitions = c.partitionsSinceDuration
+	}
+
 	return c, nil
 }
 
 // consumer members can be injected or overwritten with the usage of OptionFunc arguments.
 type consumer struct {
-	topic  string
-	cnl    context.CancelFunc
-	ms     sarama.Consumer
-	config kafka.ConsumerConfig
+	topic      string
+	cnl        context.CancelFunc
+	ms         sarama.Consumer
+	config     kafka.ConsumerConfig
+	partitions func(context.Context) ([]sarama.PartitionConsumer, error)
 }
 
 // Close handles closing consumer.
@@ -93,10 +100,13 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	chErr := make(chan error, c.config.Buffer)
 
 	log.Infof("consuming messages from topic '%s' without using consumer group", c.topic)
-	pcs, err := c.partitions()
+	var pcs []sarama.PartitionConsumer
+
+	pcs, err := c.partitions(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get partitions: %w", err)
+		return nil, nil, fmt.Errorf("failed to get partitions since duration: %w", err)
 	}
+
 	// When kafka cluster is not fully initialized, we may get 0 partitions.
 	if len(pcs) == 0 {
 		return nil, nil, errors.New("got 0 partitions")
@@ -134,7 +144,7 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 	return chMsg, chErr, nil
 }
 
-func (c *consumer) partitions() ([]sarama.PartitionConsumer, error) {
+func (c *consumer) partitionsFromOffset(_ context.Context) ([]sarama.PartitionConsumer, error) {
 
 	ms, err := sarama.NewConsumer(c.config.Brokers, c.config.SaramaConfig)
 	if err != nil {
@@ -153,6 +163,56 @@ func (c *consumer) partitions() ([]sarama.PartitionConsumer, error) {
 
 		pc, err := c.ms.ConsumePartition(c.topic, partition, c.config.SaramaConfig.Consumer.Offsets.Initial)
 		if nil != err {
+			return nil, fmt.Errorf("failed to get partition consumer: %w", err)
+		}
+		pcs[i] = pc
+	}
+
+	return pcs, nil
+}
+
+func (c *consumer) partitionsSinceDuration(ctx context.Context) ([]sarama.PartitionConsumer, error) {
+	client, err := sarama.NewClient(c.config.Brokers, c.config.SaramaConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %w", err)
+	}
+
+	consumer, err := sarama.NewConsumerFromClient(client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create simple consumer: %w", err)
+	}
+	c.ms = consumer
+
+	durationKafkaClient, err := newDurationKafkaClient(client, consumer, c.config.SaramaConfig.Net.DialTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kafka duration client: %w", err)
+	}
+
+	durationClient, err := newDurationClient(durationKafkaClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create duration client: %w", err)
+	}
+
+	offsets, err := durationClient.getTimeBasedOffsetsPerPartition(ctx, c.topic, time.Now().Add(-c.config.DurationOffset), c.config.TimeExtractor)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve duration offsets per partition: %w", err)
+	}
+
+	partitions, err := c.ms.Partitions(c.topic)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get partitions: %w", err)
+	}
+
+	pcs := make([]sarama.PartitionConsumer, len(partitions))
+
+	for i, partition := range partitions {
+		offset, exists := offsets[partition]
+		if !exists {
+			return nil, fmt.Errorf("partition %d unknown, this is most likely due to a repartitioning", partition)
+		}
+
+		pc, err := c.ms.ConsumePartition(c.topic, partition, offset)
+		if err != nil {
 			return nil, fmt.Errorf("failed to get partition consumer: %w", err)
 		}
 		pcs[i] = pc
