@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/beatlabs/patron/component/http/auth"
+	"github.com/beatlabs/patron/component/http/cache"
 	"github.com/beatlabs/patron/correlation"
 	"github.com/beatlabs/patron/log"
 	"github.com/beatlabs/patron/trace"
@@ -33,12 +34,12 @@ func (w *responseWriter) Status() int {
 	return w.status
 }
 
-// Header returns the header.
+// Header returns the Header.
 func (w *responseWriter) Header() http.Header {
 	return w.writer.Header()
 }
 
-// Write to the internal ResponseWriter and sets the status if not set already.
+// Write to the internal responseWriter and sets the status if not set already.
 func (w *responseWriter) Write(d []byte) (int, error) {
 
 	value, err := w.writer.Write(d)
@@ -54,7 +55,7 @@ func (w *responseWriter) Write(d []byte) (int, error) {
 	return value, err
 }
 
-// WriteHeader writes the internal header and saves the status for retrieval.
+// WriteHeader writes the internal Header and saves the status for retrieval.
 func (w *responseWriter) WriteHeader(code int) {
 	w.status = code
 	w.writer.WriteHeader(code)
@@ -119,6 +120,25 @@ func NewLoggingTracingMiddleware(path string) MiddlewareFunc {
 			next.ServeHTTP(lw, r)
 			finishSpan(sp, lw.Status())
 			logRequestResponse(corID, lw, r)
+		})
+	}
+}
+
+// NewCachingMiddleware creates a cache layer as a middleware
+// when used as part of a middleware chain any middleware later in the chain,
+// will not be executed, but the headers it appends will be part of the cache
+func NewCachingMiddleware(rc *cache.RouteCache) MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				next.ServeHTTP(w, r)
+				return
+			}
+			err := cache.Handler(w, r, rc, next)
+			if err != nil {
+				log.Errorf("error encountered in the caching middleware: %v", err)
+				return
+			}
 		})
 	}
 }
