@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/beatlabs/patron/component/http/auth"
@@ -206,13 +207,34 @@ func span(path, corID string, r *http.Request) (opentracing.Span, *http.Request)
 	if err != nil && err != opentracing.ErrSpanContextNotFound {
 		log.Errorf("failed to extract HTTP span: %v", err)
 	}
-	sp := opentracing.StartSpan(opName(r.Method, path), ext.RPCServerOption(ctx))
+
+	strippedPath, err := stripQueryString(path)
+	if err != nil {
+		log.Warnf("unable to strip query string %q: %v", path, err)
+		strippedPath = path
+	}
+
+	sp := opentracing.StartSpan(opName(r.Method, strippedPath), ext.RPCServerOption(ctx))
 	ext.HTTPMethod.Set(sp, r.Method)
 	ext.HTTPUrl.Set(sp, r.URL.String())
 	ext.Component.Set(sp, serverComponent)
 	sp.SetTag(trace.VersionTag, trace.Version)
 	sp.SetTag(correlation.ID, corID)
 	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
+}
+
+// stripQueryString returns a path without the query string
+func stripQueryString(path string) (string, error) {
+	u, err := url.Parse(path)
+	if err != nil {
+		return "", err
+	}
+
+	if len(u.RawQuery) == 0 {
+		return path, nil
+	}
+
+	return path[:len(path)-len(u.RawQuery)-1], nil
 }
 
 func finishSpan(sp opentracing.Span, code int, payload []byte) {
