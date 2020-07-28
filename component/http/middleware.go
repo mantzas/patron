@@ -13,15 +13,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	tracinglog "github.com/opentracing/opentracing-go/log"
 )
 
 const (
 	serverComponent = "http-server"
+	fieldNameError  = "error"
 )
 
 type responseWriter struct {
 	status              int
 	statusHeaderWritten bool
+	payload             []byte
 	writer              http.ResponseWriter
 }
 
@@ -46,6 +49,8 @@ func (w *responseWriter) Write(d []byte) (int, error) {
 	if err != nil {
 		return value, err
 	}
+
+	w.payload = d
 
 	if !w.statusHeaderWritten {
 		w.status = http.StatusOK
@@ -118,7 +123,7 @@ func NewLoggingTracingMiddleware(path string) MiddlewareFunc {
 			sp, r := span(path, corID, r)
 			lw := newResponseWriter(w)
 			next.ServeHTTP(lw, r)
-			finishSpan(sp, lw.Status())
+			finishSpan(sp, lw.Status(), lw.payload)
 			logRequestResponse(corID, lw, r)
 		})
 	}
@@ -210,9 +215,13 @@ func span(path, corID string, r *http.Request) (opentracing.Span, *http.Request)
 	return sp, r.WithContext(opentracing.ContextWithSpan(r.Context(), sp))
 }
 
-func finishSpan(sp opentracing.Span, code int) {
+func finishSpan(sp opentracing.Span, code int, payload []byte) {
 	ext.HTTPStatusCode.Set(sp, uint16(code))
-	ext.Error.Set(sp, code >= http.StatusInternalServerError)
+	isError := code >= http.StatusInternalServerError
+	if isError && len(payload) != 0 {
+		sp.LogFields(tracinglog.String(fieldNameError, string(payload)))
+	}
+	ext.Error.Set(sp, isError)
 	sp.Finish()
 }
 
