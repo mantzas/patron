@@ -129,7 +129,7 @@ func newStubSQSAPI(expectedOutput *sqs.SendMessageOutput, expectedErr error) *st
 	return &stubSQSAPI{output: expectedOutput, err: expectedErr}
 }
 
-func (s *stubSQSAPI) SendMessageWithContext(ctx context.Context, input *sqs.SendMessageInput, options ...request.Option) (*sqs.SendMessageOutput, error) {
+func (s *stubSQSAPI) SendMessageWithContext(_ context.Context, _ *sqs.SendMessageInput, _ ...request.Option) (*sqs.SendMessageOutput, error) {
 	return s.output, s.err
 }
 

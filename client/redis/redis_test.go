@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/beatlabs/patron/trace"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,10 +25,10 @@ func TestSpan(t *testing.T) {
 	trace.SpanSuccess(sp)
 	rawSpan := mtr.FinishedSpans()[0]
 	assert.Equal(t, map[string]interface{}{
-		"component":    RedisComponent,
+		"component":    Component,
 		"db.instance":  "localhost",
 		"db.statement": "flushdb",
-		"db.type":      RedisDBType,
+		"db.type":      DBType,
 		"error":        false,
 		"key":          "value",
 	}, rawSpan.Tags())

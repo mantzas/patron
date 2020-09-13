@@ -132,7 +132,7 @@ func getMultiValueHeaders(header string) []string {
 
 	splitHeaders := strings.Split(header, ",")
 
-	trimmedHeaders := []string{}
+	trimmedHeaders := make([]string, 0, len(splitHeaders))
 	for _, v := range splitHeaders {
 		trimmedHeaders = append(trimmedHeaders, strings.TrimSpace(v))
 	}

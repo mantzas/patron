@@ -10,9 +10,9 @@ import (
 	patronErrors "github.com/beatlabs/patron/errors"
 	"github.com/beatlabs/patron/internal/validation"
 	"github.com/beatlabs/patron/log"
+	opentracing "github.com/opentracing/opentracing-go"
 
 	"github.com/Shopify/sarama"
-	"github.com/opentracing/opentracing-go"
 )
 
 // RequiredAcks is used in Produce Requests to tell the broker how many replica acknowledgements
@@ -47,7 +47,7 @@ func NewBuilder(brokers []string) *Builder {
 	cfg := sarama.NewConfig()
 	cfg.Version = sarama.V0_11_0_0
 
-	errs := []error{}
+	errs := make([]error, 0)
 	if validation.IsStringSliceEmpty(brokers) {
 		errs = append(errs, errors.New("brokers are empty or have an empty value"))
 	}

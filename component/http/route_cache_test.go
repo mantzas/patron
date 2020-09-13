@@ -47,7 +47,7 @@ func TestCachingMiddleware(t *testing.T) {
 	testingCache := newTestingCache()
 	testingCache.instant = httpcache.NowSeconds
 
-	cache, errs := httpcache.NewRouteCache(testingCache, httpcache.Age{Max: 1 * time.Second})
+	routeCache, errs := httpcache.NewRouteCache(testingCache, httpcache.Age{Max: 1 * time.Second})
 	assert.Empty(t, errs)
 
 	tests := []struct {
@@ -63,14 +63,14 @@ func TestCachingMiddleware(t *testing.T) {
 			i, err := w.Write([]byte{1, 2, 3, 4})
 			assert.NoError(t, err)
 			assert.Equal(t, 4, i)
-		}), mws: []MiddlewareFunc{NewCachingMiddleware(cache)}},
+		}), mws: []MiddlewareFunc{NewCachingMiddleware(routeCache)}},
 			postRequest, 202, "\x01\x02\x03\x04", cacheState{}},
 		{"caching middleware with GET request", args{next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
 			i, err := w.Write([]byte{1, 2, 3, 4})
 			assert.NoError(t, err)
 			assert.Equal(t, 4, i)
-		}), mws: []MiddlewareFunc{NewCachingMiddleware(cache)}},
+		}), mws: []MiddlewareFunc{NewCachingMiddleware(routeCache)}},
 			getRequest, 200, "\x01\x02\x03\x04", cacheState{
 				setOps: 1,
 				getOps: 1,

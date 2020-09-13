@@ -11,15 +11,6 @@ import (
 	"github.com/beatlabs/patron/log"
 )
 
-const (
-	awsRegion      = "eu-west-1"
-	awsID          = "test"
-	awsSecret      = "test"
-	awsToken       = "token"
-	awsSQSEndpoint = "http://localhost:4576"
-	awsSQSQueue    = "patron"
-)
-
 func init() {
 	err := os.Setenv("PATRON_LOG_LEVEL", "debug")
 	if err != nil {

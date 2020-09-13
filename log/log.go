@@ -169,51 +169,51 @@ func (nl *nilLogger) Sub(map[string]interface{}) Logger {
 }
 
 // Panic logging.
-func (nl *nilLogger) Panic(args ...interface{}) {
+func (nl *nilLogger) Panic(_ ...interface{}) {
 }
 
 // Panicf logging.
-func (nl *nilLogger) Panicf(msg string, args ...interface{}) {
+func (nl *nilLogger) Panicf(_ string, _ ...interface{}) {
 }
 
 // Fatal logging.
-func (nl *nilLogger) Fatal(args ...interface{}) {
+func (nl *nilLogger) Fatal(_ ...interface{}) {
 }
 
 // Fatalf logging.
-func (nl *nilLogger) Fatalf(msg string, args ...interface{}) {
+func (nl *nilLogger) Fatalf(_ string, _ ...interface{}) {
 }
 
 // Error logging.
-func (nl *nilLogger) Error(args ...interface{}) {
+func (nl *nilLogger) Error(_ ...interface{}) {
 }
 
 // Errorf logging.
-func (nl *nilLogger) Errorf(msg string, args ...interface{}) {
+func (nl *nilLogger) Errorf(_ string, _ ...interface{}) {
 }
 
 // Warn logging.
-func (nl *nilLogger) Warn(args ...interface{}) {
+func (nl *nilLogger) Warn(_ ...interface{}) {
 }
 
 // Warnf logging.
-func (nl *nilLogger) Warnf(msg string, args ...interface{}) {
+func (nl *nilLogger) Warnf(_ string, _ ...interface{}) {
 }
 
 // Info logging.
-func (nl *nilLogger) Info(args ...interface{}) {
+func (nl *nilLogger) Info(_ ...interface{}) {
 }
 
 // Infof logging.
-func (nl *nilLogger) Infof(msg string, args ...interface{}) {
+func (nl *nilLogger) Infof(_ string, _ ...interface{}) {
 }
 
 // Debug logging.
-func (nl *nilLogger) Debug(args ...interface{}) {
+func (nl *nilLogger) Debug(_ ...interface{}) {
 }
 
 // Debugf logging.
-func (nl *nilLogger) Debugf(msg string, args ...interface{}) {
+func (nl *nilLogger) Debugf(_ string, _ ...interface{}) {
 }
 
 // Level returns the debug level of the nil logger.

@@ -129,7 +129,7 @@ func newStubSNSAPI(expectedOutput *sns.PublishOutput, expectedErr error) *stubSN
 	return &stubSNSAPI{output: expectedOutput, err: expectedErr}
 }
 
-func (s *stubSNSAPI) PublishWithContext(ctx context.Context, input *sns.PublishInput, options ...request.Option) (*sns.PublishOutput, error) {
+func (s *stubSNSAPI) PublishWithContext(_ context.Context, _ *sns.PublishInput, _ ...request.Option) (*sns.PublishOutput, error) {
 	return s.output, s.err
 }
 

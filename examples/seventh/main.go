@@ -75,7 +75,7 @@ func main() {
 
 // seventh gives the 7 minute interval of the current unix timestamp
 // since the response will be the same for the next 7 minutes, it s a good use-case to apply caching
-func seventh(ctx context.Context, req *patronhttp.Request) (*patronhttp.Response, error) {
+func seventh(_ context.Context, _ *patronhttp.Request) (*patronhttp.Response, error) {
 	now := time.Now()
 	minutes := now.Unix() / 60
 	minuteInterval := minutes / 7

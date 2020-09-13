@@ -9,7 +9,7 @@ import (
 	"github.com/beatlabs/patron/log"
 	"github.com/beatlabs/patron/trace"
 	"github.com/google/uuid"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -106,13 +106,13 @@ func (o *observer) log(err error) {
 }
 
 func (o *observer) messageHandled(err error) {
-	status, _ := status.FromError(err)
-	rpcHandledMetric.WithLabelValues(o.typ, o.service, o.method, status.Code().String()).Inc()
+	s, _ := status.FromError(err)
+	rpcHandledMetric.WithLabelValues(o.typ, o.service, o.method, s.Code().String()).Inc()
 }
 
 func (o *observer) messageLatency(dur time.Duration, err error) {
-	status, _ := status.FromError(err)
-	rpcLatencyMetric.WithLabelValues(o.typ, o.service, o.method, status.Code().String()).Observe(dur.Seconds())
+	s, _ := status.FromError(err)
+	rpcLatencyMetric.WithLabelValues(o.typ, o.service, o.method, s.Code().String()).Observe(dur.Seconds())
 }
 
 func observableUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {

@@ -60,15 +60,12 @@ The framework supplies a cli in order to simplify repository generation with the
 
 The latest version can be installed with
 
-```go
-go get github.com/beatlabs/patron/cmd/patron
-```
+    go get github.com/beatlabs/patron/cmd/patron
 
 Below is an example of a service created with the cli that has a module name `github.com/beatlabs/test` and will be created in the test folder in the current directory.
 
-```go
-patron -m "github.com/beatlabs/test" -p "test"
-```
+    patron -m "github.com/beatlabs/test" -p "test"
+
 
 ## Service
 
@@ -100,11 +97,9 @@ The service has some default settings which can be changed via environment varia
 
 A `Component` is an interface that exposes the following API:
 
-```go
-type Component interface {
-  Run(ctx context.Context) error  
-}
-```
+    type Component interface {
+      Run(ctx context.Context) error  
+    }
 
 The above API gives the `Service` the ability to start and gracefully shutdown a `component` via context cancellation. Furthermore, the component describes itself by implementing the `Info` method and thus giving the service the ability to report the information of all components. The framework divides the components in 2 categories:
 
@@ -126,18 +121,16 @@ Adding to the above list is as easy as implementing a `Component` and a `Process
 A `MiddlewareFunc` preserves the default net/http middleware pattern.
 You can create new middleware functions and pass them to Service to be chained on all routes in the default Http Component.
 
-```go
-type MiddlewareFunc func(next http.Handler) http.Handler
-
-// Setup a simple middleware for CORS
-newMiddleware := func(h http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Add("Access-Control-Allow-Origin", "*")
-        // Next
-        h.ServeHTTP(w, r)
-    })
-}
-```
+    type MiddlewareFunc func(next http.Handler) http.Handler
+    
+    // Setup a simple middleware for CORS
+    newMiddleware := func(h http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            w.Header().Add("Access-Control-Allow-Origin", "*")
+            // Next
+            h.ServeHTTP(w, r)
+        })
+    }
 
 ### gRPC
 
@@ -163,9 +156,7 @@ The implementation of the processor is responsible to create a `Request` by prov
 
 The sync package contains only a function definition along with the models needed:
 
-```go
-type ProcessorFunc func(context.Context, *Request) (*Response, error)
-```
+    type ProcessorFunc func(context.Context, *Request) (*Response, error)
 
 The `Request` model contains the following properties (which are provided when calling the "constructor" `NewRequest`)
 
@@ -176,9 +167,7 @@ The `Request` model contains the following properties (which are provided when c
 
 An exported function exists for decoding the raw io.Reader in the form of
 
-```go
-Decode(v interface{}) error
-```
+    Decode(v interface{}) error
 
 The `Response` model contains the following properties (which are provided when calling the "constructor" `NewResponse`)
 
@@ -189,31 +178,28 @@ The `Response` model contains the following properties (which are provided when 
 Middlewares can also run per routes using the processor as Handler.
 So using the `Route` helpers:
 
-```go
-// A route with ...MiddlewareFunc that will run for this route only + tracing
-route := NewRoute("/index", "GET" ProcessorFunc, true, ...MiddlewareFunc)
-// A route with ...MiddlewareFunc that will run for this route only + auth + tracing
-routeWithAuth := NewAuthRoute("/index", "GET" ProcessorFunc, true, Authendicator, ...MiddlewareFunc)
-```
+    // A route with ...MiddlewareFunc that will run for this route only + tracing
+    route := NewRoute("/index", "GET" ProcessorFunc, true, ...MiddlewareFunc)
+    // A route with ...MiddlewareFunc that will run for this route only + auth + tracing
+    routeWithAuth := NewAuthRoute("/index", "GET" ProcessorFunc, true, Authendicator, ...MiddlewareFunc)
 
 ### HTTP Caching
 
 The caching layer for HTTP routes is specified per Route.
 
-```go
-// RouteCache is the builder needed to build a cache for the corresponding route
-type RouteCache struct {
-	// cache is the ttl cache implementation to be used
-	cache cache.TTLCache
-	// age specifies the minimum and maximum amount for max-age and min-fresh header values respectively
-	// regarding the client cache-control requests in seconds
-	age age
-}
-
-func NewRouteCache(ttlCache cache.TTLCache, age Age) *RouteCache
-```
+    // RouteCache is the builder needed to build a cache for the corresponding route
+    type RouteCache struct {
+        // cache is the ttl cache implementation to be used
+        cache cache.TTLCache
+        // age specifies the minimum and maximum amount for max-age and min-fresh header values respectively
+        // regarding the client cache-control requests in seconds
+        age age
+    }
+    
+    func NewRouteCache(ttlCache cache.TTLCache, age Age) *RouteCache
 
 #### server cache
+
 - The **cache key** is based on the route path and the url request parameters.
 - The server caches only **GET requests**.
 - The server implementation must specify an **Age** parameters upon construction.
@@ -235,21 +221,19 @@ i.e. counting number of server client requests etc ...
 ### Usage
 
 - provide the cache in the route builder
-```go
-NewRouteBuilder("/", handler).
-	WithRouteCache(cache, http.Age{
-		Min: 30 * time.Minute,
-		Max: 1 * time.Hour,
-	}).
-    MethodGet()
-```
+
+    NewRouteBuilder("/", handler).
+        WithRouteCache(cache, http.Age{
+            Min: 30 * time.Minute,
+            Max: 1 * time.Hour,
+        }).
+        MethodGet()
 
 - use the cache as a middleware
-```go
-NewRouteBuilder("/", handler).
-    WithMiddlewares(NewCachingMiddleware(NewRouteCache(cc, Age{Max: 10 * time.Second}))).
-    MethodGet()
-```
+
+    NewRouteBuilder("/", handler).
+        WithMiddlewares(NewCachingMiddleware(NewRouteCache(cc, Age{Max: 10 * time.Second}))).
+        MethodGet()
 
 #### client cache-control
 The client can control the cache with the appropriate Headers
@@ -329,9 +313,7 @@ The main difference is that:
 - The `Request` is the `Message` and contains only data as `[]byte`
 - There is no `Response`, so the processor may return an error
 
-```go
-type ProcessorFunc func(context.Context, *Message) error
-```
+    type ProcessorFunc func(context.Context, *Message) error
 
 Everything else is exactly the same.
 
@@ -379,19 +361,15 @@ The log package is designed to be a leveled logger with field support.
 
 The log package defines the logger interface and a factory function type that needs to be implemented in order to set up the logging in this framework.
 
-```go
-  // instantiate the implemented factory func type and fields (map[string]interface{})
-  err := log.Setup(factory, fields)
-  // handle error
-```
+      // instantiate the implemented factory func type and fields (map[string]interface{})
+      err := log.Setup(factory, fields)
+      // handle error
 
 `If the setup is omitted the package will not setup any logging!`
 
 From there logging is as simple as
 
-```go
-  log.Info("Hello world!")
-```
+    log.Info("Hello world!")
 
 The implementations should support the following log levels:
 
@@ -414,16 +392,12 @@ The following implementations are provided as sub-package and are by default wir
 
 Logs can be associated with some contextual data e.g. a request id. Every line logged should contain this id thus grouping the logs together. This is achieved with the usage of the context package as demonstrated below:
 
-```go
-ctx := log.WithContext(r.Context(), log.Sub(map[string]interface{}{"requestID": uuid.New().String()}))
-```
+    ctx := log.WithContext(r.Context(), log.Sub(map[string]interface{}{"requestID": uuid.New().String()}))
 
 The context travels through the code as an argument and can be acquired as follows:
 
-```go
-logger:=log.FromContext(ctx)
-logger.Infof("request processed")
-```
+    logger:=log.FromContext(ctx)
+    logger.Infof("request processed")
 
 Benchmarks are provided to show the performance of this.
 
@@ -433,22 +407,20 @@ Benchmarks are provided to show the performance of this.
 
 The logger interface defines the actual logger.
 
-```go
-type Logger interface {
-  Fatal(...interface{})
-  Fatalf(string, ...interface{})
-  Panic(...interface{})
-  Panicf(string, ...interface{})
-  Error(...interface{})
-  Errorf(string, ...interface{})
-  Warn(...interface{})
-  Warnf(string, ...interface{})
-  Info(...interface{})
-  Infof(string, ...interface{})
-  Debug(...interface{})
-  Debugf(string, ...interface{})
-}
-```
+    type Logger interface {
+      Fatal(...interface{})
+      Fatalf(string, ...interface{})
+      Panic(...interface{})
+      Panicf(string, ...interface{})
+      Error(...interface{})
+      Errorf(string, ...interface{})
+      Warn(...interface{})
+      Warnf(string, ...interface{})
+      Info(...interface{})
+      Infof(string, ...interface{})
+      Debug(...interface{})
+      Debugf(string, ...interface{})
+    }
 
 In order to be consistent with the design the implementation of the `Fatal(f)` have to terminate the application with an error and the `Panic(f)` need to panic.
 
@@ -456,9 +428,7 @@ In order to be consistent with the design the implementation of the `Fatal(f)` h
 
 The factory function type defines a factory for creating a logger.
 
-```go
-type FactoryFunc func(map[string]interface{}) Logger
-```
+    type FactoryFunc func(map[string]interface{}) Logger
 
 ## Security
 
@@ -470,11 +440,9 @@ The necessary abstraction is available to implement authentication in the follow
 
 In order to use authentication, an authenticator has to be implemented following the interface:
 
-```go
-type Authenticator interface {
-  Authenticate(req *http.Request) (bool, error)
-}
-```
+    type Authenticator interface {
+      Authenticate(req *http.Request) (bool, error)
+    }
 
 This authenticator can then be used to set up routes with authentication.
 
@@ -486,13 +454,11 @@ The following authenticator is available:
 
 When creating a new HTTP component, Patron will automatically create a liveness and readiness route, which can be used to know the lifecycle of the application:
 
-```
-# liveness
-GET /alive
-
-# readiness
-GET /ready
-```
+    # liveness
+    GET /alive
+    
+    # readiness
+    GET /ready
 
 Both can return either a `200 OK` or a `503 Service Unavailable` status code (default: `200 OK`).
 

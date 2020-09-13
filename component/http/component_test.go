@@ -98,7 +98,7 @@ func TestBuilder_WithShutdownGracePeriod(t *testing.T) {
 
 func Test_createHTTPServerUsingBuilder(t *testing.T) {
 
-	var httpBuilderNoErrors = []error{}
+	httpBuilderNoErrors := make([]error, 0)
 	var httpBuilderAllErrors = []error{
 		errors.New("nil AliveCheckFunc was provided"),
 		errors.New("nil ReadyCheckFunc provided"),

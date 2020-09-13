@@ -154,12 +154,12 @@ type mockConsumerSession struct{}
 func (m *mockConsumerSession) Claims() map[string][]int32 { return nil }
 func (m *mockConsumerSession) MemberID() string           { return "" }
 func (m *mockConsumerSession) GenerationID() int32        { return 0 }
-func (m *mockConsumerSession) MarkOffset(topic string, partition int32, offset int64, metadata string) {
+func (m *mockConsumerSession) MarkOffset(_ string, _ int32, _ int64, _ string) {
 }
-func (m *mockConsumerSession) ResetOffset(topic string, partition int32, offset int64, metadata string) {
+func (m *mockConsumerSession) ResetOffset(_ string, _ int32, _ int64, _ string) {
 }
-func (m *mockConsumerSession) MarkMessage(msg *sarama.ConsumerMessage, metadata string) {}
-func (m *mockConsumerSession) Context() context.Context                                 { return context.Background() }
+func (m *mockConsumerSession) MarkMessage(msg *sarama.ConsumerMessage, _ string) {}
+func (m *mockConsumerSession) Context() context.Context                          { return context.Background() }
 
 func TestHandler_ConsumeClaim(t *testing.T) {
 

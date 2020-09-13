@@ -262,7 +262,7 @@ type testComponent struct {
 	errorRunning bool
 }
 
-func (ts testComponent) Run(ctx context.Context) error {
+func (ts testComponent) Run(_ context.Context) error {
 	if ts.errorRunning {
 		return errors.New("failed to run component")
 	}

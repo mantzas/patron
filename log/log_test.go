@@ -203,51 +203,51 @@ func (t *testLogger) Sub(map[string]interface{}) Logger {
 	return t
 }
 
-func (t *testLogger) Panic(args ...interface{}) {
+func (t *testLogger) Panic(_ ...interface{}) {
 	t.panicCount++
 }
 
-func (t *testLogger) Panicf(msg string, args ...interface{}) {
+func (t *testLogger) Panicf(_ string, _ ...interface{}) {
 	t.panicCount++
 }
 
-func (t *testLogger) Fatal(args ...interface{}) {
+func (t *testLogger) Fatal(_ ...interface{}) {
 	t.fatalCount++
 }
 
-func (t *testLogger) Fatalf(msg string, args ...interface{}) {
+func (t *testLogger) Fatalf(_ string, _ ...interface{}) {
 	t.fatalCount++
 }
 
-func (t *testLogger) Error(args ...interface{}) {
+func (t *testLogger) Error(_ ...interface{}) {
 	t.errorCount++
 }
 
-func (t *testLogger) Errorf(msg string, args ...interface{}) {
+func (t *testLogger) Errorf(_ string, _ ...interface{}) {
 	t.errorCount++
 }
 
-func (t *testLogger) Warn(args ...interface{}) {
+func (t *testLogger) Warn(_ ...interface{}) {
 	t.warnCount++
 }
 
-func (t *testLogger) Warnf(msg string, args ...interface{}) {
+func (t *testLogger) Warnf(_ string, _ ...interface{}) {
 	t.warnCount++
 }
 
-func (t *testLogger) Info(args ...interface{}) {
+func (t *testLogger) Info(_ ...interface{}) {
 	t.infoCount++
 }
 
-func (t *testLogger) Infof(msg string, args ...interface{}) {
+func (t *testLogger) Infof(_ string, _ ...interface{}) {
 	t.infoCount++
 }
 
-func (t *testLogger) Debug(args ...interface{}) {
+func (t *testLogger) Debug(_ ...interface{}) {
 	t.debugCount++
 }
 
-func (t *testLogger) Debugf(msg string, args ...interface{}) {
+func (t *testLogger) Debugf(_ string, _ ...interface{}) {
 	t.debugCount++
 }
 

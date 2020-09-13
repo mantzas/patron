@@ -27,7 +27,7 @@ type sourceHook struct {
 	skip int
 }
 
-func (sh sourceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+func (sh sourceHook) Run(e *zerolog.Event, _ zerolog.Level, _ string) {
 	k, v, ok := sourceFields(sh.skip)
 	if !ok {
 		return

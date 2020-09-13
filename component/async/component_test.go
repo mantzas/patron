@@ -398,7 +398,7 @@ func (mm *mockMessage) Context() context.Context {
 }
 
 // Decode is not called in our tests, because the mockProcessor will ignore the message decoding
-func (mm *mockMessage) Decode(v interface{}) error {
+func (mm *mockMessage) Decode(_ interface{}) error {
 	return nil
 }
 
@@ -435,7 +435,7 @@ type mockProcessor struct {
 
 var errProcess = errors.New("PROC ERROR")
 
-func (mp *mockProcessor) Process(msg Message) error {
+func (mp *mockProcessor) Process(_ Message) error {
 	mp.execs++
 	if mp.errReturn {
 		return errProcess
@@ -466,7 +466,7 @@ type mockConsumer struct {
 	chErr        chan error
 }
 
-func (mc *mockConsumer) SetTimeout(timeout time.Duration) {
+func (mc *mockConsumer) SetTimeout(_ time.Duration) {
 }
 
 var errConsumer = errors.New("CONSUMER ERROR")

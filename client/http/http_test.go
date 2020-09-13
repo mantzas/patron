@@ -20,7 +20,7 @@ func TestTracedClient_Do(t *testing.T) {
 		assert.Equal(t, "true", r.Header.Get("Mockpfx-Ids-Sampled"))
 		assert.NotEmpty(t, r.Header.Get("Mockpfx-Ids-Spanid"))
 		assert.NotEmpty(t, r.Header.Get("Mockpfx-Ids-Traceid"))
-		fmt.Fprintln(w, "Hello, client")
+		_, _ = fmt.Fprintln(w, "Hello, client")
 	}))
 	defer ts.Close()
 	mtr := mocktracer.New()

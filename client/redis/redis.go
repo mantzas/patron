@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	// RedisComponent definition
-	RedisComponent = "redis"
-	// RedisDBType description
-	RedisDBType = "In-memory"
+	// Component definition
+	Component = "redis"
+	// DBType description
+	DBType = "In-memory"
 )
 
 // Options wraps redis.Options for easier usage.
@@ -31,8 +31,8 @@ type Client struct {
 
 func (c *Client) startSpan(ctx context.Context, opName, stmt string, tags ...opentracing.Tag) (opentracing.Span, context.Context) {
 	sp, ctx := opentracing.StartSpanFromContext(ctx, opName)
-	ext.Component.Set(sp, RedisComponent)
-	ext.DBType.Set(sp, RedisDBType)
+	ext.Component.Set(sp, Component)
+	ext.DBType.Set(sp, DBType)
 	ext.DBInstance.Set(sp, c.Options().Addr)
 	ext.DBStatement.Set(sp, stmt)
 	for _, t := range tags {
@@ -56,7 +56,7 @@ func (c *Client) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 }
 
 // Close closes the connection to the underlying Redis client.
-func (c *Client) Close(ctx context.Context, args ...interface{}) error {
+func (c *Client) Close(ctx context.Context, _ ...interface{}) error {
 	sp, _ := c.startSpan(ctx, "redis.Close", "")
 	err := c.Client.Close()
 	trace.SpanComplete(sp, err)

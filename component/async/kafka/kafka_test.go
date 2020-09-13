@@ -15,8 +15,8 @@ import (
 	"github.com/beatlabs/patron/component/async"
 	"github.com/beatlabs/patron/correlation"
 	"github.com/beatlabs/patron/encoding"
-	patron_json "github.com/beatlabs/patron/encoding/json"
-	"github.com/opentracing/opentracing-go"
+	patronjson "github.com/beatlabs/patron/encoding/json"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
@@ -72,7 +72,7 @@ func Test_message(t *testing.T) {
 	msg := message{
 		sess: nil,
 		ctx:  ctx,
-		dec:  patron_json.DecodeRaw,
+		dec:  patronjson.DecodeRaw,
 		span: sp,
 		msg:  cm,
 	}
@@ -101,7 +101,7 @@ func TestMapHeader(t *testing.T) {
 func Test_getCorrelationID(t *testing.T) {
 	withID := []*sarama.RecordHeader{{Key: []byte(correlation.HeaderID), Value: []byte("123")}}
 	withoutID := []*sarama.RecordHeader{{Key: []byte(correlation.HeaderID), Value: []byte("")}}
-	missingHeader := []*sarama.RecordHeader{}
+	missingHeader := make([]*sarama.RecordHeader, 0)
 	type args struct {
 		hh []*sarama.RecordHeader
 	}
@@ -238,7 +238,7 @@ func TestDefaultDecoder(t *testing.T) {
 		msgs: []*sarama.ConsumerMessage{
 			saramaConsumerMessage("[\"value\",\"key\"]", &sarama.RecordHeader{
 				Key:   []byte(encoding.ContentTypeHeader),
-				Value: []byte(patron_json.Type),
+				Value: []byte(patronjson.Type),
 			}),
 		},
 		dmsgs: [][]string{{"value", "key"}},
@@ -298,17 +298,17 @@ func saramaConsumerMessage(value string, header *sarama.RecordHeader) *sarama.Co
 
 func versionedConsumerMessage(value string, header *sarama.RecordHeader, version uint8) *sarama.ConsumerMessage {
 
-	bytes := []byte(value)
+	buf := []byte(value)
 
 	if version > 0 {
-		bytes = append([]byte{version}, bytes...)
+		buf = append([]byte{version}, buf...)
 	}
 
 	return &sarama.ConsumerMessage{
 		Topic:          "TEST_TOPIC",
 		Partition:      0,
 		Key:            []byte("key"),
-		Value:          bytes,
+		Value:          buf,
 		Offset:         0,
 		Timestamp:      time.Now(),
 		BlockTimestamp: time.Now(),
@@ -349,11 +349,11 @@ func testMessageClaim(t *testing.T, data decodingTestData) {
 
 // some naive decoder implementations for testing
 
-func erroringDecoder(data []byte, v interface{}) error {
-	return fmt.Errorf("Predefined Decoder Error for message %s", string(data))
+func erroringDecoder(data []byte, _ interface{}) error {
+	return fmt.Errorf("predefined Decoder Error for message %s", string(data))
 }
 
-func voidDecoder(data []byte, v interface{}) error {
+func voidDecoder(_ []byte, _ interface{}) error {
 	return nil
 }
 
@@ -361,7 +361,7 @@ func stringToSliceDecoder(data []byte, v interface{}) error {
 	if arr, ok := v.(*[]string); ok {
 		*arr = append(*arr, strings.Split(string(data), " ")...)
 	} else {
-		return fmt.Errorf("Provided object is not valid for splitting data into a slice '%v'", v)
+		return fmt.Errorf("provided object is not valid for splitting data into a slice '%v'", v)
 	}
 	return nil
 }
@@ -385,15 +385,15 @@ func combinedDecoder(data []byte, v interface{}) error {
 var process = func(counter *eventCounter, data *decodingTestData) func(message async.Message) error {
 	return func(message async.Message) error {
 		// we always assume we will decode to a slice of strings
-		values := []string{}
+		values := make([]string, 0)
 		// we assume based on our transform function, that we will be able to decode as a rule
 		if err := message.Decode(&values); err != nil {
 			counter.decodingErr++
-			return fmt.Errorf("Error encountered while decoding message from source [%v] : %v", message, err)
+			return fmt.Errorf("failure encountered while decoding message from source [%v] : %v", message, err)
 		}
 		if !reflect.DeepEqual(data.dmsgs[counter.messageCount], values) {
 			counter.resultErr++
-			return fmt.Errorf("Could not verify equality for '%v' and '%v' at index '%d'", values, data.dmsgs[counter.messageCount], counter.messageCount)
+			return fmt.Errorf("could not verify equality for '%v' and '%v' at index '%d'", values, data.dmsgs[counter.messageCount], counter.messageCount)
 		}
 		counter.messageCount++
 		return nil

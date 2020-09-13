@@ -19,7 +19,7 @@ type MockAuthenticator struct {
 	err     error
 }
 
-func (mo MockAuthenticator) Authenticate(req *http.Request) (bool, error) {
+func (mo MockAuthenticator) Authenticate(_ *http.Request) (bool, error) {
 	if mo.err != nil {
 		return false, mo.err
 	}
