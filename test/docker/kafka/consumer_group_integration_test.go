@@ -71,6 +71,7 @@ func TestGroupConsume_ClaimMessageError(t *testing.T) {
 	chErr := make(chan error)
 	go func() {
 
+		// Consumer will error out in ClaimMessage as no DecoderFunc has been set
 		factory, err := group.New("test1", uuid.New().String(), []string{groupTopic2}, Brokers(),
 			kafka.Version(sarama.V2_1_0_0.String()), kafka.StartFromNewest())
 		if err != nil {
@@ -103,8 +104,10 @@ func TestGroupConsume_ClaimMessageError(t *testing.T) {
 
 	select {
 	case <-chMessages:
-		require.Fail(t, "no messages where expected")
+		require.Fail(t, "no messages were expected")
 	case err = <-chErr:
-		require.EqualError(t, err, "kafka: tried to use a consumer group that was closed")
+		require.EqualError(t, err, "kafka: error while consuming groupTopic2/0: "+
+			"could not determine decoder  failed to determine content type from message headers [] : "+
+			"content type header is missing")
 	}
 }
