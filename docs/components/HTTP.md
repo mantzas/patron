@@ -142,17 +142,23 @@ func NewAuthMiddleware(auth auth.Authenticator) MiddlewareFunc {
 }
 
 // NewLoggingTracingMiddleware creates a MiddlewareFunc that continues a tracing span and finishes it.
-// It also logs the HTTP request on debug logging level
+// It also logs the HTTP request on debug logging level.
 func NewLoggingTracingMiddleware(path string) MiddlewareFunc {
     // ...
 }
 
-// NewCachingMiddleware creates a cache layer as a middleware
+// NewCachingMiddleware creates a cache layer as a middleware.
 // when used as part of a middleware chain any middleware later in the chain,
-// will not be executed, but the headers it appends will be part of the cache
+// will not be executed, but the headers it appends will be part of the cache.
 func NewCachingMiddleware(rc *cache.RouteCache) MiddlewareFunc {
     // ...
 }
+
+// NewCompressionMiddleware initializes a compression middleware.
+// As per Section 3.5 of the HTTP/1.1 RFC, we support GZIP and Deflate as compression methods.
+// https://tools.ietf.org/html/rfc2616#section-3.5
+func NewCompressionMiddleware(deflateLevel int, ignoreRoutes ...string) MiddlewareFunc {
+
 ```
 
 ## HTTP Routes
