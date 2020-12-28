@@ -14,4 +14,4 @@ updates:
       day: "monday"
     ignore:
       - dependency-name: "github.com/julienschmidt/httprouter"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
