@@ -381,7 +381,7 @@ func statusCodeErrorLogging(ctx context.Context, statusCodeLogger statusCodeLogg
 	}
 
 	if statusCodeLogger.shouldLog(statusCode) {
-		log.FromContext(ctx).Error("%s %d error: %v", path, statusCode, string(payload))
+		log.FromContext(ctx).Errorf("%s %d error: %v", path, statusCode, string(payload))
 	}
 }
 
