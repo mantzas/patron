@@ -6,11 +6,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/beatlabs/patron"
 	patronamqp "github.com/beatlabs/patron/client/amqp/v2"
-	"github.com/beatlabs/patron/component/async"
-	"github.com/beatlabs/patron/component/async/kafka"
-	"github.com/beatlabs/patron/component/async/kafka/group"
+	"github.com/beatlabs/patron/component/kafka"
+	"github.com/beatlabs/patron/component/kafka/group"
 	"github.com/beatlabs/patron/encoding/json"
 	"github.com/beatlabs/patron/encoding/protobuf"
 	"github.com/beatlabs/patron/examples"
@@ -86,15 +86,28 @@ func newKafkaComponent(name, broker, topic, groupID string, publisher *patronamq
 		pub: publisher,
 	}
 
-	cf, err := group.New(name, groupID, []string{topic}, []string{broker}, kafka.Decoder(json.DecodeRaw))
-	if err != nil {
-		return nil, err
-	}
+	saramaCfg := sarama.NewConfig()
+	// batches will be responsible for committing
+	saramaCfg.Consumer.Offsets.AutoCommit.Enable = false
+	saramaCfg.Consumer.Offsets.Initial = sarama.OffsetOldest
+	saramaCfg.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategySticky
+	saramaCfg.Net.DialTimeout = 15 * time.Second
+	saramaCfg.Version = sarama.V2_6_0_0
 
-	cmp, err := async.New("kafka-cmp", cf, kafkaCmp.Process).
-		WithRetries(10).
-		WithRetryWait(5 * time.Second).
-		Create()
+	cmp, err := group.New(
+		name,
+		groupID,
+		[]string{broker},
+		[]string{topic},
+		kafkaCmp.Process,
+		group.FailureStrategy(kafka.SkipStrategy),
+		group.BatchSize(1),
+		group.BatchTimeout(1*time.Second),
+		group.Retries(10),
+		group.RetryWait(3*time.Second),
+		group.SaramaConfig(saramaCfg),
+		group.CommitSync())
+
 	if err != nil {
 		return nil, err
 	}
@@ -103,29 +116,31 @@ func newKafkaComponent(name, broker, topic, groupID string, publisher *patronamq
 	return &kafkaCmp, nil
 }
 
-func (kc *kafkaComponent) Process(msg async.Message) error {
-	var u examples.User
+func (kc *kafkaComponent) Process(batch kafka.Batch) error {
+	for _, msg := range batch.Messages() {
+		var u examples.User
+		err := json.DecodeRaw(msg.Message().Value, &u)
+		if err != nil {
+			log.FromContext(msg.Context()).Errorf("error decoding kafka message: %w", err)
+			return err
+		}
 
-	err := msg.Decode(&u)
-	if err != nil {
-		return err
+		body, err := protobuf.Encode(&u)
+		if err != nil {
+			return fmt.Errorf("failed to encode to protobuf: %w", err)
+		}
+
+		amqpMsg := amqp.Publishing{
+			ContentType: protobuf.Type,
+			Body:        body,
+		}
+
+		err = kc.pub.Publish(msg.Context(), amqpExchange, "", false, false, amqpMsg)
+		if err != nil {
+			return err
+		}
+
+		log.FromContext(msg.Context()).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
 	}
-
-	body, err := protobuf.Encode(&u)
-	if err != nil {
-		return fmt.Errorf("failed to encode to protobuf: %w", err)
-	}
-
-	amqpMsg := amqp.Publishing{
-		ContentType: protobuf.Type,
-		Body:        body,
-	}
-
-	err = kc.pub.Publish(msg.Context(), amqpExchange, "", false, false, amqpMsg)
-	if err != nil {
-		return err
-	}
-
-	log.FromContext(msg.Context()).Infof("request processed: %s %s", u.GetFirstname(), u.GetLastname())
 	return nil
 }

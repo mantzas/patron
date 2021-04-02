@@ -12,15 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/Shopify/sarama"
 	"github.com/beatlabs/patron"
-	"github.com/beatlabs/patron/component/async"
-	"github.com/beatlabs/patron/component/async/kafka"
-	"github.com/beatlabs/patron/component/async/kafka/group"
+	"github.com/beatlabs/patron/component/kafka"
+	"github.com/beatlabs/patron/component/kafka/group"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKafkaComponent_Success(t *testing.T) {
@@ -31,22 +28,24 @@ func TestKafkaComponent_Success(t *testing.T) {
 	actualSuccessfulMessages := make([]string, 0)
 	var consumerWG sync.WaitGroup
 	consumerWG.Add(numOfMessagesToSend)
-	processorFunc := func(msg async.Message) error {
-		var msgContent string
-		err := msg.Decode(&msgContent)
-		assert.NoError(t, err)
-		actualSuccessfulMessages = append(actualSuccessfulMessages, msgContent)
-		consumerWG.Done()
+	processorFunc := func(batch kafka.Batch) error {
+		for _, msg := range batch.Messages() {
+			var msgContent string
+			err := decodeString(msg.Message().Value, &msgContent)
+			assert.NoError(t, err)
+			actualSuccessfulMessages = append(actualSuccessfulMessages, msgContent)
+			consumerWG.Done()
+		}
 		return nil
 	}
-	component := newComponent(t, successTopic, 3, processorFunc)
+	component := newComponent(t, successTopic2, 3, 10, processorFunc)
 
 	// Run Patron with the kafka component
 	patronContext, patronCancel := context.WithCancel(context.Background())
 	var patronWG sync.WaitGroup
 	patronWG.Add(1)
 	go func() {
-		svc, err := patron.New(successTopic, "0", patron.TextLogger())
+		svc, err := patron.New(successTopic2, "0", patron.LogFields(map[string]interface{}{"test": successTopic2}))
 		require.NoError(t, err)
 		err = svc.WithComponents(component).Run(patronContext)
 		require.NoError(t, err)
@@ -60,7 +59,7 @@ func TestKafkaComponent_Success(t *testing.T) {
 		producer, err := NewProducer()
 		require.NoError(t, err)
 		for i := 1; i <= numOfMessagesToSend; i++ {
-			_, _, err := producer.SendMessage(&sarama.ProducerMessage{Topic: successTopic, Value: sarama.StringEncoder(strconv.Itoa(i))})
+			_, _, err := producer.SendMessage(&sarama.ProducerMessage{Topic: successTopic2, Value: sarama.StringEncoder(strconv.Itoa(i))})
 			require.NoError(t, err)
 		}
 		producerWG.Done()
@@ -85,28 +84,32 @@ func TestKafkaComponent_Success(t *testing.T) {
 func TestKafkaComponent_FailAllRetries(t *testing.T) {
 	// Test parameters
 	numOfMessagesToSend := 100
-	errAtIndex := 50
+	errAtIndex := 70
 
 	// Set up the kafka component
 	actualSuccessfulMessages := make([]int, 0)
 	actualNumOfRuns := int32(0)
-	processorFunc := func(msg async.Message) error {
-		var msgContentStr string
-		err := msg.Decode(&msgContentStr)
-		assert.NoError(t, err)
+	processorFunc := func(batch kafka.Batch) error {
+		for _, msg := range batch.Messages() {
+			var msgContent string
+			err := decodeString(msg.Message().Value, &msgContent)
+			assert.NoError(t, err)
 
-		msgIndex, err := strconv.Atoi(msgContentStr)
-		assert.NoError(t, err)
+			msgIndex, err := strconv.Atoi(msgContent)
+			assert.NoError(t, err)
 
-		if msgIndex == errAtIndex {
-			atomic.AddInt32(&actualNumOfRuns, 1)
-			return errors.New("expected error")
+			if msgIndex == errAtIndex {
+				atomic.AddInt32(&actualNumOfRuns, 1)
+				return errors.New("expected error")
+			}
+			actualSuccessfulMessages = append(actualSuccessfulMessages, msgIndex)
 		}
-		actualSuccessfulMessages = append(actualSuccessfulMessages, msgIndex)
 		return nil
 	}
+
 	numOfRetries := uint(3)
-	component := newComponent(t, failAllRetriesTopic, numOfRetries, processorFunc)
+	batchSize := uint(1)
+	component := newComponent(t, failAllRetriesTopic2, numOfRetries, batchSize, processorFunc)
 
 	// Send messages to the kafka topic
 	var producerWG sync.WaitGroup
@@ -115,14 +118,14 @@ func TestKafkaComponent_FailAllRetries(t *testing.T) {
 		producer, err := NewProducer()
 		require.NoError(t, err)
 		for i := 1; i <= numOfMessagesToSend; i++ {
-			_, _, err := producer.SendMessage(&sarama.ProducerMessage{Topic: failAllRetriesTopic, Value: sarama.StringEncoder(strconv.Itoa(i))})
+			_, _, err := producer.SendMessage(&sarama.ProducerMessage{Topic: failAllRetriesTopic2, Value: sarama.StringEncoder(strconv.Itoa(i))})
 			require.NoError(t, err)
 		}
 		producerWG.Done()
 	}()
 
 	// Run Patron with the component - no need for goroutine since we expect it to stop after the retries fail
-	svc, err := patron.New(failAllRetriesTopic, "0", patron.TextLogger())
+	svc, err := patron.New(failAllRetriesTopic2, "0", patron.LogFields(map[string]interface{}{"test": failAllRetriesTopic2}))
 	require.NoError(t, err)
 	err = svc.WithComponents(component).Run(context.Background())
 	assert.Error(t, err)
@@ -148,19 +151,21 @@ func TestKafkaComponent_FailOnceAndRetry(t *testing.T) {
 	actualMessages := make([]string, 0)
 	var consumerWG sync.WaitGroup
 	consumerWG.Add(numOfMessagesToSend)
-	processorFunc := func(msg async.Message) error {
-		var msgContent string
-		err := msg.Decode(&msgContent)
-		assert.NoError(t, err)
+	processorFunc := func(batch kafka.Batch) error {
+		for _, msg := range batch.Messages() {
+			var msgContent string
+			err := decodeString(msg.Message().Value, &msgContent)
+			assert.NoError(t, err)
 
-		if msgContent == "50" && atomic.CompareAndSwapInt32(&didFail, 0, 1) {
-			return errors.New("expected error")
+			if msgContent == "50" && atomic.CompareAndSwapInt32(&didFail, 0, 1) {
+				return errors.New("expected error")
+			}
+			consumerWG.Done()
+			actualMessages = append(actualMessages, msgContent)
 		}
-		consumerWG.Done()
-		actualMessages = append(actualMessages, msgContent)
 		return nil
 	}
-	component := newComponent(t, failAndRetryTopic, 3, processorFunc)
+	component := newComponent(t, failAndRetryTopic2, 3, 1, processorFunc)
 
 	// Send messages to the kafka topic
 	var producerWG sync.WaitGroup
@@ -169,7 +174,7 @@ func TestKafkaComponent_FailOnceAndRetry(t *testing.T) {
 		producer, err := NewProducer()
 		require.NoError(t, err)
 		for i := 1; i <= numOfMessagesToSend; i++ {
-			_, _, err := producer.SendMessage(&sarama.ProducerMessage{Topic: failAndRetryTopic, Value: sarama.StringEncoder(strconv.Itoa(i))})
+			_, _, err := producer.SendMessage(&sarama.ProducerMessage{Topic: failAndRetryTopic2, Value: sarama.StringEncoder(strconv.Itoa(i))})
 			require.NoError(t, err)
 		}
 		producerWG.Done()
@@ -180,7 +185,7 @@ func TestKafkaComponent_FailOnceAndRetry(t *testing.T) {
 	var patronWG sync.WaitGroup
 	patronWG.Add(1)
 	go func() {
-		svc, err := patron.New(failAndRetryTopic, "0", patron.TextLogger())
+		svc, err := patron.New(failAndRetryTopic2, "0", patron.LogFields(map[string]interface{}{"test": failAndRetryTopic2}))
 		require.NoError(t, err)
 		err = svc.WithComponents(component).Run(patronContext)
 		require.NoError(t, err)
@@ -203,28 +208,36 @@ func TestKafkaComponent_FailOnceAndRetry(t *testing.T) {
 	assert.Equal(t, expectedMessages, actualMessages)
 }
 
-func newComponent(t *testing.T, name string, retries uint, processorFunc func(message async.Message) error) *async.Component {
-	decode := func(data []byte, v interface{}) error {
-		tmp := string(data)
-		p := v.(*string)
-		*p = tmp
-		return nil
-	}
-	factory, err := group.New(
+func newComponent(t *testing.T, name string, retries uint, batchSize uint, processorFunc kafka.BatchProcessorFunc) *group.Component {
+	saramaCfg := sarama.NewConfig()
+	saramaCfg.Consumer.Offsets.Initial = sarama.OffsetOldest
+	saramaCfg.Version = sarama.V2_6_0_0
+
+	broker := fmt.Sprintf("%s:%s", kafkaHost, kafkaPort)
+	cmp, err := group.New(
 		name,
 		name+"-group",
+		[]string{broker},
 		[]string{name},
-		[]string{fmt.Sprintf("%s:%s", kafkaHost, kafkaPort)},
-		kafka.Decoder(decode),
-		kafka.Start(sarama.OffsetOldest))
-	require.NoError(t, err)
-
-	cmp, err := async.New(name, factory, processorFunc).
-		WithRetries(retries).
-		WithRetryWait(200 * time.Millisecond).
-		WithFailureStrategy(async.NackExitStrategy).
-		Create()
+		processorFunc,
+		group.FailureStrategy(kafka.ExitStrategy),
+		group.BatchSize(batchSize),
+		group.BatchTimeout(100*time.Millisecond),
+		group.Retries(retries),
+		group.RetryWait(200*time.Millisecond),
+		group.SaramaConfig(saramaCfg),
+		group.CommitSync())
 	require.NoError(t, err)
 
 	return cmp
+}
+
+func decodeString(data []byte, v interface{}) error {
+	tmp := string(data)
+	p, ok := v.(*string)
+	if !ok {
+		return errors.New("not a string")
+	}
+	*p = tmp
+	return nil
 }
