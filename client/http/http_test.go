@@ -12,12 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beatlabs/patron/encoding"
-	"github.com/beatlabs/patron/reliability/circuitbreaker"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/mocktracer"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/beatlabs/patron/encoding"
+	"github.com/beatlabs/patron/reliability/circuitbreaker"
 )
 
 func TestTracedClient_Do(t *testing.T) {
@@ -40,6 +42,7 @@ func TestTracedClient_Do(t *testing.T) {
 	assert.NoError(t, err)
 	reqErr, err := http.NewRequest("GET", "", nil)
 	assert.NoError(t, err)
+	reqErr.Header.Set(encoding.AcceptEncodingHeader, "gzip")
 	opName := opName("GET", ts.URL)
 	opNameError := "HTTP GET"
 
@@ -48,16 +51,17 @@ func TestTracedClient_Do(t *testing.T) {
 		req *http.Request
 	}
 	tests := []struct {
-		name       string
-		args       args
-		wantErr    bool
-		wantOpName string
+		name        string
+		args        args
+		wantErr     bool
+		wantOpName  string
+		wantCounter int
 	}{
-		{name: "respose", args: args{c: c, req: req}, wantErr: false, wantOpName: opName},
-		{name: "response with circuit breaker", args: args{c: cb, req: req}, wantErr: false, wantOpName: opName},
-		{name: "respose with custom transport", args: args{c: ct, req: req}, wantErr: false, wantOpName: opName},
-		{name: "error", args: args{c: cb, req: reqErr}, wantErr: true, wantOpName: opNameError},
-		{name: "error with circuit breaker", args: args{c: cb, req: reqErr}, wantErr: true, wantOpName: opNameError},
+		{name: "response", args: args{c: c, req: req}, wantErr: false, wantOpName: opName, wantCounter: 1},
+		{name: "response with circuit breaker", args: args{c: cb, req: req}, wantErr: false, wantOpName: opName, wantCounter: 1},
+		{name: "response with custom transport", args: args{c: ct, req: req}, wantErr: false, wantOpName: opName, wantCounter: 1},
+		{name: "error", args: args{c: cb, req: reqErr}, wantErr: true, wantOpName: opNameError, wantCounter: 0},
+		{name: "error with circuit breaker", args: args{c: cb, req: reqErr}, wantErr: true, wantOpName: opNameError, wantCounter: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -73,6 +77,9 @@ func TestTracedClient_Do(t *testing.T) {
 			assert.NotNil(t, sp)
 			assert.Equal(t, tt.wantOpName, sp.OperationName)
 			mtr.Reset()
+			// Test counters.
+			assert.Equal(t, tt.wantCounter, testutil.CollectAndCount(reqDurationMetrics))
+			reqDurationMetrics.Reset()
 		})
 	}
 }

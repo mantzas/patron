@@ -7,21 +7,41 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/beatlabs/patron/correlation"
 	"github.com/beatlabs/patron/encoding"
 	"github.com/beatlabs/patron/log"
 	"github.com/beatlabs/patron/reliability/circuitbreaker"
 	"github.com/beatlabs/patron/trace"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 )
 
 const (
 	clientComponent = "http-client"
 )
+
+var (
+	reqDurationMetrics *prometheus.HistogramVec
+)
+
+func init() {
+	reqDurationMetrics = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "client",
+			Subsystem: "http",
+			Name:      "request_duration_seconds",
+			Help:      "HTTP requests completed by the client.",
+		},
+		[]string{"method", "url", "status_code"},
+	)
+	prometheus.MustRegister(reqDurationMetrics)
+}
 
 // Client interface of a HTTP client.
 type Client interface {
@@ -64,15 +84,22 @@ func (tc *TracedClient) Do(ctx context.Context, req *http.Request) (*http.Respon
 
 	req.Header.Set(correlation.HeaderID, correlation.IDFromContext(ctx))
 
+	start := time.Now()
+
 	rsp, err := tc.do(req)
-	if err != nil {
-		ext.Error.Set(ht.Span(), true)
-	} else {
-		ext.HTTPStatusCode.Set(ht.Span(), uint16(rsp.StatusCode))
-	}
 
 	ext.HTTPMethod.Set(ht.Span(), req.Method)
 	ext.HTTPUrl.Set(ht.Span(), req.URL.String())
+
+	if err != nil {
+		ext.Error.Set(ht.Span(), true)
+		return rsp, err
+	}
+
+	ext.HTTPStatusCode.Set(ht.Span(), uint16(rsp.StatusCode))
+	reqDurationMetrics.
+		WithLabelValues(req.Method, req.URL.Host, strconv.Itoa(rsp.StatusCode)).
+		Observe(time.Since(start).Seconds())
 
 	if hdr := req.Header.Get(encoding.AcceptEncodingHeader); hdr != "" {
 		rsp.Body = decompress(hdr, rsp)
