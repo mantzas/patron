@@ -253,14 +253,13 @@ func selectByWeight(weighted map[float64]string) (string, error) {
 }
 
 // NewCompressionMiddleware initializes a compression middleware.
-// As per Section 3.5 of the HTTP/1.1 RFC, we support GZIP and Deflate as compression methods.
+// As per Section 3.5 of the HTTP/1.1 RFC, GZIP and Deflate compression methods are supported.
 // https://tools.ietf.org/html/rfc2616#section-14.3
 func NewCompressionMiddleware(deflateLevel int, ignoreRoutes ...string) MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if ignore(ignoreRoutes, r.URL.String()) {
 				next.ServeHTTP(w, r)
-				log.Debugf("url %s skipped from compression middleware", r.URL.String())
 				return
 			}
 
@@ -308,7 +307,6 @@ func NewCompressionMiddleware(deflateLevel int, ignoreRoutes ...string) Middlewa
 
 			crw := compressionResponseWriter{Writer: writer, ResponseWriter: w}
 			next.ServeHTTP(crw, r)
-			log.Debugf("url %s used with %s compression method", r.URL.String(), hdr)
 		})
 	}
 }
