@@ -160,6 +160,7 @@ func (s *service) waitTermination(chErr <-chan error) error {
 			switch sig {
 			case syscall.SIGHUP:
 				s.sighupHandler()
+				return nil
 			default:
 				return nil
 			}
