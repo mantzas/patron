@@ -28,9 +28,10 @@ func FailureStrategy(fs kafka.FailStrategy) OptionFunc {
 }
 
 // Retries sets the number of time a component should retry in case of an error.
-// These retries are useful when there are temporary connection issues, re-balancing, in the case
-// where a message batch fails to be processed and the failure strategy is set to kafka.ExitStrategy
-// or if there is any other reason that the component needs to reconnect.
+// These retries are depleted in these cases:
+// * when there are temporary connection issues
+// * a message batch fails to be processed through the user-defined processing function and the failure strategy is set to kafka.ExitStrategy
+// * any other reason for which the component needs to reconnect.
 func Retries(count uint) OptionFunc {
 	return func(c *Component) error {
 		c.retries = count
