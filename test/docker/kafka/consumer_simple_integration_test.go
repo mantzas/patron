@@ -3,6 +3,7 @@
 package kafka
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -219,6 +220,47 @@ func TestSimpleConsume_WithNotificationOnceReachingLatestOffset(t *testing.T) {
 	// We should also check that the notification channel is also eventually closed.
 	select {
 	case <-time.After(time.Second):
+		assert.FailNow(t, "notification channel not closed")
+	case _, open := <-chNotif:
+		assert.False(t, open)
+	}
+}
+
+func TestSimpleConsume_WithNotificationOnceReachingLatestOffset_NoMessages(t *testing.T) {
+	chErr := make(chan error)
+	chNotif := make(chan struct{})
+	go func() {
+		factory, err := simple.New("test5", simpleTopic5, Brokers(), kafka.DecoderJSON(), kafka.Version(sarama.V2_1_0_0.String()),
+			kafka.StartFromOldest(), simple.WithNotificationOnceReachingLatestOffset(chNotif))
+		if err != nil {
+			chErr <- err
+			return
+		}
+
+		consumer, err := factory.Create()
+		if err != nil {
+			chErr <- err
+			return
+		}
+		defer func() {
+			_ = consumer.Close()
+		}()
+
+		ctx, cnl := context.WithCancel(context.Background())
+		defer cnl()
+
+		_, _, err = consumer.Consume(ctx)
+		if err != nil {
+			chErr <- err
+		}
+	}()
+
+	// At this stage, we have received all the expected messages.
+	// We should also check that the notification channel is also eventually closed.
+	select {
+	case err := <-chErr:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
 		assert.FailNow(t, "notification channel not closed")
 	case _, open := <-chNotif:
 		assert.False(t, open)
