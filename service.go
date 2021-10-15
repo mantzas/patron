@@ -224,7 +224,7 @@ func Logger(logger log.Logger) Option {
 // TextLogger to use Go's standard logger.
 func TextLogger() Option {
 	return func(cfg *Config) {
-		cfg.logger = std.New(os.Stderr, getLogLevel(), nil)
+		cfg.logger = std.New(os.Stderr, getLogLevel(), cfg.fields)
 	}
 }
 
