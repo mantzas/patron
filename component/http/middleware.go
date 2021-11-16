@@ -73,6 +73,11 @@ func (w *responseWriter) Header() http.Header {
 
 // Write to the internal responseWriter and sets the status if not set already.
 func (w *responseWriter) Write(d []byte) (int, error) {
+	if !w.statusHeaderWritten {
+		w.status = http.StatusOK
+		w.statusHeaderWritten = true
+	}
+
 	value, err := w.writer.Write(d)
 	if err != nil {
 		return value, err
@@ -80,11 +85,6 @@ func (w *responseWriter) Write(d []byte) (int, error) {
 
 	if w.capturePayload {
 		w.responsePayload.Write(d)
-	}
-
-	if !w.statusHeaderWritten {
-		w.status = http.StatusOK
-		w.statusHeaderWritten = true
 	}
 
 	return value, err

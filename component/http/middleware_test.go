@@ -688,3 +688,45 @@ func TestIsConnectionReset(t *testing.T) {
 		})
 	}
 }
+
+type failWriter struct {
+}
+
+func (fw *failWriter) Header() http.Header {
+	return http.Header{}
+}
+
+func (fw *failWriter) Write([]byte) (int, error) {
+	return 0, fmt.Errorf("foo")
+}
+
+func (fw *failWriter) WriteHeader(statusCode int) {
+
+}
+
+func TestSetResponseWriterStatusOnResponseFailWrite(t *testing.T) {
+	failWriter := &failWriter{}
+	failDynamicCompressionResponseWriter := &dynamicCompressionResponseWriter{failWriter, "", nil, 0, deflateLevel}
+
+	tests := []struct {
+		Name           string
+		ResponseWriter *responseWriter
+	}{
+		{
+			Name:           "Failing responseWriter with http.ResponseWriter",
+			ResponseWriter: newResponseWriter(failWriter, false),
+		},
+		{
+			Name:           "Failing responseWriter with http.ResponseWriter",
+			ResponseWriter: newResponseWriter(failDynamicCompressionResponseWriter, false),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			_, err := test.ResponseWriter.Write([]byte(`"foo":"bar"`))
+			assert.Error(t, err)
+			assert.Equal(t, http.StatusOK, test.ResponseWriter.status)
+		})
+	}
+}
