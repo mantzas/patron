@@ -63,7 +63,7 @@ func (p Publisher) Publish(ctx context.Context, msg *sqs.SendMessageInput) (mess
 
 	start := time.Now()
 	out, err := p.api.SendMessageWithContext(ctx, msg)
-	observePublish(span, start, *msg.QueueUrl, err)
+	observePublish(ctx, span, start, *msg.QueueUrl, err)
 	if err != nil {
 		return "", fmt.Errorf("failed to publish message: %w", err)
 	}
@@ -101,7 +101,11 @@ func injectHeaders(span opentracing.Span, input *sqs.SendMessageInput) error {
 	return nil
 }
 
-func observePublish(span opentracing.Span, start time.Time, queue string, err error) {
+func observePublish(ctx context.Context, span opentracing.Span, start time.Time, queue string, err error) {
 	trace.SpanComplete(span, err)
-	publishDurationMetrics.WithLabelValues(queue, strconv.FormatBool(err != nil)).Observe(time.Since(start).Seconds())
+
+	durationHistogram := trace.Histogram{
+		Observer: publishDurationMetrics.WithLabelValues(queue, strconv.FormatBool(err == nil)),
+	}
+	durationHistogram.Observe(ctx, time.Since(start).Seconds())
 }
