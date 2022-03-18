@@ -106,8 +106,9 @@ func getSingleHeaderEncoding(header string) (string, encoding.DecodeFunc, encodi
 	var dec encoding.DecodeFunc
 	var ct string
 
-	switch header {
-	case "*/*", json.Type, json.TypeCharset:
+	parts := strings.SplitN(header, ";", 2)
+	switch parts[0] {
+	case "*/*", "*", "identity", json.Type, json.TypeCharset:
 		enc = json.Encode
 		dec = json.Decode
 		ct = json.TypeCharset
