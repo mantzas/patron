@@ -242,7 +242,8 @@ func (c *consumer) Consume(ctx context.Context) (<-chan async.Message, <-chan er
 }
 
 func (c *consumer) ifStartingOffsetAfterLatestOffset(latestOffset int64, partition int) bool {
-	return c.startingOffsets[int32(partition)] >= latestOffset
+	startingOffset := c.startingOffsets[int32(partition)]
+	return startingOffset <= sarama.OffsetNewest || startingOffset >= latestOffset
 }
 
 func (c *consumer) partitionsFromOffset(_ context.Context) ([]sarama.PartitionConsumer, error) {
