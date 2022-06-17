@@ -99,6 +99,7 @@ func (l *Logger) Sub(fields map[string]interface{}) patronLog.Logger {
 
 // Fatal logging.
 func (l *Logger) Fatal(args ...interface{}) {
+	patronLog.IncreaseFatalCounter()
 	if !l.shouldLog(patronLog.FatalLevel) {
 		return
 	}
@@ -109,6 +110,7 @@ func (l *Logger) Fatal(args ...interface{}) {
 
 // Fatalf logging.
 func (l *Logger) Fatalf(msg string, args ...interface{}) {
+	patronLog.IncreaseFatalCounter()
 	if !l.shouldLog(patronLog.FatalLevel) {
 		return
 	}
@@ -119,6 +121,7 @@ func (l *Logger) Fatalf(msg string, args ...interface{}) {
 
 // Panic logging.
 func (l *Logger) Panic(args ...interface{}) {
+	patronLog.IncreasePanicCounter()
 	if !l.shouldLog(patronLog.PanicLevel) {
 		return
 	}
@@ -128,6 +131,7 @@ func (l *Logger) Panic(args ...interface{}) {
 
 // Panicf logging.
 func (l *Logger) Panicf(msg string, args ...interface{}) {
+	patronLog.IncreasePanicCounter()
 	if !l.shouldLog(patronLog.PanicLevel) {
 		return
 	}
@@ -137,6 +141,7 @@ func (l *Logger) Panicf(msg string, args ...interface{}) {
 
 // Error logging.
 func (l *Logger) Error(args ...interface{}) {
+	patronLog.IncreaseErrorCounter()
 	if !l.shouldLog(patronLog.ErrorLevel) {
 		return
 	}
@@ -146,6 +151,7 @@ func (l *Logger) Error(args ...interface{}) {
 
 // Errorf logging.
 func (l *Logger) Errorf(msg string, args ...interface{}) {
+	patronLog.IncreaseErrorCounter()
 	if !l.shouldLog(patronLog.ErrorLevel) {
 		return
 	}
@@ -155,6 +161,7 @@ func (l *Logger) Errorf(msg string, args ...interface{}) {
 
 // Warn logging.
 func (l *Logger) Warn(args ...interface{}) {
+	patronLog.IncreaseWarnCounter()
 	if !l.shouldLog(patronLog.WarnLevel) {
 		return
 	}
@@ -164,6 +171,7 @@ func (l *Logger) Warn(args ...interface{}) {
 
 // Warnf logging.
 func (l *Logger) Warnf(msg string, args ...interface{}) {
+	patronLog.IncreaseWarnCounter()
 	if !l.shouldLog(patronLog.WarnLevel) {
 		return
 	}
@@ -173,6 +181,7 @@ func (l *Logger) Warnf(msg string, args ...interface{}) {
 
 // Info logging.
 func (l *Logger) Info(args ...interface{}) {
+	patronLog.IncreaseInfoCounter()
 	if !l.shouldLog(patronLog.InfoLevel) {
 		return
 	}
@@ -182,6 +191,7 @@ func (l *Logger) Info(args ...interface{}) {
 
 // Infof logging.
 func (l *Logger) Infof(msg string, args ...interface{}) {
+	patronLog.IncreaseInfoCounter()
 	if !l.shouldLog(patronLog.InfoLevel) {
 		return
 	}
@@ -191,6 +201,7 @@ func (l *Logger) Infof(msg string, args ...interface{}) {
 
 // Debug logging.
 func (l *Logger) Debug(args ...interface{}) {
+	patronLog.IncreaseDebugCounter()
 	if !l.shouldLog(patronLog.DebugLevel) {
 		return
 	}
@@ -200,6 +211,7 @@ func (l *Logger) Debug(args ...interface{}) {
 
 // Debugf logging.
 func (l *Logger) Debugf(msg string, args ...interface{}) {
+	patronLog.IncreaseDebugCounter()
 	if !l.shouldLog(patronLog.DebugLevel) {
 		return
 	}

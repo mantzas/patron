@@ -31,20 +31,26 @@ const (
 	NoLevel Level = ""
 )
 
-var levelOrder = map[Level]int{
-	DebugLevel: 0,
-	InfoLevel:  1,
-	WarnLevel:  2,
-	ErrorLevel: 3,
-	FatalLevel: 4,
-	PanicLevel: 5,
-	NoLevel:    6,
-}
-
-// LevelOrder returns the numerical order of the level.
-func LevelOrder(lvl Level) int {
-	return levelOrder[lvl]
-}
+var (
+	levelOrder = map[Level]int{
+		DebugLevel: 0,
+		InfoLevel:  1,
+		WarnLevel:  2,
+		ErrorLevel: 3,
+		FatalLevel: 4,
+		PanicLevel: 5,
+		NoLevel:    6,
+	}
+	logCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "observability",
+			Subsystem: "log",
+			Name:      "counter",
+			Help:      "Counts logger calls per level",
+		},
+		[]string{"level"},
+	)
+)
 
 // Logger interface definition of a logger.
 type Logger interface {
@@ -67,21 +73,57 @@ type Logger interface {
 type ctxKey struct{}
 
 var (
-	logger     Logger = &fmtLogger{}
-	once       sync.Once
-	logCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "observability",
-			Subsystem: "log",
-			Name:      "counter",
-			Help:      "Counts the log level",
-		},
-		[]string{"level"},
-	)
+	logger Logger = &fmtLogger{}
+	once   sync.Once
 )
 
 func init() {
 	prometheus.MustRegister(logCounter)
+}
+
+// LevelCount returns the total level count.
+func LevelCount(level string) prometheus.Counter {
+	return logCounter.WithLabelValues(level)
+}
+
+// ResetLogCounter resets the log counter.
+func ResetLogCounter() {
+	logCounter.Reset()
+}
+
+// IncreaseFatalCounter increases the fatal counter.
+func IncreaseFatalCounter() {
+	logCounter.WithLabelValues(string(FatalLevel)).Inc()
+}
+
+// IncreasePanicCounter increases the panic counter.
+func IncreasePanicCounter() {
+	logCounter.WithLabelValues(string(PanicLevel)).Inc()
+}
+
+// IncreaseErrorCounter increases the error counter.
+func IncreaseErrorCounter() {
+	logCounter.WithLabelValues(string(ErrorLevel)).Inc()
+}
+
+// IncreaseWarnCounter increases the warn counter.
+func IncreaseWarnCounter() {
+	logCounter.WithLabelValues(string(WarnLevel)).Inc()
+}
+
+// IncreaseInfoCounter increases the info counter.
+func IncreaseInfoCounter() {
+	logCounter.WithLabelValues(string(InfoLevel)).Inc()
+}
+
+// IncreaseDebugCounter increases the debug counter.
+func IncreaseDebugCounter() {
+	logCounter.WithLabelValues(string(DebugLevel)).Inc()
+}
+
+// LevelOrder returns the numerical order of the level.
+func LevelOrder(lvl Level) int {
+	return levelOrder[lvl]
 }
 
 // Setup logging by providing a logger factory.
@@ -119,73 +161,61 @@ func Sub(ff map[string]interface{}) Logger {
 
 // Panic logging.
 func Panic(args ...interface{}) {
-	logCounter.WithLabelValues(string(PanicLevel)).Inc()
 	logger.Panic(args...)
 }
 
 // Panicf logging.
 func Panicf(msg string, args ...interface{}) {
-	logCounter.WithLabelValues(string(PanicLevel)).Inc()
 	logger.Panicf(msg, args...)
 }
 
 // Fatal logging.
 func Fatal(args ...interface{}) {
-	logCounter.WithLabelValues(string(FatalLevel)).Inc()
 	logger.Fatal(args...)
 }
 
 // Fatalf logging.
 func Fatalf(msg string, args ...interface{}) {
-	logCounter.WithLabelValues(string(FatalLevel)).Inc()
 	logger.Fatalf(msg, args...)
 }
 
 // Error logging.
 func Error(args ...interface{}) {
-	logCounter.WithLabelValues(string(ErrorLevel)).Inc()
 	logger.Error(args...)
 }
 
 // Errorf logging.
 func Errorf(msg string, args ...interface{}) {
-	logCounter.WithLabelValues(string(ErrorLevel)).Inc()
 	logger.Errorf(msg, args...)
 }
 
 // Warn logging.
 func Warn(args ...interface{}) {
-	logCounter.WithLabelValues(string(WarnLevel)).Inc()
 	logger.Warn(args...)
 }
 
 // Warnf logging.
 func Warnf(msg string, args ...interface{}) {
-	logCounter.WithLabelValues(string(WarnLevel)).Inc()
 	logger.Warnf(msg, args...)
 }
 
 // Info logging.
 func Info(args ...interface{}) {
-	logCounter.WithLabelValues(string(InfoLevel)).Inc()
 	logger.Info(args...)
 }
 
 // Infof logging.
 func Infof(msg string, args ...interface{}) {
-	logCounter.WithLabelValues(string(InfoLevel)).Inc()
 	logger.Infof(msg, args...)
 }
 
 // Debug logging.
 func Debug(args ...interface{}) {
-	logCounter.WithLabelValues(string(DebugLevel)).Inc()
 	logger.Debug(args...)
 }
 
 // Debugf logging.
 func Debugf(msg string, args ...interface{}) {
-	logCounter.WithLabelValues(string(DebugLevel)).Inc()
 	logger.Debugf(msg, args...)
 }
 
@@ -203,65 +233,77 @@ func (fl *fmtLogger) Sub(map[string]interface{}) Logger {
 
 // Panic logging.
 func (fl *fmtLogger) Panic(args ...interface{}) {
+	IncreasePanicCounter()
 	fmt.Print(args...)
 	panic(args)
 }
 
 // Panicf logging.
 func (fl *fmtLogger) Panicf(msg string, args ...interface{}) {
+	IncreasePanicCounter()
 	fmt.Printf(msg, args...)
 	panic(args)
 }
 
 // Fatal logging.
 func (fl *fmtLogger) Fatal(args ...interface{}) {
+	IncreaseFatalCounter()
 	fmt.Print(args...)
 	os.Exit(1)
 }
 
 // Fatalf logging.
 func (fl *fmtLogger) Fatalf(msg string, args ...interface{}) {
+	IncreaseFatalCounter()
 	fmt.Printf(msg, args...)
 	os.Exit(1)
 }
 
 // Error logging.
 func (fl *fmtLogger) Error(args ...interface{}) {
+	IncreaseErrorCounter()
 	fmt.Print(args...)
 }
 
 // Errorf logging.
 func (fl *fmtLogger) Errorf(msg string, args ...interface{}) {
+	IncreaseErrorCounter()
 	fmt.Printf(msg, args...)
 }
 
 // Warn logging.
 func (fl *fmtLogger) Warn(args ...interface{}) {
+	IncreaseWarnCounter()
 	fmt.Print(args...)
 }
 
 // Warnf logging.
 func (fl *fmtLogger) Warnf(msg string, args ...interface{}) {
+	IncreaseWarnCounter()
 	fmt.Printf(msg, args...)
 }
 
 // Info logging.
 func (fl *fmtLogger) Info(args ...interface{}) {
+	IncreaseInfoCounter()
 	fmt.Print(args...)
 }
 
 // Infof logging.
 func (fl *fmtLogger) Infof(msg string, args ...interface{}) {
+	IncreaseInfoCounter()
 	fmt.Printf(msg, args...)
 }
 
 // Debug logging.
 func (fl *fmtLogger) Debug(args ...interface{}) {
+	IncreaseDebugCounter()
 	fmt.Print(args...)
 }
 
 // Debugf logging.
 func (fl *fmtLogger) Debugf(msg string, args ...interface{}) {
+	IncreaseDebugCounter()
 	fmt.Printf(msg, args...)
 }
 

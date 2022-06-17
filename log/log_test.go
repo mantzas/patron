@@ -37,30 +37,36 @@ func TestLevelOrder(t *testing.T) {
 
 func TestLogMetrics(t *testing.T) {
 	t.Parallel()
-	logCounter.Reset()
-	l := testLogger{}
-	logger = &l
+	ResetLogCounter()
+	l = &fmtLogger{}
 	tests := map[string]struct {
 		lvl      Level
 		logfunc  func(args ...interface{})
 		logfuncf func(msg string, args ...interface{})
 	}{
-		"debug": {lvl: DebugLevel, logfunc: Debug, logfuncf: Debugf},
-		"info":  {lvl: InfoLevel, logfunc: Info, logfuncf: Infof},
-		"warn":  {lvl: WarnLevel, logfunc: Warn, logfuncf: Warnf},
-		"error": {lvl: ErrorLevel, logfunc: Error, logfuncf: Errorf},
-		"fatal": {lvl: FatalLevel, logfunc: Fatal, logfuncf: Fatalf},
-		"panic": {lvl: PanicLevel, logfunc: Panic, logfuncf: Panicf},
+		"debug": {lvl: DebugLevel, logfunc: l.Debug, logfuncf: l.Debugf},
+		"info":  {lvl: InfoLevel, logfunc: l.Info, logfuncf: l.Infof},
+		"warn":  {lvl: WarnLevel, logfunc: l.Warn, logfuncf: l.Warnf},
+		"error": {lvl: ErrorLevel, logfunc: l.Error, logfuncf: l.Errorf},
+		"panic": {lvl: PanicLevel, logfunc: l.Panic, logfuncf: l.Panicf},
 	}
 	for name, tt := range tests {
 		tt := tt
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, 0.0, testutil.ToFloat64(logCounter.WithLabelValues(string(tt.lvl))))
-			tt.logfunc(name)
-			assert.Equal(t, 1.0, testutil.ToFloat64(logCounter.WithLabelValues(string(tt.lvl))))
-			tt.logfuncf(name)
-			assert.Equal(t, 2.0, testutil.ToFloat64(logCounter.WithLabelValues(string(tt.lvl))))
+			assert.Equal(t, 0.0, testutil.ToFloat64(LevelCount(string(tt.lvl))))
+			if tt.lvl == PanicLevel {
+				assert.Panics(t, func() { tt.logfunc(name) })
+			} else {
+				tt.logfunc(name)
+			}
+			assert.Equal(t, 1.0, testutil.ToFloat64(LevelCount(string(tt.lvl))))
+			if tt.lvl == PanicLevel {
+				assert.Panics(t, func() { tt.logfuncf(name) })
+			} else {
+				tt.logfuncf(name)
+			}
+			assert.Equal(t, 2.0, testutil.ToFloat64(LevelCount(string(tt.lvl))))
 		})
 	}
 }

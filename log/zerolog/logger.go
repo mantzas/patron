@@ -69,61 +69,73 @@ func (l *Logger) Sub(ff map[string]interface{}) log.Logger {
 
 // Panic logging.
 func (l *Logger) Panic(args ...interface{}) {
+	log.IncreasePanicCounter()
 	l.logger.Panic().Msg(fmt.Sprint(args...))
 }
 
 // Panicf logging.
 func (l *Logger) Panicf(msg string, args ...interface{}) {
+	log.IncreasePanicCounter()
 	l.loggerf.Panic().Msgf(msg, args...)
 }
 
 // Fatal logging.
 func (l *Logger) Fatal(args ...interface{}) {
+	log.IncreaseFatalCounter()
 	l.logger.Fatal().Msg(fmt.Sprint(args...))
 }
 
 // Fatalf logging.
 func (l *Logger) Fatalf(msg string, args ...interface{}) {
+	log.IncreaseFatalCounter()
 	l.loggerf.Fatal().Msgf(msg, args...)
 }
 
 // Error logging.
 func (l *Logger) Error(args ...interface{}) {
+	log.IncreaseErrorCounter()
 	l.logger.Error().Msg(fmt.Sprint(args...))
 }
 
 // Errorf logging.
 func (l *Logger) Errorf(msg string, args ...interface{}) {
+	log.IncreaseErrorCounter()
 	l.loggerf.Error().Msgf(msg, args...)
 }
 
 // Warn logging.
 func (l *Logger) Warn(args ...interface{}) {
+	log.IncreaseWarnCounter()
 	l.logger.Warn().Msg(fmt.Sprint(args...))
 }
 
 // Warnf logging.
 func (l *Logger) Warnf(msg string, args ...interface{}) {
+	log.IncreaseWarnCounter()
 	l.loggerf.Warn().Msgf(msg, args...)
 }
 
 // Info logging.
 func (l *Logger) Info(args ...interface{}) {
+	log.IncreaseInfoCounter()
 	l.logger.Info().Msg(fmt.Sprint(args...))
 }
 
 // Infof logging.
 func (l *Logger) Infof(msg string, args ...interface{}) {
+	log.IncreaseInfoCounter()
 	l.loggerf.Info().Msgf(msg, args...)
 }
 
 // Debug logging.
 func (l *Logger) Debug(args ...interface{}) {
+	log.IncreaseDebugCounter()
 	l.logger.Debug().Msg(fmt.Sprint(args...))
 }
 
 // Debugf logging.
 func (l *Logger) Debugf(msg string, args ...interface{}) {
+	log.IncreaseDebugCounter()
 	l.loggerf.Debug().Msgf(msg, args...)
 }
 

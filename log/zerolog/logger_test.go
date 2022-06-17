@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/beatlabs/patron/log"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,6 +28,42 @@ func init() {
 	}
 	defaultSourceHookWithFormat = &sourceHookWithSkip{
 		skip: 5,
+	}
+}
+
+func TestLogMetrics(t *testing.T) {
+	t.Parallel()
+	log.ResetLogCounter()
+	l := New(&zerolog.Logger{}, log.DebugLevel, nil)
+	tests := map[string]struct {
+		lvl      log.Level
+		logfunc  func(args ...interface{})
+		logfuncf func(msg string, args ...interface{})
+	}{
+		"debug": {lvl: log.DebugLevel, logfunc: l.Debug, logfuncf: l.Debugf},
+		"info":  {lvl: log.InfoLevel, logfunc: l.Info, logfuncf: l.Infof},
+		"warn":  {lvl: log.WarnLevel, logfunc: l.Warn, logfuncf: l.Warnf},
+		"error": {lvl: log.ErrorLevel, logfunc: l.Error, logfuncf: l.Errorf},
+		"panic": {lvl: log.PanicLevel, logfunc: l.Panic, logfuncf: l.Panicf},
+	}
+	for name, tt := range tests {
+		tt := tt
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, 0.0, testutil.ToFloat64(log.LevelCount(string(tt.lvl))))
+			if tt.lvl == log.PanicLevel {
+				assert.Panics(t, func() { tt.logfunc(name) })
+			} else {
+				tt.logfunc(name)
+			}
+			assert.Equal(t, 1.0, testutil.ToFloat64(log.LevelCount(string(tt.lvl))))
+			if tt.lvl == log.PanicLevel {
+				assert.Panics(t, func() { tt.logfuncf(name) })
+			} else {
+				tt.logfuncf(name)
+			}
+			assert.Equal(t, 2.0, testutil.ToFloat64(log.LevelCount(string(tt.lvl))))
+		})
 	}
 }
 
