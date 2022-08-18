@@ -794,3 +794,38 @@ func TestNewRequestObserver(t *testing.T) {
 
 	assert.Equal(t, 200, rc.Code)
 }
+
+func TestNewAppVersion(t *testing.T) {
+	appName := "name"
+	appVersion := "1.0"
+	middlewareWith := NewAppNameVersion(appName, appVersion)
+	middlewareWithout := NewAppNameVersion("", "")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
+
+	// check if the route actually ignored
+	req, err := http.NewRequest("GET", "/api", nil)
+	assert.NoError(t, err)
+
+	tests := map[string]struct {
+		middleware Func
+		hasVersion bool
+	}{
+		"with":    {middleware: middlewareWith, hasVersion: true},
+		"without": {middleware: middlewareWithout, hasVersion: false},
+	}
+	for name, tt := range tests {
+		tt := tt
+		t.Run(name, func(t *testing.T) {
+			rc := httptest.NewRecorder()
+
+			tt.middleware(handler).ServeHTTP(rc, req)
+			if tt.hasVersion {
+				assert.Equal(t, appVersion, rc.Header().Get(appVersionHeader))
+				assert.Equal(t, appName, rc.Header().Get(appNameHeader))
+			} else {
+				assert.Equal(t, "", rc.Header().Get(appVersionHeader))
+				assert.Equal(t, "", rc.Header().Get(appNameHeader))
+			}
+		})
+	}
+}

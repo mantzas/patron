@@ -34,10 +34,12 @@ const (
 	serverComponent = "http-server"
 	fieldNameError  = "error"
 
-	gzipHeader     = "gzip"
-	deflateHeader  = "deflate"
-	identityHeader = "identity"
-	anythingHeader = "*"
+	gzipHeader       = "gzip"
+	deflateHeader    = "deflate"
+	identityHeader   = "identity"
+	anythingHeader   = "*"
+	appVersionHeader = "X-App-Version"
+	appNameHeader    = "X-App-Name"
 )
 
 var (
@@ -117,6 +119,21 @@ func NewRecovery() Func {
 					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				}
 			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// NewAppNameVersion adds an app name header and an app version header to all responses. Existing values of these headers are overwritten.
+func NewAppNameVersion(name, version string) Func {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if version != "" {
+				w.Header().Set(appVersionHeader, version)
+			}
+			if name != "" {
+				w.Header().Set(appNameHeader, name)
+			}
 			next.ServeHTTP(w, r)
 		})
 	}
