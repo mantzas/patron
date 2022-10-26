@@ -46,11 +46,6 @@ func main() {
 	name := "http-sec"
 	version := "1.0.0"
 
-	service, err := patron.New(name, version, patron.LogFields(map[string]interface{}{"env": "staging"}))
-	if err != nil {
-		log.Fatalf("failed to set up service: %v", err)
-	}
-
 	asyncComp, err := newAsyncKafkaProducer(kafkaBroker, kafkaTopic, true)
 	if err != nil {
 		log.Fatalf("failed to create processor %v", err)
@@ -62,19 +57,24 @@ func main() {
 	}
 
 	var routes v2.Routes
-	routes.Append(v2.NewGetRoute("/", asyncComp.forwardToKafkaHandler, v2.Auth(auth)))
+	routes.Append(v2.NewGetRoute("/", asyncComp.forwardToKafkaHandler, v2.WithAuth(auth)))
 	rr, err := routes.Result()
 	if err != nil {
 		log.Fatalf("failed to create routes: %v", err)
 	}
 
-	router, err := httprouter.New(httprouter.Routes(rr...), httprouter.EnableAppNameHeaders(name, version))
+	router, err := httprouter.New(httprouter.WithRoutes(rr...), httprouter.WithAppNameHeaders(name, version))
 	if err != nil {
 		log.Fatalf("failed to create http router: %v", err)
 	}
 
+	service, err := patron.New(name, version, patron.WithLogFields(map[string]interface{}{"env": "staging"}), patron.WithRouter(router))
+	if err != nil {
+		log.Fatalf("failed to set up service: %v", err)
+	}
+
 	ctx := context.Background()
-	err = service.WithRouter(router).Run(ctx)
+	err = service.Run(ctx)
 	if err != nil {
 		log.Fatalf("failed to create and run service %v", err)
 	}
@@ -123,7 +123,7 @@ func (hc *kafkaProducer) forwardToKafkaHandler(rw http.ResponseWriter, r *http.R
 		_, _ = rw.Write([]byte(fmt.Sprintf("failed to create request for www.google.com: %v", err)))
 		return
 	}
-	cl, err := clienthttp.New(clienthttp.Timeout(5 * time.Second))
+	cl, err := clienthttp.New(clienthttp.WithTimeout(5 * time.Second))
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		return

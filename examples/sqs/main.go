@@ -47,11 +47,6 @@ func main() {
 	version := "1.0.0"
 	ctx := context.Background()
 
-	service, err := patron.New(name, version)
-	if err != nil {
-		log.Fatalf("failed to set up service: %v", err)
-	}
-
 	cc, err := patrongrpc.Dial("localhost:50006", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to dial grpc connection: %v", err)
@@ -72,7 +67,12 @@ func main() {
 		log.Fatalf("failed to create sqs component: %v", err)
 	}
 
-	err = service.WithComponents(sqsCmp.cmp).Run(ctx)
+	service, err := patron.New(name, version, patron.WithComponents(sqsCmp.cmp))
+	if err != nil {
+		log.Fatalf("failed to set up service: %v", err)
+	}
+
+	err = service.Run(ctx)
 	if err != nil {
 		log.Fatalf("failed to create and run service: %v", err)
 	}
@@ -88,7 +88,7 @@ func createSQSComponent(api *sqs.Client, greeter examples.GreeterClient) (*sqsCo
 		greeter: greeter,
 	}
 
-	cmp, err := patronsqs.New("sqs-cmp", awsSQSQueue, api, sqsCmp.Process, patronsqs.PollWaitSeconds(5))
+	cmp, err := patronsqs.New("sqs-cmp", awsSQSQueue, api, sqsCmp.Process, patronsqs.WithPollWaitSeconds(5))
 	if err != nil {
 		return nil, err
 	}

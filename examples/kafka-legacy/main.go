@@ -46,11 +46,6 @@ func main() {
 	name := "kafka"
 	version := "1.0.0"
 
-	service, err := patron.New(name, version, patron.TextLogger())
-	if err != nil {
-		log.Fatalf("failed to set up service: %v", err)
-	}
-
 	pub, err := patronamqp.New(amqpURL)
 	if err != nil {
 		log.Fatalf("failed to create AMQP publisher processor %v", err)
@@ -66,8 +61,13 @@ func main() {
 		log.Fatalf("failed to create processor %v", err)
 	}
 
+	service, err := patron.New(name, version, patron.WithTextLogger(), patron.WithComponents(kafkaCmp.cmp))
+	if err != nil {
+		log.Fatalf("failed to set up service: %v", err)
+	}
+
 	ctx := context.Background()
-	err = service.WithComponents(kafkaCmp.cmp).Run(ctx)
+	err = service.Run(ctx)
 	if err != nil {
 		log.Fatalf("failed to create and run service %v", err)
 	}
@@ -88,7 +88,7 @@ func newKafkaComponent(name, broker, topic, groupID string, publisher *patronamq
 		return nil, err
 	}
 
-	cf, err := group.New(name, groupID, []string{topic}, []string{broker}, saramaCfg, kafka.Decoder(json.DecodeRaw))
+	cf, err := group.New(name, groupID, []string{topic}, []string{broker}, saramaCfg, kafka.WithDecoder(json.DecodeRaw))
 	if err != nil {
 		return nil, err
 	}

@@ -26,7 +26,7 @@ func TestRoutes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			cfg := &Config{}
-			err := Routes(tt.args.routes...)(cfg)
+			err := WithRoutes(tt.args.routes...)(cfg)
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)
 			} else {
@@ -53,7 +53,7 @@ func TestAliveCheck(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			cfg := &Config{}
-			err := AliveCheck(tt.args.acf)(cfg)
+			err := WithAliveCheck(tt.args.acf)(cfg)
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)
 			} else {
@@ -80,7 +80,7 @@ func TestReadyCheck(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			cfg := &Config{}
-			err := ReadyCheck(tt.args.rcf)(cfg)
+			err := WithReadyCheck(tt.args.rcf)(cfg)
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)
 			} else {
@@ -92,10 +92,33 @@ func TestReadyCheck(t *testing.T) {
 
 func TestDeflateLevel(t *testing.T) {
 	t.Parallel()
-	cfg := &Config{}
-	err := DeflateLevel(10)(cfg)
-	assert.NoError(t, err)
-	assert.Equal(t, 10, cfg.deflateLevel)
+	type args struct {
+		deflateLevel int
+	}
+
+	tests := map[string]struct {
+		args        args
+		expectedErr string
+	}{
+		"too high deflate level":   {args: args{deflateLevel: 10}, expectedErr: "provided deflate level value not in the [-2, 9] range"},
+		"too low deflate level":    {args: args{deflateLevel: -3}, expectedErr: "provided deflate level value not in the [-2, 9] range"},
+		"acceptable deflate level": {args: args{deflateLevel: 6}},
+	}
+
+	for name, tt := range tests {
+		temp := tt
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			cfg := &Config{}
+			err := WithDeflateLevel(temp.args.deflateLevel)(cfg)
+			if temp.expectedErr != "" {
+				assert.EqualError(t, err, temp.expectedErr)
+				return
+			}
+
+			assert.Equal(t, temp.args.deflateLevel, cfg.deflateLevel)
+		})
+	}
 }
 
 func TestMiddlewares(t *testing.T) {
@@ -115,7 +138,7 @@ func TestMiddlewares(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			cfg := &Config{}
-			err := Middlewares(tt.args.mm...)(cfg)
+			err := WithMiddlewares(tt.args.mm...)(cfg)
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)
 			} else {
@@ -128,7 +151,7 @@ func TestMiddlewares(t *testing.T) {
 func TestDisableProfiling(t *testing.T) {
 	t.Parallel()
 	cfg := &Config{}
-	err := EnableExpVarProfiling()(cfg)
+	err := WithExpVarProfiling()(cfg)
 	assert.NoError(t, err)
 	assert.True(t, cfg.enableProfilingExpVar)
 }
@@ -150,7 +173,7 @@ func TestEnableAppNameHeaders(t *testing.T) {
 		tt := tt
 		t.Run(name, func(t *testing.T) {
 			cfg := &Config{}
-			err := EnableAppNameHeaders(tt.args.name, tt.args.version)(cfg)
+			err := WithAppNameHeaders(tt.args.name, tt.args.version)(cfg)
 
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)

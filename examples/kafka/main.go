@@ -45,11 +45,6 @@ func main() {
 	name := "kafka"
 	version := "1.0.0"
 
-	service, err := patron.New(name, version, patron.TextLogger())
-	if err != nil {
-		log.Fatalf("failed to set up service: %v", err)
-	}
-
 	pub, err := patronamqp.New(amqpURL)
 	if err != nil {
 		log.Fatalf("failed to create AMQP publisher processor %v", err)
@@ -65,8 +60,13 @@ func main() {
 		log.Fatalf("failed to create processor %v", err)
 	}
 
+	service, err := patron.New(name, version, patron.WithTextLogger(), patron.WithComponents(kafkaCmp.cmp))
+	if err != nil {
+		log.Fatalf("failed to set up service: %v", err)
+	}
+
 	ctx := context.Background()
-	err = service.WithComponents(kafkaCmp.cmp).Run(ctx)
+	err = service.Run(ctx)
 	if err != nil {
 		log.Fatalf("failed to create and run service %v", err)
 	}
@@ -96,8 +96,8 @@ func newKafkaComponent(name, broker, topic, groupID string, publisher *patronamq
 	saramaCfg.Version = sarama.V2_6_0_0
 
 	cmp, err := group.New(name, groupID, []string{broker}, []string{topic}, kafkaCmp.Process, saramaCfg,
-		group.FailureStrategy(kafka.SkipStrategy), group.BatchSize(1), group.BatchTimeout(1*time.Second),
-		group.Retries(10), group.RetryWait(3*time.Second), group.CommitSync())
+		group.WithFailureStrategy(kafka.SkipStrategy), group.WithBatchSize(1), group.WithBatchTimeout(1*time.Second),
+		group.WithRetries(10), group.WithRetryWait(3*time.Second), group.WithCommitSync())
 	if err != nil {
 		return nil, err
 	}

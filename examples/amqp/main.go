@@ -95,11 +95,6 @@ func main() {
 	name := "amqp"
 	version := "1.0.0"
 
-	service, err := patron.New(name, version, patron.TextLogger())
-	if err != nil {
-		log.Fatalf("failed to set up service: %v", err)
-	}
-
 	// Programmatically create an empty SQS queue for the sake of the example
 	sqsAPI, err := createSQSAPI(awsSQSEndpoint)
 	if err != nil {
@@ -145,8 +140,13 @@ func main() {
 		log.Fatalf("failed to create processor %v", err)
 	}
 
+	service, err := patron.New(name, version, patron.WithTextLogger(), patron.WithComponents(amqpCmp.cmp))
+	if err != nil {
+		log.Fatalf("failed to set up service: %v", err)
+	}
+
 	ctx := context.Background()
-	err = service.WithComponents(amqpCmp.cmp).Run(ctx)
+	err = service.Run(ctx)
 	if err != nil {
 		log.Fatalf("failed to create and run service %v", err)
 	}
@@ -252,7 +252,8 @@ type amqpComponent struct {
 }
 
 func newAmqpComponent(url, queue, snsTopicArn string, snsPub patronsns.Publisher, sqsPub patronsqscli.Publisher,
-	sqsQueueURL string) (*amqpComponent, error) {
+	sqsQueueURL string,
+) (*amqpComponent, error) {
 	amqpCmp := amqpComponent{
 		snsTopicArn: snsTopicArn,
 		snsPub:      snsPub,
@@ -260,7 +261,7 @@ func newAmqpComponent(url, queue, snsTopicArn string, snsPub patronsns.Publisher
 		sqsQueueURL: sqsQueueURL,
 	}
 
-	cmp, err := patronamqp.New(url, queue, amqpCmp.Process, patronamqp.Retry(10, 1*time.Second))
+	cmp, err := patronamqp.New(url, queue, amqpCmp.Process, patronamqp.WithRetry(10, 1*time.Second))
 	if err != nil {
 		return nil, err
 	}
