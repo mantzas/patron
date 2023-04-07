@@ -3,7 +3,7 @@
 # github.com/Shopify/sarama v1.38.1
 ## explicit; go 1.17
 github.com/Shopify/sarama
-# github.com/aws/aws-sdk-go-v2 v1.17.3
+# github.com/aws/aws-sdk-go-v2 v1.17.7
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2
 github.com/aws/aws-sdk-go-v2/aws
@@ -24,10 +24,10 @@ github.com/aws/aws-sdk-go-v2/internal/shareddefaults
 github.com/aws/aws-sdk-go-v2/internal/strings
 github.com/aws/aws-sdk-go-v2/internal/sync/singleflight
 github.com/aws/aws-sdk-go-v2/internal/timeconv
-# github.com/aws/aws-sdk-go-v2/config v1.18.8
+# github.com/aws/aws-sdk-go-v2/config v1.18.19
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/config
-# github.com/aws/aws-sdk-go-v2/credentials v1.13.8
+# github.com/aws/aws-sdk-go-v2/credentials v1.13.18
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/credentials
 github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds
@@ -36,43 +36,43 @@ github.com/aws/aws-sdk-go-v2/credentials/endpointcreds/internal/client
 github.com/aws/aws-sdk-go-v2/credentials/processcreds
 github.com/aws/aws-sdk-go-v2/credentials/ssocreds
 github.com/aws/aws-sdk-go-v2/credentials/stscreds
-# github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.21
+# github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.1
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds/internal/config
-# github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.27
+# github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.31
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/internal/configsources
-# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.21
+# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.25
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
-# github.com/aws/aws-sdk-go-v2/internal/ini v1.3.28
+# github.com/aws/aws-sdk-go-v2/internal/ini v1.3.32
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/internal/ini
-# github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.21
+# github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.25
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
-# github.com/aws/aws-sdk-go-v2/service/sns v1.19.0
+# github.com/aws/aws-sdk-go-v2/service/sns v1.20.6
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/sns
 github.com/aws/aws-sdk-go-v2/service/sns/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sns/types
-# github.com/aws/aws-sdk-go-v2/service/sqs v1.20.0
+# github.com/aws/aws-sdk-go-v2/service/sqs v1.20.6
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/sqs
 github.com/aws/aws-sdk-go-v2/service/sqs/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sqs/types
-# github.com/aws/aws-sdk-go-v2/service/sso v1.12.0
+# github.com/aws/aws-sdk-go-v2/service/sso v1.12.6
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/sso
 github.com/aws/aws-sdk-go-v2/service/sso/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sso/types
-# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.0
+# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.6
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/ssooidc
 github.com/aws/aws-sdk-go-v2/service/ssooidc/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/ssooidc/types
-# github.com/aws/aws-sdk-go-v2/service/sts v1.18.0
+# github.com/aws/aws-sdk-go-v2/service/sts v1.18.7
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/sts
 github.com/aws/aws-sdk-go-v2/service/sts/internal/endpoints
@@ -117,16 +117,16 @@ github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 ## explicit
 github.com/eapache/queue
-# github.com/eclipse/paho.golang v0.10.0
+# github.com/eclipse/paho.golang v0.11.0
 ## explicit; go 1.15
 github.com/eclipse/paho.golang/autopaho
 github.com/eclipse/paho.golang/packets
 github.com/eclipse/paho.golang/paho
-# github.com/elastic/elastic-transport-go/v8 v8.1.0
+# github.com/elastic/elastic-transport-go/v8 v8.2.0
 ## explicit; go 1.13
 github.com/elastic/elastic-transport-go/v8/elastictransport
 github.com/elastic/elastic-transport-go/v8/elastictransport/version
-# github.com/elastic/go-elasticsearch/v8 v8.6.0
+# github.com/elastic/go-elasticsearch/v8 v8.7.0
 ## explicit; go 1.13
 github.com/elastic/go-elasticsearch/v8
 github.com/elastic/go-elasticsearch/v8/esapi
@@ -591,6 +591,7 @@ github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/geoshaperelation
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/geostrategy
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/geovalidationmethod
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/granttype
+github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/gridaggregationtype
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/gridtype
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/groupby
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/healthstatus
@@ -628,6 +629,7 @@ github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/language
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/level
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/licensestatus
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/licensetype
+github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/lifecycleoperationmode
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/matchtype
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/memorystatus
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/metric
@@ -675,6 +677,7 @@ github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/shardsstatsstage
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/shardstoreallocation
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/shutdownstatus
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/shutdowntype
+github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/simplequerystringflag
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/snapshotsort
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/snapshotupgradestate
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/snowballlanguage
@@ -699,6 +702,7 @@ github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/tokenchar
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/tokenizationtruncate
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/totalhitsrelation
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/trainedmodeltype
+github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/trainingpriority
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/translogdurability
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/ttesttype
 github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/type_
@@ -887,7 +891,7 @@ github.com/prometheus/procfs/internal/util
 github.com/rcrowley/go-metrics
 # github.com/rogpeppe/go-internal v1.9.0
 ## explicit; go 1.17
-# github.com/rs/zerolog v1.28.0
+# github.com/rs/zerolog v1.29.0
 ## explicit; go 1.15
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
@@ -895,7 +899,7 @@ github.com/rs/zerolog/internal/json
 # github.com/streadway/amqp v1.0.0
 ## explicit; go 1.10
 github.com/streadway/amqp
-# github.com/stretchr/testify v1.8.1
+# github.com/stretchr/testify v1.8.2
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
@@ -935,7 +939,7 @@ github.com/xdg-go/stringprep
 # github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 ## explicit; go 1.12
 github.com/youmark/pkcs8
-# go.mongodb.org/mongo-driver v1.11.3
+# go.mongodb.org/mongo-driver v1.11.4
 ## explicit; go 1.13
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -1065,7 +1069,7 @@ google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
 google.golang.org/grpc/test/bufconn
-# google.golang.org/protobuf v1.28.1
+# google.golang.org/protobuf v1.30.0
 ## explicit; go 1.11
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
