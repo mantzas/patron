@@ -6,25 +6,25 @@ import (
 	"os"
 	"testing"
 
-	"github.com/beatlabs/patron/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slog"
 )
 
 func TestNew(t *testing.T) {
-	httpBuilderAllErrors := "provided WithSIGHUP handler was nil\n"
+	httpBuilderAllErrors := "attributes are empty\nprovided WithSIGHUP handler was nil\n"
 
 	tests := map[string]struct {
 		name              string
-		fields            map[string]interface{}
+		fields            []slog.Attr
 		sighupHandler     func()
 		uncompressedPaths []string
 		wantErr           string
 	}{
 		"success": {
 			name:              "name",
-			fields:            map[string]interface{}{"env": "dev"},
-			sighupHandler:     func() { log.Info("WithSIGHUP received: nothing setup") },
+			fields:            []slog.Attr{slog.String("env", "dev")},
+			sighupHandler:     func() { slog.Info("WithSIGHUP received: nothing setup") },
 			uncompressedPaths: []string{"/foo", "/bar"},
 			wantErr:           "",
 		},
@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 	for name, tt := range tests {
 		temp := tt
 		t.Run(name, func(t *testing.T) {
-			gotService, gotErr := New(tt.name, "1.0", WithLogFields(temp.fields), WithTextLogger(),
+			gotService, gotErr := New(tt.name, "1.0", WithLogFields(temp.fields...), WithJSONLogger(),
 				WithSIGHUP(temp.sighupHandler))
 
 			if temp.wantErr != "" {
@@ -82,7 +82,7 @@ func TestServer_Run_Shutdown(t *testing.T) {
 				os.Clearenv()
 			}()
 			t.Setenv("PATRON_HTTP_DEFAULT_PORT", "50099")
-			svc, err := New("test", "", WithTextLogger())
+			svc, err := New("test", "", WithJSONLogger())
 			assert.NoError(t, err)
 			err = svc.Run(context.Background(), tt.cp)
 			if temp.wantErr {
@@ -126,7 +126,7 @@ func TestServer_SetupTracing(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			svc, err := New("test", "", WithTextLogger())
+			svc, err := New("test", "", WithJSONLogger())
 			assert.NoError(t, err)
 
 			err = svc.Run(context.Background(), tt.cp)
@@ -160,7 +160,7 @@ func TestNewServer_FailingConditions(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			svc, err := New("test", "", WithTextLogger())
+			svc, err := New("test", "", WithJSONLogger())
 
 			if tt.expectedConstructorError != "" {
 				require.EqualError(t, err, tt.expectedConstructorError)
@@ -192,4 +192,24 @@ func (ts testComponent) Run(_ context.Context) error {
 		return errors.New("failed to run component")
 	}
 	return nil
+}
+
+func Test_getLogLevel(t *testing.T) {
+	tests := map[string]struct {
+		lvl  string
+		want slog.Level
+	}{
+		"debug":         {lvl: "debug", want: slog.LevelDebug},
+		"info":          {lvl: "info", want: slog.LevelInfo},
+		"warn":          {lvl: "warn", want: slog.LevelWarn},
+		"error":         {lvl: "error", want: slog.LevelError},
+		"invalid level": {lvl: "invalid", want: slog.LevelInfo},
+	}
+	for name, tt := range tests {
+		tt := tt
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("PATRON_LOG_LEVEL", tt.lvl)
+			assert.Equal(t, tt.want, getLogLevel())
+		})
+	}
 }

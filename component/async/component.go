@@ -9,9 +9,8 @@ import (
 	patronErrors "github.com/beatlabs/patron/errors"
 	"github.com/beatlabs/patron/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/exp/slog"
 )
-
-const propSetMSG = "property '%s' set for '%s'"
 
 var consumerErrors *prometheus.CounterVec
 
@@ -85,7 +84,7 @@ func (cb *Builder) WithFailureStrategy(fs FailStrategy) *Builder {
 	if fs > AckStrategy || fs < NackExitStrategy {
 		cb.errors = append(cb.errors, errors.New("invalid strategy provided"))
 	} else {
-		log.Debugf(propSetMSG, "failure strategy", cb.name)
+		slog.Debug("builder with", slog.Any("failureStrategy", fs))
 		cb.failStrategy = fs
 	}
 	return cb
@@ -94,7 +93,7 @@ func (cb *Builder) WithFailureStrategy(fs FailStrategy) *Builder {
 // WithRetries specifies the retry events number for the component
 // default value is '0'.
 func (cb *Builder) WithRetries(retries uint) *Builder {
-	log.Debugf(propSetMSG, "retries", cb.name)
+	slog.Debug("builder with", slog.Any("retries", retries))
 	cb.retries = retries
 	return cb
 }
@@ -103,7 +102,7 @@ func (cb *Builder) WithRetries(retries uint) *Builder {
 // default value is '1'
 // do NOT enable concurrency value for in-order consumers, such as Kafka or FIFO SQS.
 func (cb *Builder) WithConcurrency(concurrency uint) *Builder {
-	log.Debugf(propSetMSG, "concurrency", cb.name)
+	slog.Debug("builder with", slog.Any("concurrency", concurrency))
 	cb.concurrency = concurrency
 	return cb
 }
@@ -115,7 +114,7 @@ func (cb *Builder) WithRetryWait(retryWait time.Duration) *Builder {
 	if retryWait < 0 {
 		cb.errors = append(cb.errors, errors.New("invalid retry wait provided"))
 	} else {
-		log.Debugf(propSetMSG, "retryWait", cb.name)
+		slog.Debug("builder with", slog.Duration("retryWait", retryWait))
 		cb.retryWait = retryWait
 	}
 	return cb
@@ -162,7 +161,8 @@ func (c *Component) Run(ctx context.Context) error {
 		}
 		consumerErrorsInc(c.name)
 		if c.retries > 0 {
-			log.Errorf("failed run, retry %d/%d with %v wait: %v", i, c.retries, c.retryWait, err)
+			slog.Error("failed run, retrying", slog.Int("current", i), slog.Int("retries", c.retries),
+				slog.Duration("wait", c.retryWait), slog.Any("error", err))
 			time.Sleep(c.retryWait)
 		}
 	}
@@ -182,7 +182,7 @@ func (c *Component) processing(ctx context.Context) error {
 	defer func() {
 		err := cns.Close()
 		if err != nil {
-			log.Warnf("failed to close consumer: %v", err)
+			slog.Warn("failed to close consumer", slog.Any("error", err))
 		}
 	}()
 
@@ -201,7 +201,7 @@ func (c *Component) processing(ctx context.Context) error {
 			}
 		case <-ctx.Done():
 			if !errors.Is(ctx.Err(), context.Canceled) {
-				log.Warnf("closing consumer: %v", ctx.Err())
+				slog.Warn("closing consumer", slog.Any("error", ctx.Err()))
 			}
 			return cns.Close()
 		case err := <-chErr:
@@ -240,7 +240,7 @@ func (c *Component) worker() {
 var errInvalidFS = errors.New("invalid failure strategy")
 
 func (c *Component) executeFailureStrategy(msg Message, err error) error {
-	log.FromContext(msg.Context()).Errorf("failed to process message, failure strategy executed: %v", err)
+	log.FromContext(msg.Context()).Error("failed to process message, failure strategy executed", slog.Any("error", err))
 	switch c.failStrategy {
 	case NackExitStrategy:
 		nackErr := msg.Nack()

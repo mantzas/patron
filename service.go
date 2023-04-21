@@ -13,9 +13,9 @@ import (
 
 	patronErrors "github.com/beatlabs/patron/errors"
 	"github.com/beatlabs/patron/log"
-	patronzerolog "github.com/beatlabs/patron/log/zerolog"
 	"github.com/beatlabs/patron/trace"
 	"github.com/uber/jaeger-client-go"
+	"golang.org/x/exp/slog"
 )
 
 const (
@@ -36,7 +36,7 @@ type Service struct {
 	version       string
 	termSig       chan os.Signal
 	sighupHandler func()
-	config        config
+	logConfig     logConfig
 }
 
 func New(name, version string, options ...OptionFunc) (*Service, error) {
@@ -52,11 +52,11 @@ func New(name, version string, options ...OptionFunc) (*Service, error) {
 		version: version,
 		termSig: make(chan os.Signal, 1),
 		sighupHandler: func() {
-			log.Debug("WithSIGHUP received: nothing setup")
+			slog.Debug("sighup received: nothing setup")
 		},
-		config: config{
-			logger: patronzerolog.New(os.Stderr, getLogLevel(), nil),
-			fields: defaultLogFields(name, version),
+		logConfig: logConfig{
+			attrs: defaultLogAttrs(name, version),
+			json:  false,
 		},
 	}
 
@@ -78,11 +78,7 @@ func New(name, version string, options ...OptionFunc) (*Service, error) {
 		return nil, patronErrors.Aggregate(optionErrors...)
 	}
 
-	err = setupLogging(s.config.fields, s.config.logger)
-	if err != nil {
-		return nil, err
-	}
-
+	setupLogging(s.logConfig)
 	s.setupOSSignal()
 
 	return s, nil
@@ -96,7 +92,7 @@ func (s *Service) Run(ctx context.Context, components ...Component) error {
 	defer func() {
 		err := trace.Close()
 		if err != nil {
-			log.Errorf("failed to close trace %v", err)
+			slog.Error("failed to close trace", slog.Any("error", err))
 		}
 	}()
 	ctx, cnl := context.WithCancel(ctx)
@@ -110,7 +106,7 @@ func (s *Service) Run(ctx context.Context, components ...Component) error {
 		}(cp)
 	}
 
-	log.FromContext(ctx).Infof("service %s started", s.name)
+	log.FromContext(ctx).Info("service started", slog.String("name", s.name))
 	ee := make([]error, 0, len(components))
 	ee = append(ee, s.waitTermination(chErr))
 	cnl()
@@ -132,7 +128,7 @@ func (s *Service) waitTermination(chErr <-chan error) error {
 	for {
 		select {
 		case sig := <-s.termSig:
-			log.Infof("signal %s received", sig.String())
+			slog.Info("signal received", slog.Any("type", sig))
 
 			switch sig {
 			case syscall.SIGHUP:
@@ -143,45 +139,60 @@ func (s *Service) waitTermination(chErr <-chan error) error {
 			}
 		case err := <-chErr:
 			if err != nil {
-				log.Info("component error received")
+				slog.Info("component error received")
 			}
 			return err
 		}
 	}
 }
 
-// config for setting up the builder.
-type config struct {
-	fields map[string]interface{}
-	logger log.Logger
+type logConfig struct {
+	attrs []slog.Attr
+	json  bool
 }
 
-func getLogLevel() log.Level {
+func getLogLevel() slog.Level {
 	lvl, ok := os.LookupEnv("PATRON_LOG_LEVEL")
 	if !ok {
-		lvl = string(log.InfoLevel)
+		return slog.LevelInfo
 	}
-	return log.Level(lvl)
+
+	lv := slog.LevelVar{}
+	if err := lv.UnmarshalText([]byte(lvl)); err != nil {
+		return slog.LevelInfo
+	}
+
+	return lv.Level()
 }
 
-func defaultLogFields(name, version string) map[string]interface{} {
+func defaultLogAttrs(name, version string) []slog.Attr {
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = host
 	}
 
-	return map[string]interface{}{
-		srv:  name,
-		ver:  version,
-		host: hostname,
+	return []slog.Attr{
+		slog.String(srv, name),
+		slog.String(ver, version),
+		slog.String(host, hostname),
 	}
 }
 
-func setupLogging(fields map[string]interface{}, logger log.Logger) error {
-	if fields != nil {
-		return log.Setup(logger.Sub(fields))
+func setupLogging(lc logConfig) {
+	ho := slog.HandlerOptions{
+		AddSource: true,
+		Level:     getLogLevel(),
 	}
-	return log.Setup(logger)
+
+	var hnd slog.Handler
+
+	if lc.json {
+		hnd = ho.NewJSONHandler(os.Stderr)
+	} else {
+		hnd = ho.NewTextHandler(os.Stderr)
+	}
+
+	slog.New(hnd.WithAttrs(lc.attrs))
 }
 
 func setupJaegerTracing(name, version string) error {
@@ -219,6 +230,6 @@ func setupJaegerTracing(name, version string) error {
 		}
 	}
 
-	log.Debugf("setting up default tracing %s, %s with param %f", agent, tp, prmVal)
+	slog.Debug("setting up default tracing", slog.String("agent", agent), slog.String("param", tp), slog.Float64("val", prmVal))
 	return trace.Setup(name, version, agent, tp, prmVal, buckets)
 }

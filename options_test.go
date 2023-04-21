@@ -2,62 +2,47 @@ package patron
 
 import (
 	"errors"
-	"os"
 	"testing"
 
-	"github.com/beatlabs/patron/log/std"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/slog"
 )
 
 func TestLogFields(t *testing.T) {
-	defaultFields := defaultLogFields("test", "1.0")
-	fields := map[string]interface{}{"key": "value"}
-	fields1 := defaultLogFields("name1", "version1")
+	defaultAttrs := defaultLogAttrs("test", "1.0")
+	attrs := []slog.Attr{slog.String("key", "value")}
+	attrs1 := defaultLogAttrs("name1", "version1")
 	type args struct {
-		fields map[string]interface{}
+		fields []slog.Attr
 	}
 	tests := map[string]struct {
-		args args
-		want config
+		args        args
+		want        logConfig
+		expectedErr string
 	}{
-		"success":      {args: args{fields: fields}, want: config{fields: mergeFields(defaultFields, fields)}},
-		"no overwrite": {args: args{fields: fields1}, want: config{fields: defaultFields}},
+		"empty attributes": {args: args{fields: nil}, expectedErr: "attributes are empty"},
+		"success":          {args: args{fields: attrs}, want: logConfig{attrs: append(defaultAttrs, attrs...)}},
+		"no overwrite":     {args: args{fields: attrs1}, want: logConfig{attrs: defaultAttrs}},
 	}
 	for name, tt := range tests {
-		temp := tt
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			svc := &Service{
-				config: config{
-					fields: defaultFields,
+				logConfig: logConfig{
+					attrs: defaultAttrs,
 				},
 			}
 
-			err := WithLogFields(temp.args.fields)(svc)
-			assert.NoError(t, err)
+			err := WithLogFields(tt.args.fields...)(svc)
 
-			assert.Equal(t, temp.want, svc.config)
+			if tt.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, svc.logConfig)
+			} else {
+				assert.EqualError(t, err, tt.expectedErr)
+			}
 		})
 	}
-}
-
-func mergeFields(ff1, ff2 map[string]interface{}) map[string]interface{} {
-	ff := map[string]interface{}{}
-	for k, v := range ff1 {
-		ff[k] = v
-	}
-	for k, v := range ff2 {
-		ff[k] = v
-	}
-	return ff
-}
-
-func TestLogger(t *testing.T) {
-	logger := std.New(os.Stderr, getLogLevel(), nil)
-	svc := &Service{}
-
-	err := WithLogger(logger)(svc)
-	assert.NoError(t, err)
-	assert.Equal(t, logger, svc.config.logger)
 }
 
 func TestSIGHUP(t *testing.T) {

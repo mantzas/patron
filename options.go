@@ -2,10 +2,8 @@ package patron
 
 import (
 	"errors"
-	"os"
 
-	"github.com/beatlabs/patron/log"
-	"github.com/beatlabs/patron/log/std"
+	"golang.org/x/exp/slog"
 )
 
 type OptionFunc func(svc *Service) error
@@ -17,7 +15,7 @@ func WithSIGHUP(handler func()) OptionFunc {
 			return errors.New("provided WithSIGHUP handler was nil")
 		}
 
-		log.Debug("setting WithSIGHUP handler func")
+		slog.Debug("setting WithSIGHUP handler func")
 		svc.sighupHandler = handler
 
 		return nil
@@ -25,34 +23,29 @@ func WithSIGHUP(handler func()) OptionFunc {
 }
 
 // WithLogFields options to pass in additional log fields.
-func WithLogFields(fields map[string]interface{}) OptionFunc {
+func WithLogFields(attrs ...slog.Attr) OptionFunc {
 	return func(svc *Service) error {
-		for k, v := range fields {
-			if k == srv || k == ver || k == host {
+		if len(attrs) == 0 {
+			return errors.New("attributes are empty")
+		}
+
+		for _, attr := range attrs {
+			if attr.Key == srv || attr.Key == ver || attr.Key == host {
 				// don't override
 				continue
 			}
-			svc.config.fields[k] = v
+
+			svc.logConfig.attrs = append(svc.logConfig.attrs, attr)
 		}
 
 		return nil
 	}
 }
 
-// WithLogger to pass in custom logger.
-func WithLogger(logger log.Logger) OptionFunc {
+// WithJSONLogger to use Go's slog package.
+func WithJSONLogger() OptionFunc {
 	return func(svc *Service) error {
-		svc.config.logger = logger
-
-		return nil
-	}
-}
-
-// WithTextLogger to use Go's standard logger.
-func WithTextLogger() OptionFunc {
-	return func(svc *Service) error {
-		svc.config.logger = std.New(os.Stderr, getLogLevel(), svc.config.fields)
-
+		svc.logConfig.json = true
 		return nil
 	}
 }
