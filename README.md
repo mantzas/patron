@@ -1,4 +1,5 @@
 # patron [![CircleCI](https://circleci.com/gh/mantzas/patron.svg?style=svg)](https://circleci.com/gh/mantzas/patron) [![codecov](https://codecov.io/gh/mantzas/patron/branch/master/graph/badge.svg)](https://codecov.io/gh/mantzas/patron) [![Go Report Card](https://goreportcard.com/badge/github.com/mantzas/patron)](https://goreportcard.com/report/github.com/mantzas/patron) [![GoDoc](https://godoc.org/github.com/mantzas/patron?status.svg)](https://godoc.org/github.com/mantzas/patron)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmantzas%2Fpatron.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmantzas%2Fpatron?ref=badge_shield)
 
 Patron is a framework for creating microservices, originally created by Sotiris Mantzaris (https://github.com/mantzas). This fork is maintained by Beat Engineering (https://thebeat.co)
 
@@ -295,3 +296,7 @@ This authenticator can then be used to set up routes with authentication.
 The following authenticator are available:
 
 - API key authenticator, see examples
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmantzas%2Fpatron.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmantzas%2Fpatron?ref=badge_large)
